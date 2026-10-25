@@ -1,8 +1,9 @@
 // Upgrade parts, in the spirit of Forza: each slot has a few levels, and most
 // parts trade one thing for another. A part is a small function that returns
 // a changed copy of the car's numbers; nothing else knows how it works.
-// Visual parts (paint, rims, ride height, spoilers, body kits) also change
-// the model; that side lives in the garage (session 2).
+// Wings, body kits, big brakes, loud exhausts and stripped interiors also
+// show on the model (car-model.js); paint, wheels and ride height are looks
+// (looks.js).
 //
 // Rough real-world guides used for the numbers:
 //  - intake/exhaust: +3-6% power each, exhausts shed 5-10 kg
@@ -106,9 +107,9 @@ export const SLOTS = {
     options: [
       { id: 'stock', name: 'Stock' },
       { id: 'sport', name: 'Sport springs', info: 'less lean, +3% grip, sharper turn-in',
-        apply: (s) => { s.rollScale *= 0.6; s.tireGrip *= 1.03; s.steerSpeed *= 1.08; s.rideDrop = Math.max(s.rideDrop || 0, 0.02); } },
+        apply: (s) => { s.rollScale *= 0.6; s.tireGrip *= 1.03; s.steerSpeed *= 1.08; } },
       { id: 'race', name: 'Coilovers', info: 'barely leans, +6% grip, quick and a bit nervous',
-        apply: (s) => { s.rollScale *= 0.35; s.pitchScale *= 0.6; s.tireGrip *= 1.06; s.steerSpeed *= 1.16; s.yawInertiaScale *= 0.92; s.rideDrop = Math.max(s.rideDrop || 0, 0.04); } },
+        apply: (s) => { s.rollScale *= 0.35; s.pitchScale *= 0.6; s.tireGrip *= 1.06; s.steerSpeed *= 1.16; s.yawInertiaScale *= 0.92; s.coilovers = true; } },
     ],
   },
   gearing: {

@@ -3,6 +3,7 @@
 // settings on top. Physics only ever sees the result.
 
 import { applyParts } from './parts.js';
+import { RIDE } from './looks.js';
 
 // Feel panel sliders. Each one edits a car-spec number; `camera` ones edit
 // the camera instead. Ranges are wide on purpose: this is for finding taste.
@@ -25,9 +26,13 @@ export const FEEL = [
   { key: 'shakeScale', label: 'Camera: shake', min: 0, max: 2, step: 0.05, camera: true },
 ];
 
-// base: a car from cars.js. build: { parts: { slot: partId } }. feel: { key: value }.
+// base: a car from cars.js. build: { parts: { slot: partId }, look }. feel: { key: value }.
 export function buildSpec(base, build, feel = {}) {
   const s = applyParts(base, build?.parts || {});
+  // A lower car has a lower centre of gravity: a little less weight transfer.
+  const drop = RIDE[build?.look?.ride]?.drop || 0;
+  s.rideDrop = drop;
+  s.cgHeight -= drop * 0.8;
   for (const f of FEEL) if (!f.camera && feel[f.key] !== undefined) s[f.key] = feel[f.key];
   // Lean and dive limits follow their strength, so the body never touches the road.
   if (feel.rollScale !== undefined) s.maxRoll = Math.min(0.09, feel.rollScale * 13.75);

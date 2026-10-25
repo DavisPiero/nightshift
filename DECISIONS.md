@@ -52,3 +52,9 @@ One line each, newest last.
 - 2026-10-26: Underground: 2.46 km closed loop of Tokyo-style shield tunnel, three lanes, walls at 8.2 m; no rain (Clear and Fog only, fog as exhaust haze).
 - 2026-10-26: The car and weather tag at the top left of the driving screen is gone (David).
 - 2026-10-26: Headless screenshots through Chrome's DevTools protocol on the GPU (tools/shot.mjs): seconds, not minutes, and no window.
+- 2026-10-26: Garage mods: every part and look is fitted at once and is free (money is Milestone 7); "Reset" asks twice.
+- 2026-10-26: Builds: up to 3 named builds per car (save version 3); the one marked RACING is driven and rated in the car pick. A version 2 save becomes "My build".
+- 2026-10-26: Ride height is a look (Stock, Low, Slammed; Slammed needs coilovers) that also lowers the centre of gravity; suspension parts no longer lower the car on their own.
+- 2026-10-26: Paint, finish, decals and wheels are looks only. Wheel size is not offered (it would need physics and arch work).
+- 2026-10-26: Garage ratings compare with stock: green pips gained, red lost. The Engine tab shows a dyno chart (power and torque, stock faint behind).
+- 2026-10-26: The garage camera moves to suit the tab (wheels close up, rear for wing and kit, front three-quarter for parts).

@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.5.0 (unreleased): garage mods
+- The Garage has eight tabs: Paint (colour and finish: gloss, metallic, pearl, matte), Decals
+  (stripes, side stripe, race number, 走り屋 sticker), Wheels (six rim styles, rim and calliper
+  colours), Body (street kit, widebody, wings, ride height), Engine, Chassis, Drive and Builds.
+- Parts show on the car: GT wing or no wing, splitter, skirts and diffuser, a real widebody,
+  slammed ride height, big brakes, bigger exhaust tips, a stripped cockpit.
+- Ratings in the garage compare with stock; the Engine tab has a dyno chart.
+- Up to three named builds per car; pick which one you race. Old saves carry over.
+
 ## 0.4.0 (unreleased): neon Japan, the Underground, better cars
 - New look for every menu: neon Japan pixel style with turquoise frames, hot pink buttons,
   window title bars, scanlines and Japanese under the English.

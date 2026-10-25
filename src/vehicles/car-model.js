@@ -12,6 +12,7 @@
 import * as THREE from 'three';
 import { Tex } from '../graphics/textures.js';
 import { Body, SLOT, flatShape, roundRect } from './body.js';
+import { FINISHES, RIDE, checkLook } from './looks.js';
 
 const ROLL_CENTRE = 0.42; // m above the road
 
@@ -31,28 +32,43 @@ function beamGeometry(length, radius) {
   return g;
 }
 
-// Clear-coated car paint. Metallic paints get a little more metal.
-export function paintMaterial(color) {
+// Car paint in one of the finishes (looks.js): gloss, metallic and pearl
+// are clear-coated; matte is not.
+export function paintMaterial(color, finish = 'metallic') {
+  const f = FINISHES[finish] || FINISHES.metallic;
   return new THREE.MeshPhysicalMaterial({
-    color, metalness: 0.35, roughness: 0.42, clearcoat: 1, clearcoatRoughness: 0.07, envMapIntensity: 1.1,
+    color, metalness: f.metalness, roughness: f.roughness, clearcoat: f.clearcoat, clearcoatRoughness: 0.07,
+    iridescence: f.iridescence, iridescenceIOR: 1.6, envMapIntensity: f.clearcoat ? 1.1 : 0.5,
   });
 }
 
-export function buildCar(spec, paintColor = spec.paint, { simple = false } = {}) {
+// The widebody's shape: the same car with blistered arches.
+function wideDef(def) {
+  const [f, r] = def.wheels.flare;
+  return { ...def, wheels: { ...def.wheels, flare: [f + 0.05, r + 0.06] }, bulge: (def.bulge ?? 0.015) + 0.01 };
+}
+
+// spec: the car as built (its parts set flags like wing, kit, bigBrakes).
+// look: paint, finish, decal, wheels and ride height (looks.js), or just a
+// paint colour.
+export function buildCar(spec, look = spec.paint, { simple = false } = {}) {
   const sh = SHAPES[spec.id] || SHAPES['skyliner-r34'];
-  const B = sh.body instanceof Body ? sh.body : (sh.body = new Body(sh.def));
+  look = checkLook(typeof look === 'number' ? { paint: look } : look, spec);
+  const wide = spec.kit === 'wide';
+  const B = wide ? (sh.wideBody ??= new Body(wideDef(sh.def))) : (sh.body ??= new Body(sh.def));
+  const drop = RIDE[look.ride].drop;
   const root = new THREE.Group();
   root.name = spec.id;
   const sway = new THREE.Group();   // leans and pitches about the roll centre
   sway.position.y = ROLL_CENTRE;
   root.add(sway);
   const body = new THREE.Group();
-  body.position.y = -ROLL_CENTRE;
+  body.position.y = -ROLL_CENTRE - drop;
   sway.add(body);
   const cockpit = new THREE.Group(); // stays level with the road
   root.add(cockpit);
 
-  const paint = paintMaterial(paintColor);
+  const paint = paintMaterial(look.paint, look.finish);
   const trim = new THREE.MeshStandardMaterial({ color: 0x141516, roughness: 0.55, metalness: 0.2 });
   const black = new THREE.MeshStandardMaterial({ color: 0x070708, roughness: 0.9, metalness: 0 });
   const carbon = new THREE.MeshStandardMaterial({ color: 0x111214, roughness: 0.32, metalness: 0.35 });
@@ -67,7 +83,7 @@ export function buildCar(spec, paintColor = spec.paint, { simple = false } = {})
   const tailRing = new THREE.MeshBasicMaterial({ color: 0x3a0503 });
   const reverseLight = new THREE.MeshBasicMaterial({ color: 0x777777 });
   const amber = new THREE.MeshBasicMaterial({ color: 0xc86a10 });
-  const interior = new THREE.MeshLambertMaterial({ color: 0x2a2b2d });
+  const interior = new THREE.MeshLambertMaterial({ color: spec.stripped ? 0x4a5054 : 0x2a2b2d }); // bare metal when stripped
   const dashMat = new THREE.MeshLambertMaterial({ color: 0x0f1012, flatShading: true });
   const seatMat = new THREE.MeshLambertMaterial({ color: 0x232426 });
   const seatInsert = new THREE.MeshLambertMaterial({ color: 0x2c3036 });
@@ -87,11 +103,15 @@ export function buildCar(spec, paintColor = spec.paint, { simple = false } = {})
   box(sh.core[0], 0.4, sh.core[1], black, 0, 0.44, sh.core[2] ?? 0);
 
   const mats = { paint, trim, black, carbon, chrome, plate, headlight, lampInner, lens, tail, tailRing, reverseLight, amber, glass };
-  const { exhausts } = sh.details({ B, box, add, body, mats });
+  const tip = 1 + ((spec.exhaustVolume ?? 1) - 1) * 0.7; // louder exhausts, bigger tips
+  const { exhausts } = sh.details({ B, box, add, body, mats, spec, tip });
+  bodyKit({ B, box, spec, mats, sh });
+  if (spec.wing === 'gt') gtWing({ B, box, mats });
+  if (look.decal !== 'none') decals({ B, add, look, sh });
 
   // --- Cockpit (does not lean). The driver sits at driverX. ---
   const dx = sh.driverX;
-  cockpit.position.set(0, sh.cockpitOffset[0], sh.cockpitOffset[1]);
+  cockpit.position.set(0, sh.cockpitOffset[0] - drop, sh.cockpitOffset[1]);
   let steeringWheel = new THREE.Group(), needles = [];
   if (!simple) {
     // Dashboard: a top slab under the windscreen, a face toward the cabin,
@@ -138,6 +158,7 @@ export function buildCar(spec, paintColor = spec.paint, { simple = false } = {})
     box(0.2, 0.045, 0.005, chrome, 0, 1.24, 0.489, cockpit);
     for (const s of [1, -1]) { const v = box(0.4, 0.02, 0.16, interior, s * 0.38, 1.3, 0.38, cockpit); v.rotation.x = -0.15; }
     for (const s of [1, -1]) {
+      if (spec.stripped && Math.sign(s) !== Math.sign(dx)) continue; // stripped: no passenger seat
       box(0.5, 0.12, 0.5, seatMat, s * 0.38, 0.52, -0.25, cockpit);
       const back = box(0.5, 0.66, 0.12, seatMat, s * 0.38, 0.86, -0.55, cockpit);
       back.rotation.x = -0.18;
@@ -145,7 +166,7 @@ export function buildCar(spec, paintColor = spec.paint, { simple = false } = {})
       ins.rotation.x = -0.18;
       for (const w of [1, -1]) { const bol = box(0.07, 0.5, 0.16, seatMat, s * 0.38 + w * 0.22, 0.9, -0.52, cockpit); bol.rotation.x = -0.18; }
     }
-    box(1.4, 0.06, 0.4, interior, 0, 0.99, -0.9, cockpit); // parcel shelf
+    if (!spec.stripped) box(1.4, 0.06, 0.4, interior, 0, 0.99, -0.9, cockpit); // parcel shelf
 
     // Steering wheel on a column, tilted like a real one.
     const column = new THREE.Group();
@@ -174,20 +195,22 @@ export function buildCar(spec, paintColor = spec.paint, { simple = false } = {})
 
   // Wheels: tyre, a rim face with open spokes, and a brake disc and calliper
   // behind it (they steer but do not spin).
-  const WR = spec.wheelRadius, TW = sh.tyreWidth;
+  const WR = spec.wheelRadius, TW = sh.tyreWidth + (wide ? 0.03 : 0);
+  const hex = (c) => '#' + c.toString(16).padStart(6, '0');
   const tyreMat = new THREE.MeshStandardMaterial({ map: Tex.tire(), color: 0x9a9a9a, roughness: 0.9 });
   const wallMat = new THREE.MeshStandardMaterial({ color: 0x161617, roughness: 0.85 });
-  const rimMat = new THREE.MeshStandardMaterial({ map: Tex.rimFace(sh.rim.style, sh.rim.color), transparent: true, alphaTest: 0.5, metalness: 0.75, roughness: 0.3, side: THREE.DoubleSide });
+  const rimMat = new THREE.MeshStandardMaterial({ map: Tex.rimFace(look.rim || sh.rim.style, look.rimColour !== null ? hex(look.rimColour) : sh.rim.color), transparent: true, alphaTest: 0.5, metalness: 0.75, roughness: 0.3, side: THREE.DoubleSide });
   const barrelMat = new THREE.MeshStandardMaterial({ color: 0x2a2c2e, metalness: 0.8, roughness: 0.4, side: THREE.BackSide });
   const discMat = new THREE.MeshStandardMaterial({ color: 0x55585a, metalness: 0.9, roughness: 0.35 });
-  const caliperMat = new THREE.MeshStandardMaterial({ color: sh.rim.caliper, roughness: 0.45, metalness: 0.3 });
+  const caliperMat = new THREE.MeshStandardMaterial({ color: look.caliper ?? (spec.bigBrakes ? 0xb01818 : sh.rim.caliper), roughness: 0.45, metalness: 0.3 });
+  const big = spec.bigBrakes ? 1.22 : 1; // big brake kit: bigger discs and callipers
   const treadGeo = new THREE.CylinderGeometry(WR, WR, TW, 22, 1, true).rotateZ(Math.PI / 2);
   const sideGeo = new THREE.RingGeometry(WR * 0.74, WR, 22).rotateY(Math.PI / 2);
   const faceGeo = new THREE.CircleGeometry(WR * 0.76, 22).rotateY(Math.PI / 2);
   const barrelGeo = new THREE.CylinderGeometry(WR * 0.74, WR * 0.74, TW * 0.9, 18, 1, true).rotateZ(Math.PI / 2);
-  const discGeo = new THREE.CircleGeometry(WR * 0.6, 18).rotateY(Math.PI / 2);
+  const discGeo = new THREE.CircleGeometry(WR * 0.6 * big, 18).rotateY(Math.PI / 2);
   const wheels = [];
-  const [WZf, WZr] = sh.def.wheels.z, WX = sh.wheelX;
+  const [WZf, WZr] = sh.def.wheels.z, WX = sh.wheelX + (wide ? 0.045 : 0);
   for (const [x, z, front] of [[WX, WZf, true], [-WX, WZf, true], [WX, WZr, false], [-WX, WZr, false]]) {
     const out = Math.sign(x);
     const steer = new THREE.Group();
@@ -212,8 +235,8 @@ export function buildCar(spec, paintColor = spec.paint, { simple = false } = {})
       disc.position.x = out * (TW / 2 - 0.09);
       if (out < 0) disc.rotation.y = Math.PI;
       steer.add(disc);
-      const cal = new THREE.Mesh(new THREE.BoxGeometry(0.07, WR * 0.34, WR * 0.5), caliperMat);
-      cal.position.set(out * (TW / 2 - 0.07), WR * 0.38, front ? -WR * 0.2 : WR * 0.2);
+      const cal = new THREE.Mesh(new THREE.BoxGeometry(0.07, WR * 0.34 * big, WR * 0.5 * big), caliperMat);
+      cal.position.set(out * (TW / 2 - 0.07), WR * 0.38 * big, front ? -WR * 0.2 : WR * 0.2);
       cal.rotation.x = front ? -0.5 : 0.5;
       steer.add(cal);
     }
@@ -446,7 +469,7 @@ function exhaust(add, mats, x, y, z, r = 0.05, len = 0.18) {
 // ---------------------------------------------------------------------------
 // The R34 (1999 Skyline GT-R): square shoulders, flat bonnet with a vent,
 // angular lamps, blistered arches, a tall wing and four round tail lights.
-function r34Details({ B, add, box, mats: m }) {
+function r34Details({ B, add, box, mats: m, spec, tip }) {
   const zf = B.z1, zr = B.z0;
   // Angular headlights across the front corners, a slim grille between.
   add(B.decal(2.02, zf - 0.015, 5.5, (z) => 8.6 - (z - 2.02) * 1.2, { nz: 6, nt: 5 }), m.lampInner);
@@ -480,23 +503,27 @@ function r34Details({ B, add, box, mats: m }) {
   const diff = box(1.1, 0.03, 0.3, m.carbon, 0, 0.23, zr + 0.12);
   diff.rotation.x = -0.12;
   for (const x of [-0.3, 0, 0.3]) box(0.02, 0.08, 0.26, m.carbon, x, 0.26, zr + 0.12);
-  const ex = [exhaust(add, m, -0.5, 0.28, zr - 0.02, 0.06, 0.2)];
-  // Tall wing on two uprights, with endplates and a small flap.
+  const ex = [exhaust(add, m, -0.5, 0.28, zr - 0.02, 0.06 * tip, 0.2)];
+  if (!spec.wing) r34Wing({ box, m, zr });
+  mirror(add, m, B, 0.74);
+  return { exhausts: ex, tails };
+}
+
+// The R34's tall stock wing on two uprights, with endplates and a small flap.
+function r34Wing({ box, m, zr }) {
   for (const s of [1, -1]) { const up = box(0.05, 0.22, 0.14, m.paint, s * 0.58, 1.1, zr + 0.25); up.rotation.x = -0.12; }
   const wing = box(1.56, 0.04, 0.3, m.paint, 0, 1.22, zr + 0.2);
   wing.rotation.x = 0.07;
   const flap = box(1.5, 0.03, 0.08, m.paint, 0, 1.255, zr + 0.06);
   flap.rotation.x = -0.4;
   for (const s of [1, -1]) box(0.02, 0.13, 0.36, m.paint, s * 0.78, 1.22, zr + 0.18);
-  mirror(add, m, B, 0.74);
-  return { exhausts: ex, tails };
 }
 
 // The R35 (2017 GT-R): long low bonnet, swept lamps that run back over the
 // front wheels, a big trapezoid grille, the shark-gill vent behind the
 // front wheel, a high fastback roof, round quad tail lights in the body
 // colour, a wing on the boot edge and four titanium pipes.
-function r35Details({ B, add, box, mats: m }) {
+function r35Details({ B, add, box, mats: m, spec, tip }) {
   const zf = B.z1, zr = B.z0;
   // Headlights: a chrome-backed lamp that sweeps back over the fender, an
   // L-shaped running light along its inner and lower edge.
@@ -546,12 +573,14 @@ function r35Details({ B, add, box, mats: m }) {
   diff.rotation.x = -0.15;
   for (const x of [-0.36, -0.12, 0.12, 0.36]) box(0.02, 0.09, 0.26, m.carbon, x, 0.33, zr + 0.13);
   const ex = [];
-  for (const x of [-0.7, -0.56, 0.56, 0.7]) ex.push(exhaust(add, m, x, 0.36, zr - 0.02, 0.05, 0.16));
+  for (const x of [-0.7, -0.56, 0.56, 0.7]) ex.push(exhaust(add, m, x, 0.36, zr - 0.02, 0.05 * Math.min(tip, 1.25), 0.16));
   // Wing on the boot edge.
-  for (const s of [1, -1]) { const up = box(0.05, 0.1, 0.16, m.paint, s * 0.55, 1.11, zr + 0.22); up.rotation.x = -0.2; }
-  const wing = box(1.5, 0.03, 0.24, m.paint, 0, 1.16, zr + 0.17);
-  wing.rotation.x = 0.1;
-  for (const s of [1, -1]) box(0.015, 0.07, 0.24, m.paint, s * 0.76, 1.15, zr + 0.17);
+  if (!spec.wing) {
+    for (const s of [1, -1]) { const up = box(0.05, 0.1, 0.16, m.paint, s * 0.55, 1.11, zr + 0.22); up.rotation.x = -0.2; }
+    const wing = box(1.5, 0.03, 0.24, m.paint, 0, 1.16, zr + 0.17);
+    wing.rotation.x = 0.1;
+    for (const s of [1, -1]) box(0.015, 0.07, 0.24, m.paint, s * 0.76, 1.15, zr + 0.17);
+  }
   mirror(add, m, B, 0.66);
   return { exhausts: ex, tails };
 }
@@ -560,7 +589,7 @@ function r35Details({ B, add, box, mats: m }) {
 // a central scoop and two vents, four round lamps in a full-width black
 // grille, slab sides, a short glasshouse, a full-width tail-light band, a
 // ducktail and two big pipes.
-function challenjerDetails({ B, add, box, mats: m }) {
+function challenjerDetails({ B, add, box, mats: m, tip }) {
   const zf = B.z1, zr = B.z0;
   // Full-width grille with the four lamps set into it.
   add(flatShape(roundRect(0, 0.72, 1.66, 0.24, 0.03), zf, 1, 0.003), m.black);
@@ -611,9 +640,67 @@ function challenjerDetails({ B, add, box, mats: m }) {
   const duck = box(1.62, 0.035, 0.14, m.paint, 0, B.hood(zr + 0.08) + 0.03, zr + 0.08);
   duck.rotation.x = -0.28;
   const ex = [];
-  for (const s of [1, -1]) ex.push(exhaust(add, m, s * 0.58, 0.33, zr - 0.02, 0.07, 0.18));
+  for (const s of [1, -1]) ex.push(exhaust(add, m, s * 0.58, 0.33, zr - 0.02, 0.07 * tip, 0.18));
   mirror(add, m, B, 0.8, 1.1);
   return { exhausts: ex, tails };
+}
+
+// Body kits: a deep splitter, side skirts and a finned diffuser (the
+// widebody also gets its blistered arches from wideDef).
+function bodyKit({ B, box, spec, mats: m, sh }) {
+  if (!spec.kit) return;
+  const zf = B.z1, zr = B.z0, [wf, wr] = sh.def.wheels.z, r = sh.def.wheels.r;
+  const lip = box(B.width(zf - 0.1) * 2 - 0.05, 0.03, 0.26, m.carbon, 0, B.sill(zf - 0.1) - 0.03, zf - 0.04);
+  lip.rotation.x = 0.04;
+  const len = (wf - r) - (wr + r) - 0.1, mid = ((wf - r) + (wr + r)) / 2;
+  for (const s of [1, -1]) box(0.08, 0.09, len, m.carbon, s * (B.width(mid) + B.flare(mid) - 0.01), B.sill(mid) - 0.01, mid);
+  const diff = box(B.width(zr + 0.2) * 1.5, 0.03, 0.4, m.carbon, 0, B.sill(zr + 0.2) - 0.02, zr + 0.18);
+  diff.rotation.x = -0.18;
+  for (let i = -2; i <= 2; i++) box(0.02, 0.11, 0.36, m.carbon, i * 0.22, B.sill(zr + 0.2) + 0.02, zr + 0.18);
+}
+
+// A big GT wing on swan-neck stands, with endplates.
+function gtWing({ B, box, mats: m }) {
+  const z = B.z0 + 0.3, y = B.hood(z);
+  for (const s of [1, -1]) {
+    const st = box(0.03, 0.34, 0.12, m.carbon, s * 0.45, y + 0.17, z + 0.04);
+    st.rotation.x = 0.25;
+  }
+  const blade = box(1.72, 0.025, 0.32, m.carbon, 0, y + 0.36, z - 0.06);
+  blade.rotation.x = 0.12;
+  const gurney = box(1.72, 0.05, 0.015, m.carbon, 0, y + 0.37, z - 0.23);
+  gurney.rotation.x = 0.12;
+  for (const s of [1, -1]) box(0.012, 0.12, 0.36, m.carbon, s * 0.86, y + 0.35, z - 0.06);
+}
+
+// Decals laid on the body: twin stripes over the top, a side stripe, a race
+// number roundel on the doors, or a 走り屋 sticker on the rear quarters.
+function decals({ B, add, look, sh }) {
+  const def = sh.def;
+  const colour = new THREE.MeshStandardMaterial({ color: look.decalColour, roughness: 0.35, metalness: 0.1, polygonOffset: true, polygonOffsetFactor: -2 });
+  const [wf, wr] = def.wheels.z, r = def.wheels.r;
+  if (look.decal === 'stripes') {
+    // Over the bonnet, roof and boot, but not over the glass.
+    const cuts = [def.rearGlass, def.screen].map(([a, b]) => [Math.min(a, b), Math.max(a, b)]).sort((a, b) => a[0] - b[0]);
+    let from = B.z0 + 0.02;
+    for (const [a, b] of [...cuts, [B.z1 - 0.02, B.z1]]) {
+      if (a - from > 0.05) add(B.decal(from, a, 10.85, 11.45, { lift: 0.006, nz: Math.ceil((a - from) / 0.08), nt: 1 }), colour);
+      from = b;
+    }
+  } else if (look.decal === 'side') {
+    add(B.decal(B.z0 + 0.15, B.z1 - 0.15, 5.25, 5.5, { lift: 0.006, nz: 60, nt: 1 }), colour);
+  } else {
+    const number = look.decal === 'number';
+    const map = number ? Tex.roundel(look.decalColour) : Tex.sticker('走り屋');
+    const mat = new THREE.MeshStandardMaterial({ map, transparent: true, alphaTest: 0.4, roughness: 0.4, color: number ? 0xffffff : look.decalColour, polygonOffset: true, polygonOffsetFactor: -2 });
+    if (number) {
+      const zc = (wf - r + (wr + r)) / 2 + 0.25;
+      add(B.decal(zc - 0.24, zc + 0.24, 3.0, 5.2, { lift: 0.007, nz: 6, nt: 6, uv: true }), mat);
+    } else {
+      const z0 = wr + r + 0.08;
+      add(B.decal(z0, z0 + 0.2, 3.4, 5.6, { lift: 0.007, nz: 3, nt: 6, uv: true }), mat);
+    }
+  }
 }
 
 // Each car's shape. The driver sits at driverX (negative = right-hand

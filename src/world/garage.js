@@ -155,6 +155,11 @@ export function buildGarage() {
     views: {
       garage: { pos: [4.2, 1.65, 5.1], look: [1.35, 0.45, 0.1], fov: 44 },
       setup: { pos: [-2.5, 2.0, 5.25], look: [-1.25, 0.3, 0.0], fov: 50 },
+      // Garage tabs: turn is the turntable angle to hold (none = keep turning).
+      paint: { pos: [0.6, 2.2, 5.3], look: [0.25, 0.4, 0], fov: 46 },
+      wheels: { pos: [3.1, 0.75, 3.1], look: [0.7, 0.4, 1.25], fov: 44, turn: 0 },
+      body: { pos: [2.9, 2.3, 4.6], look: [0.25, 0.55, 0], fov: 46, turn: 4.1 },
+      side: { pos: [0.6, 1.9, 5.3], look: [0.2, 0.45, 0], fov: 46, turn: 0.8 },
     },
   };
 }

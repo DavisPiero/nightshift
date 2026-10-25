@@ -26,7 +26,8 @@
    track, the R34 and a proper cockpit. **In progress.** (This pulled in parts of 5, 7 and 8.)
 4. Feel, garage and world (David's second notes), in three parts: (1) feel pass, Feel
    panel, ratings, parts, controllers, the Challenjer. **Done, signed off 2026-10-25.** (2) The
-   garage: workshop, visual and performance mods, dyno, named builds. (3) Asset library,
+   garage: workshop, visual and performance mods, dyno, named builds. **Built 2026-10-26,
+   waiting for sign-off.** (3) Asset library,
    time of day, snow, weather patches, a Monza-inspired street track.
    Look pass (David's third notes, 2026-10-26): neon Japan menus, new track and car pick
    layouts, the Underground track, rebuilt car bodies and a third car (R35), paint

@@ -220,6 +220,25 @@ for (const car of [CAR, GTAR_R35, CHALLENJER_SRT8]) {
   check(lap.done && lap.hits === 0, 'the Underground in fog should lap cleanly');
 }
 
+console.log('Garage builds and save');
+{
+  // The save code reads the page address and storage; give it stand-ins.
+  globalThis.location ??= { search: '' };
+  const old = { version: 2, garage: { selected: 'skyliner-r34', cars: { 'skyliner-r34': { paint: 0x1f4fa8, upgrades: { tyres: 'semi' } } } } };
+  globalThis.localStorage = { getItem: () => JSON.stringify(old), setItem() {} };
+  const { loadSave, activeBuild } = await import('../src/save/save.js');
+  const { buildSpec } = await import('../src/vehicles/tuning.js');
+  const save = loadSave(), b = activeBuild(save, CAR);
+  console.log(`  version 2 save -> version ${save.version}: build "${b.name}", parts ${JSON.stringify(b.parts)}, paint #${b.look.paint.toString(16)}`);
+  check(save.version === 3 && b.parts.tyres === 'semi' && b.look.paint === 0x1f4fa8, 'an old save should carry its paint and parts into a build');
+  const slammed = buildSpec(CAR, { parts: { suspension: 'race' }, look: { ride: 'slammed' } });
+  const stockRide = buildSpec(CAR, { parts: { suspension: 'race' }, look: { ride: 'stock' } });
+  console.log(`  slammed: centre of gravity ${stockRide.cgHeight.toFixed(3)} -> ${slammed.cgHeight.toFixed(3)} m`);
+  check(slammed.cgHeight < stockRide.cgHeight, 'a slammed car should sit lower');
+  const full = carStats(buildSpec(CAR, { parts: { bodykit: 'wide', aero: 'gt', tyres: 'semi', suspension: 'race', brakes: 'race' } }));
+  console.log(`  R34 with grip parts: ${full.cls} ${full.pi}`);
+}
+
 console.log('Walls');
 {
   // Drive into the barrier at an angle: no part of the body may end up
