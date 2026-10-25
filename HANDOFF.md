@@ -1,7 +1,7 @@
 # Hand-off: end of session 5 (2026-10-26)
 
 ## Repo state
-- Branch `m4-garage-mods`, committed, not merged. `main` is the signed-off look pass, live.
+- Signed off and merged to `main` (live). No other branches.
 - Bench passes (new checks: an old save carries into a build; slammed lowers the centre of
   gravity). Smoke test passes. R34 baseline unchanged.
 
@@ -23,4 +23,4 @@
   against `compare`.
 
 ## Next
-David's sign-off, then Milestone 4 part 3 (the world).
+Milestone 4 part 3 (the world).

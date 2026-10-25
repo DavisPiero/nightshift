@@ -3,8 +3,7 @@
 _Last updated 2026-10-26, end of session 5 (Milestone 4 part 2, the garage mods)._
 
 ## Where we are
-On branch `m4-garage-mods`, not merged. `main` (live) has the look pass (signed off today).
-This session built the garage mods:
+Milestone 4 part 2 is signed off (2026-10-26), merged to `main` and live. It built:
 - eight tabs: Paint, Decals, Wheels, Body, Engine, Chassis, Drive, Builds
 - parts you can see: wings, kits, widebody, ride height, big brakes, exhaust tips, stripped cockpit
 - paint finishes, decals, six rim styles, rim and calliper colours
@@ -14,8 +13,7 @@ This session built the garage mods:
 Bench and smoke test pass.
 
 ## Next
-- David plays the garage and signs off (or sends notes).
-- Then Milestone 4 part 3, the world: asset library, time of day (the Time box on the car
+- Milestone 4 part 3, the world: asset library, time of day (the Time box on the car
   pick), snow, weather patches, the Monza-inspired street track.
 
 ## Open with David
