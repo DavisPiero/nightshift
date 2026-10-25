@@ -41,3 +41,14 @@ One line each, newest last.
 - 2026-10-25: Second car: "2009 Dodga Challenjer SRT8", built from the real car's figures, left-hand drive, its own V8 sound profile.
 - 2026-10-25: Gear changes now dip the engine note for real (the old dip was overwritten every frame) and clunk; turbo cars whistle and flutter.
 - 2026-10-25: Controllers through the Gamepad API (standard layout), including menu navigation.
+- 2026-10-26: Look changed to neon Japan (David's references in Reference/User Interface). UI: Jersey 10 titles, DotGothic16 text, turquoise frames with glow, pink main action (was orange). Replaces the Courtside look.
+- 2026-10-26: The "no neon / cyan out of the 3D world" rule is lifted: each track has a light colour; the Underground's is turquoise.
+- 2026-10-26: Track and car pick follow Automobilista 2: a scrolling list on the left, a preview on the right, Continue (or Race) bottom right; weather in a panel along the bottom right.
+- 2026-10-26: The track preview is the track itself: picking one loads it and the camera flies along it behind the menu.
+- 2026-10-26: Car bodies are made from profile curves (plan, sill, shoulder, bonnet, roof) into smooth panels with crisp edges between them; lamps and vents are laid on the surface (src/vehicles/body.js). Replaces the boxy lofts.
+- 2026-10-26: Third car, 2017 Nissani GT-Ar (R35), from David's reference sheet; four-wheel drive like the real one (30% to the front). Class S 862. Guess: added rather than replacing the R34.
+- 2026-10-26: Paint and glass reflect a small cube photo of the bright things round the car (lamps, tunnel lights, garage panels), retaken every other frame. Cheap enough for iPad; makes black paint readable.
+- 2026-10-26: The Garage and car-pick screens show the car on a turntable in its own lock-up garage scene (after Reference/Tracks/garage.jpg), not parked on the track. Lights off, running lights on.
+- 2026-10-26: Underground: 2.46 km closed loop of Tokyo-style shield tunnel, three lanes, walls at 8.2 m; no rain (Clear and Fog only, fog as exhaust haze).
+- 2026-10-26: The car and weather tag at the top left of the driving screen is gone (David).
+- 2026-10-26: Headless screenshots through Chrome's DevTools protocol on the GPU (tools/shot.mjs): seconds, not minutes, and no window.

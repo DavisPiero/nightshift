@@ -305,4 +305,193 @@ export const Tex = {
     }
     g.putImageData(img, 0, 0);
   }, { nearest: false })),
+
+  // --- Underground (Tokyo tunnel) ---
+
+  // Tunnel wall: pale glazed panels with dark joints, grimier toward the
+  // road, and a painted teal band at the bottom. One tile is 4 m x 4 m.
+  tunnelWall: () => cached('tunnelwall', () => canvasTexture([64, 64], (g, w, h) => {
+    noise(g, w, h, [150, 160, 160], 14, 61);
+    const grime = g.createLinearGradient(0, 0, 0, h);
+    grime.addColorStop(0, 'rgba(10,20,20,0)');
+    grime.addColorStop(0.7, 'rgba(10,20,20,0.15)');
+    grime.addColorStop(1, 'rgba(10,20,20,0.55)');
+    g.fillStyle = grime; g.fillRect(0, 0, w, h);
+    g.fillStyle = 'rgba(20,30,32,0.75)';
+    for (let x = 0; x < w; x += 16) g.fillRect(x, 0, 1, h);
+    for (let y = 0; y < h; y += 16) g.fillRect(0, y, w, 1);
+    g.fillStyle = '#1d5a5e'; g.fillRect(0, h - 12, w, 12);   // teal band at the foot
+    g.fillStyle = '#d8dcd4'; g.fillRect(0, h - 13, w, 1);
+  })),
+
+  // Ceiling: bare concrete rings with joints and bolt pockets. One tile is 3 m.
+  tunnelRoof: () => cached('tunnelroof', () => canvasTexture([32, 32], (g, w, h) => {
+    noise(g, w, h, [62, 66, 66], 16, 62);
+    g.fillStyle = 'rgba(10,12,12,0.7)';
+    g.fillRect(0, 0, 1, h); g.fillRect(w / 2, 0, 1, h);
+    g.fillRect(0, 0, w, 1);
+    g.fillStyle = 'rgba(10,12,12,0.5)';
+    for (const x of [6, 22]) for (let y = 4; y < h; y += 8) g.fillRect(x, y, 2, 2);
+  })),
+
+  // A light pool painted in white, to be tinted by the material.
+  lightPoolWhite: () => cached('poolw', () => canvasTexture([64, 64], (g, w, h) => {
+    const grad = g.createRadialGradient(w / 2, h / 2, 0, w / 2, h / 2, w / 2);
+    grad.addColorStop(0, 'rgba(255,255,255,0.6)');
+    grad.addColorStop(0.45, 'rgba(255,255,255,0.22)');
+    grad.addColorStop(1, 'rgba(255,255,255,0)');
+    g.fillStyle = grad; g.fillRect(0, 0, w, h);
+  }, { nearest: false })),
+
+  // A wash of light across a strip: bright along one edge (u = 0), fading out.
+  wash: () => cached('wash', () => canvasTexture([32, 4], (g, w, h) => {
+    const grad = g.createLinearGradient(0, 0, w, 0);
+    grad.addColorStop(0, 'rgba(255,255,255,0.9)');
+    grad.addColorStop(0.35, 'rgba(255,255,255,0.35)');
+    grad.addColorStop(1, 'rgba(255,255,255,0)');
+    g.fillStyle = grad; g.fillRect(0, 0, w, h);
+  }, { nearest: false })),
+
+  // Words painted on the road, stacked and stretched like Japanese road
+  // markings (read from the bottom as you drive up to them).
+  roadWords: (text) => cached('roadwords' + text, () => canvasTexture([32, 32 * text.length], (g, w, h) => {
+    g.clearRect(0, 0, w, h);
+    g.fillStyle = '#f4f6f2';
+    g.font = `bold 30px "Hiragino Sans", "Noto Sans JP", "Yu Gothic", "Meiryo", sans-serif`;
+    g.textAlign = 'center'; g.textBaseline = 'middle';
+    [...text].forEach((ch, i) => g.fillText(ch, w / 2, 16 + i * 32));
+  }, { srgb: true })),
+
+  // Square dots across the lane before a hard corner, white and red.
+  slowBars: () => cached('slowbars', () => canvasTexture([16, 16], (g, w, h) => {
+    g.clearRect(0, 0, w, h);
+    for (let x = 0; x < w; x += 4) { g.fillStyle = (x / 4) % 2 ? '#c2262a' : '#eef0ea'; g.fillRect(x, 4, 3, 8); }
+  })),
+
+  // Overhead direction board: white text on blue or green, pixel sharp.
+  // lines: [[text, size], ...]
+  roadSign: (lines, bg = '#1d4f9a', w = 128, h = 48) => cached('rsign' + lines.join() + bg, () => canvasTexture([w, h], (g) => {
+    g.fillStyle = bg; g.fillRect(0, 0, w, h);
+    g.fillStyle = '#e8eef0'; g.fillRect(2, 2, w - 4, 1); g.fillRect(2, h - 3, w - 4, 1); g.fillRect(2, 2, 1, h - 4); g.fillRect(w - 3, 2, 1, h - 4);
+    g.textAlign = 'center'; g.textBaseline = 'middle';
+    let y = 6;
+    const total = lines.reduce((t, [, sz]) => t + sz, 0);
+    y = (h - total) / 2;
+    for (const [text, size] of lines) {
+      g.font = `bold ${size}px "Hiragino Sans", "Noto Sans JP", "Yu Gothic", "Meiryo", sans-serif`;
+      g.fillText(text, w / 2, y + size / 2 + 1);
+      y += size;
+    }
+  })),
+
+  // Amber LED message board: dot-matrix text on black.
+  ledBoard: (text, w = 96, h = 20) => cached('led' + text, () => canvasTexture([w, h], (g) => {
+    g.fillStyle = '#050505'; g.fillRect(0, 0, w, h);
+    const c = document.createElement('canvas'); c.width = w; c.height = h;
+    const t = c.getContext('2d');
+    t.fillStyle = '#fff'; t.font = `bold 15px "Hiragino Sans", "Noto Sans JP", "Yu Gothic", "Meiryo", sans-serif`;
+    t.textAlign = 'center'; t.textBaseline = 'middle';
+    t.fillText(text, w / 2, h / 2 + 1);
+    const img = t.getImageData(0, 0, w, h).data;
+    for (let y = 1; y < h - 1; y++) for (let x = 1; x < w - 1; x++) {
+      const on = img[(y * w + x) * 4 + 3] > 90;
+      g.fillStyle = on ? '#ffb02a' : '#1a1206';
+      if (on || (x + y) % 2 === 0) g.fillRect(x, y, 1, 1);
+    }
+  })),
+
+  // Green emergency exit sign: a running figure and a door.
+  exitSign: () => cached('exitsign', () => canvasTexture([24, 12], (g, w, h) => {
+    g.fillStyle = '#1fae5a'; g.fillRect(0, 0, w, h);
+    g.fillStyle = '#e8fff0';
+    g.fillRect(15, 2, 6, 8); g.fillStyle = '#1fae5a'; g.fillRect(16, 3, 4, 7);
+    g.fillStyle = '#e8fff0';
+    g.fillRect(6, 2, 2, 2); g.fillRect(5, 4, 3, 3); g.fillRect(3, 5, 2, 1); g.fillRect(8, 5, 3, 1);
+    g.fillRect(4, 7, 2, 3); g.fillRect(7, 7, 2, 2); g.fillRect(9, 8, 2, 1);
+  })),
+
+  // A wheel face with open spokes (transparent between them, so the brake
+  // disc shows through). style: five, ten or split (five split spokes).
+  rimFace: (style = 'five', color = '#a8acae') => cached('rimface' + style + color, () => canvasTexture([64, 64], (g, w, h) => {
+    g.clearRect(0, 0, w, h);
+    const c = w / 2;
+    g.fillStyle = color;
+    g.beginPath(); g.arc(c, c, 31, 0, Math.PI * 2); g.arc(c, c, 26, 0, Math.PI * 2, true); g.fill(); // lip
+    const spokes = style === 'ten' ? 10 : 5;
+    const pairs = style === 'split' ? [-0.13, 0.13] : [0];
+    const wid = style === 'ten' ? 0.1 : style === 'split' ? 0.07 : 0.2;
+    for (let i = 0; i < spokes; i++) for (const o of pairs) {
+      const a = (i / spokes) * Math.PI * 2 + o;
+      g.beginPath();
+      g.moveTo(c + Math.cos(a - wid * 1.6) * 8, c + Math.sin(a - wid * 1.6) * 8);
+      g.lineTo(c + Math.cos(a - wid) * 27, c + Math.sin(a - wid) * 27);
+      g.lineTo(c + Math.cos(a + wid) * 27, c + Math.sin(a + wid) * 27);
+      g.lineTo(c + Math.cos(a + wid * 1.6) * 8, c + Math.sin(a + wid * 1.6) * 8);
+      g.fill();
+    }
+    g.beginPath(); g.arc(c, c, 9, 0, Math.PI * 2); g.fill(); // hub
+    g.fillStyle = 'rgba(0,0,0,0.45)';
+    for (let i = 0; i < 5; i++) { const a = i / 5 * Math.PI * 2 + 0.6; g.fillRect(c + Math.cos(a) * 5 - 1, c + Math.sin(a) * 5 - 1, 2, 2); }
+    g.fillStyle = 'rgba(255,255,255,0.35)';
+    g.beginPath(); g.arc(c, c, 30, Math.PI * 1.1, Math.PI * 1.5); g.arc(c, c, 28, Math.PI * 1.5, Math.PI * 1.1, true); g.fill();
+  })),
+
+  // --- Garage ---
+
+  // Green epoxy floor, scuffed, with a painted yellow line.
+  epoxy: () => cached('epoxy', () => canvasTexture([64, 64], (g, w, h) => {
+    noise(g, w, h, [96, 112, 100], 10, 71);
+    const r = rng(72);
+    g.fillStyle = 'rgba(30,40,30,0.25)';
+    for (let i = 0; i < 6; i++) { g.beginPath(); g.arc(r() * w, r() * h, 2 + r() * 6, 0, Math.PI * 2); g.fill(); }
+    g.fillStyle = 'rgba(255,255,255,0.05)';
+    for (let i = 0; i < 40; i++) g.fillRect(r() * w | 0, r() * h | 0, 2 + (r() * 6 | 0), 1);
+  }, { repeat: [2, 3] })),
+
+  cork: () => cached('cork', () => canvasTexture([64, 24], (g, w, h) => {
+    noise(g, w, h, [150, 110, 60], 30, 73);
+    const r = rng(74);
+    for (let i = 0; i < 9; i++) {
+      g.fillStyle = r() < 0.7 ? '#d8d8d0' : '#e8d870';
+      const x = r() * (w - 10) | 0, y = r() * (h - 9) | 0;
+      g.fillRect(x, y, 6 + (r() * 5 | 0), 6 + (r() * 3 | 0));
+      g.fillStyle = '#c02020'; g.fillRect(x + 2, y, 1, 1);
+    }
+    g.fillStyle = '#5a4020'; g.fillRect(0, 0, w, 1); g.fillRect(0, h - 1, w, 1); g.fillRect(0, 0, 1, h); g.fillRect(w - 1, 0, 1, h);
+  })),
+
+  pegboard: () => cached('pegboard', () => canvasTexture([64, 28], (g, w, h) => {
+    g.fillStyle = '#7a6a50'; g.fillRect(0, 0, w, h);
+    g.fillStyle = '#4a3e2c';
+    for (let y = 2; y < h; y += 3) for (let x = 2; x < w; x += 3) g.fillRect(x, y, 1, 1);
+    // Spanners, a hammer and pliers hanging up.
+    g.fillStyle = '#b8bcc0';
+    for (let i = 0; i < 6; i++) g.fillRect(4 + i * 3, 4, 1, 8 + i);
+    g.fillStyle = '#c03020'; g.fillRect(30, 4, 2, 12); g.fillStyle = '#9a9ea2'; g.fillRect(27, 3, 8, 3);
+    g.fillStyle = '#2a5a9a'; g.fillRect(42, 6, 2, 10); g.fillRect(46, 6, 2, 10); g.fillStyle = '#9a9ea2'; g.fillRect(42, 3, 6, 4);
+    g.fillStyle = '#d8a020'; g.fillRect(54, 5, 6, 9);
+  })),
+
+  // An old monitor showing a green-on-black readout.
+  crt: () => cached('crt', () => canvasTexture([32, 24], (g, w, h) => {
+    g.fillStyle = '#04140c'; g.fillRect(0, 0, w, h);
+    g.fillStyle = '#5ae88a';
+    const r = rng(75);
+    for (let y = 3; y < h - 2; y += 3) g.fillRect(3, y, 6 + (r() * 20 | 0), 1);
+    g.fillStyle = 'rgba(90,232,138,0.12)';
+    for (let y = 0; y < h; y += 2) g.fillRect(0, y, w, 1);
+  })),
+
+  // The neon sign: 夜勤 ("night shift") in pink tubes, NIGHTSHIFT under it.
+  neonSign: () => cached('neon', () => canvasTexture([128, 64], (g, w, h) => {
+    g.clearRect(0, 0, w, h);
+    g.textAlign = 'center'; g.textBaseline = 'middle';
+    g.font = `bold 40px "Hiragino Sans", "Noto Sans JP", "Yu Gothic", "Meiryo", sans-serif`;
+    g.lineJoin = 'round';
+    g.strokeStyle = 'rgba(255,40,130,0.35)'; g.lineWidth = 7; g.strokeText('夜勤', w / 2, 24);
+    g.strokeStyle = '#ff3a8a'; g.lineWidth = 3; g.strokeText('夜勤', w / 2, 24);
+    g.strokeStyle = '#ffd0e8'; g.lineWidth = 1; g.strokeText('夜勤', w / 2, 24);
+    g.font = '14px "Jersey 10", monospace';
+    g.fillStyle = '#4ff0e0'; g.fillText('N I G H T S H I F T', w / 2, 54);
+  }, { nearest: false })),
 };

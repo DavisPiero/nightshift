@@ -10,7 +10,8 @@ import { TrackPath } from '../src/world/track-path.js';
 import { STARTER_TRACK as TEST_ROAD } from '../src/world/starter-track.js';
 import { keepOnTrack } from '../src/physics/walls.js';
 import { applyWeather } from '../src/physics/weather.js';
-import { CHALLENJER_SRT8 } from '../src/vehicles/cars.js';
+import { CHALLENJER_SRT8, GTAR_R35 } from '../src/vehicles/cars.js';
+import { UNDERGROUND_TRACK } from '../src/world/underground.js';
 import { carStats } from '../src/vehicles/stats.js';
 import { applyParts } from '../src/vehicles/parts.js';
 
@@ -121,11 +122,11 @@ for (const [name, speed, script, secs] of tests) {
 }
 
 console.log('Lap of ' + TEST_ROAD.name);
-function botLap(assists, weather = 'clear', car = CAR) {
-  const track = new TrackPath(TEST_ROAD);
+function botLap(assists, weather = 'clear', car = CAR, def = TEST_ROAD) {
+  const track = new TrackPath(def);
   const v = new Vehicle(car, assists);
   const grip = applyWeather(v, weather).grip;
-  const s0 = TEST_ROAD.start;
+  const s0 = def.start;
   v.reset(track.x[s0], track.z[s0], track.headingAt(s0));
   let hint = s0, t = 0, hits = 0, travelled = 0, maxBeta = 0, worstHit = 0;
   while (t < 240 && travelled < track.count) {
@@ -189,6 +190,12 @@ console.log('Second car and ratings');
   const r34 = carStats(CAR), ch = carStats(CHALLENJER_SRT8);
   console.log(`  ratings: ${CAR.model} ${fmt(r34)}; ${CHALLENJER_SRT8.model} ${fmt(ch)}`);
   check(r34.cls === 'A' && ch.cls === 'B', 'stock classes: the R34 is A, the Challenjer is B');
+  const r35 = carStats(GTAR_R35), lap35 = botLap(DEFAULT_ASSISTS, 'clear', GTAR_R35);
+  console.log(`  ${GTAR_R35.model} (R35) bot lap: ${lap35.done ? lap35.t.toFixed(1) + ' s' : 'did not finish'}, wall hits ${lap35.hits}, max slide ${deg(lap35.maxBeta)}°; rating ${fmt(r35)}`);
+  check(lap35.done && lap35.hits === 0, 'the R35 should lap cleanly with assists on');
+  check(r35.cls === 'S', 'stock class: the R35 is S');
+  const off35 = botLap(NO_ASSISTS, 'clear', GTAR_R35);
+  console.log(`  R35 assists off: ${off35.done ? off35.t.toFixed(1) + ' s' : 'did not finish'}, wall hits ${off35.hits}, max slide ${deg(off35.maxBeta)}°`);
   // Every part must move the stats the way its description says.
   const with_ = (parts, car = CAR) => carStats(applyParts(car, parts)).stats;
   const up = (a, b, k) => a[k] > b[k];
@@ -199,6 +206,18 @@ console.log('Second car and ratings');
   check(up(with_({ gearing: 'short' }), base, 'accel') && up(base, with_({ gearing: 'short' }), 'speed'), 'short gears: more acceleration, less top speed');
   check(up(with_({ aero: 'gt' }), base, 'handling') && up(base, with_({ aero: 'gt' }), 'speed'), 'a GT wing: more handling, less top speed');
   check(up(with_({ induction: 'super' }, CHALLENJER_SRT8), ch.stats, 'accel'), 'a supercharger should raise acceleration');
+}
+
+console.log('Lap of ' + UNDERGROUND_TRACK.name);
+for (const car of [CAR, GTAR_R35, CHALLENJER_SRT8]) {
+  const lap = botLap(DEFAULT_ASSISTS, 'clear', car, UNDERGROUND_TRACK);
+  console.log(`  ${car.model}: ${lap.done ? lap.t.toFixed(1) + ' s' : 'did not finish'}, wall hits ${lap.hits} (worst ${lap.worstHit.toFixed(0)} km/h), max slide ${deg(lap.maxBeta)}°`);
+  check(lap.done && lap.hits === 0, car.model + ' should lap the Underground cleanly with assists on');
+}
+{
+  const lap = botLap(DEFAULT_ASSISTS, 'fog', CAR, UNDERGROUND_TRACK);
+  console.log(`  ${CAR.model} in the haze: ${lap.done ? lap.t.toFixed(1) + ' s' : 'did not finish'}, wall hits ${lap.hits}`);
+  check(lap.done && lap.hits === 0, 'the Underground in fog should lap cleanly');
 }
 
 console.log('Walls');

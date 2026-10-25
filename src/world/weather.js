@@ -54,12 +54,12 @@ export class WeatherView {
     this.id = WEATHER[id] ? id : 'clear';
     const w = WEATHER[this.id], look = LOOKS[this.id];
     const fog = this.scene.fog;
-    fog.color.setHex(look.fog);
+    fog.color.setHex(this.world.look?.fog?.[this.id] ?? look.fog);
     fog.near = w.fogNear;
     fog.far = w.fogFar ? Math.min(preset.drawDistance, w.fogFar) : preset.drawDistance;
     this.scene.background = fog.color;
     const hemi = this.scene.children.find((o) => o.isHemisphereLight);
-    if (hemi) hemi.intensity = look.hemi;
+    if (hemi) hemi.intensity = look.hemi * (this.world.look?.hemi?.[2] ?? 1);
     const road = this.world.roadMat;
     if (road) {
       road.color.setHex(look.road);

@@ -1,11 +1,11 @@
 // Driving HUD: a pixel rev counter (a ring of chunky blocks) with the gear
 // in the middle and the speed underneath. It is drawn small on a canvas and
-// scaled up with square pixels, like the menus. Plus the car name tag and a
-// debug panel (F3) with the physics numbers.
+// scaled up with square pixels, like the menus. Plus a debug panel (F3) with
+// the physics numbers.
 
 const SEGMENTS = 28;
 const FONT = '"Jersey 10", ui-monospace, monospace';
-const CYAN = '#3fd6e6', ORANGE = '#ff8b2b', RED = '#ff4a36', TEXT = '#f2f6f7';
+const CYAN = '#3ff0e8', ORANGE = '#ff2e88', RED = '#ff3b3b', TEXT = '#eafcfb';
 
 export class Hud {
   constructor(root) {
@@ -13,7 +13,6 @@ export class Hud {
     this.canvas = root.querySelector('#tach');
     this.g = this.canvas.getContext('2d');
     this.debugEl = root.querySelector('#debug');
-    this.tag = root.querySelector('#hud-car');
     this.debugOn = false;
     this.flash = 0;
     this.gearPop = 0;
@@ -24,7 +23,6 @@ export class Hud {
 
   show(on) { this.el.hidden = !on; }
   setTouch(on) { this.el.classList.toggle('touch', on); }
-  setCar(title) { this.tag.innerHTML = title; }
 
   toggleDebug() {
     this.debugOn = !this.debugOn;
@@ -91,7 +89,7 @@ export class Hud {
     this.shownKmh += (kmh - this.shownKmh) * Math.min(1, dt * 12);
     const shown = Math.round(this.units === 'mph' ? this.shownKmh / 1.609 : this.shownKmh);
     g.font = `30px ${FONT}`;
-    g.fillStyle = '#7a3510';
+    g.fillStyle = '#5a0a30';
     g.fillText(String(shown), cx + 2, cy + 26 + 2);
     g.fillStyle = ORANGE;
     g.fillText(String(shown), cx, cy + 26);
