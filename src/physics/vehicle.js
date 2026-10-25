@@ -47,6 +47,9 @@ export class Vehicle {
     this.spec = spec;
     this.assists = { ...assists };
     this.gearbox = new Gearbox(spec);
+    // Road surface, set by the weather: grip multiplies tyre friction, slide
+    // is the share of grip left when fully sideways (wet roads let go sooner).
+    this.surface = { grip: 1, slide: 1 };
     const L = spec.wheelbase;
     this.cgToFront = L * (1 - spec.frontWeight);
     this.cgToRear = L * spec.frontWeight;
@@ -70,6 +73,8 @@ export class Vehicle {
     this.load = 0;            // engine load -1..1 for audio
     this.braking = 0;
     this.limiter = false;
+    this.wallPivot = 0;       // yaw rate (rad/s) from leaning on a wall at low speed
+    this.wallTimer = 0;
     this.gearbox.gear = 1;
     this.gearbox.shiftTimer = 0;
   }
@@ -145,8 +150,9 @@ export class Vehicle {
     }
     if (reversing) driveForce = -driveForce;
 
-    const muF = s.tireGrip;
-    const muR = s.tireGrip * s.rearGripScale;
+    const muF = s.tireGrip * this.surface.grip;
+    const muR = s.tireGrip * s.rearGripScale * this.surface.grip;
+    const slideGrip = s.slideGrip * this.surface.slide;
     const rearCap = muR * nRear;
 
     // Wheelspin when the engine pushes harder than the rear tyres can take.
@@ -183,16 +189,24 @@ export class Vehicle {
     const sgn = vLong >= 0 ? 1 : -1;
     const alphaF = Math.atan2(vLat + this.yawRate * a, vRef) - delta * sgn;
     const alphaR = Math.atan2(vLat - this.yawRate * b, vRef);
-    const latF = -muF * nFront * gripCurve(alphaF, s.slipPeak, s.slideGrip);
-    const latR = -rearLatCap * gripCurve(alphaR, s.slipPeak, s.slideGrip);
+    // At walking pace the turned front wheels simply roll where they point
+    // (the crawl blend below does that); their slip angle is not real, so
+    // fade their sideways force out instead of letting it drag the car.
+    const crawlTyre = clamp(1 - speed / 4, 0, 1);
+    const latF = -muF * nFront * gripCurve(alphaF, s.slipPeak, slideGrip) * (1 - crawlTyre * 0.85);
+    const latR = -rearLatCap * gripCurve(alphaR, s.slipPeak, slideGrip);
     this.frontSlide = clamp(Math.abs(alphaF) / s.slipPeak - 1, 0, 1);
     this.rearSlide = clamp(Math.max(Math.abs(alphaR) / s.slipPeak - 0.8, this.spin, c.handbrake && speed > 3 ? 0.7 : 0), 0, 1);
 
     // Air and rolling resistance.
     const dragF = 0.5 * AIR * s.dragCoefficient * s.frontalArea * speed * speed + s.rollingResistance * s.mass * G * Math.min(1, speed);
+    // Lift-off: with no pedal pressed a real car slows noticeably (engine,
+    // drivetrain, tyres). Physics alone undersells it, so add a little more.
+    const coasting = drive < 0.05 && brake < 0.05 && !c.handbrake;
+    const liftOff = coasting ? s.liftOffDrag * s.mass * clamp(Math.abs(vLong) / 3, 0, 1) : 0;
 
     const cosD = Math.cos(delta), sinD = Math.sin(delta);
-    let fLong = fRearLong + fFrontLong * cosD - latF * sinD;
+    let fLong = fRearLong + fFrontLong * cosD - latF * sinD - Math.sign(vLong) * liftOff;
     let fLat = latR + latF * cosD + fFrontLong * sinD;
     if (speed > 0.01) {
       fLong -= dragF * vLong / speed;
@@ -243,7 +257,11 @@ export class Vehicle {
       if (drive < 0.05 && !brake && Math.abs(vLong) < 0.15) vLong = 0;
       this.vx = vLong * fx + vLat * lx;
       this.vz = vLong * fz + vLat * lz;
+      // Leaning on a wall at walking pace: pivot to run along it, so the
+      // car never gets pinned nose-first (rolling tyres alone cannot turn it).
+      if (this.wallTimer > 0 && (drive > 0.2 || brake > 0.2)) this.yawRate += this.wallPivot * crawl;
     }
+    this.wallTimer = Math.max(0, this.wallTimer - dt);
 
     this.heading += this.yawRate * dt;
     this.x += this.vx * dt;
@@ -277,36 +295,59 @@ export class Vehicle {
     this.frontWheelAngle += wheelRate * dt;
     if (!c.handbrake) this.rearWheelAngle += (wheelRate + Math.sign(drive) * this.spin * 25) * dt;
 
-    // Body pitch and roll on springs, for looks.
+    // Body pitch and roll on stiff springs, for looks. Capped so the body
+    // never tips far enough to touch the road.
     const kS = s.suspensionStiffness, kD = s.suspensionDamping;
-    const pitchTarget = -this.aLong * s.pitchScale;
-    const rollTarget = this.aLat * s.rollScale;
+    const pitchTarget = clamp(-this.aLong * s.pitchScale, -s.maxPitch, s.maxPitch);
+    const rollTarget = clamp(this.aLat * s.rollScale, -s.maxRoll, s.maxRoll);
     this.pitchVel += ((pitchTarget - this.pitch) * kS - this.pitchVel * kD) * dt;
     this.pitch += this.pitchVel * dt;
     this.rollVel += ((rollTarget - this.roll) * kS - this.rollVel * kD) * dt;
     this.roll += this.rollVel * dt;
+    this.pitch = clamp(this.pitch, -s.maxPitch * 1.3, s.maxPitch * 1.3);
+    this.roll = clamp(this.roll, -s.maxRoll * 1.3, s.maxRoll * 1.3);
   }
 
-  // Bounce off a wall. nx/nz is the wall normal pointing back toward the road,
-  // depth how far the car has gone through it. Returns the impact speed.
-  collide(nx, nz, depth) {
+  // Bounce off a wall. nx/nz is the wall normal pointing back toward the
+  // road, depth how far the body has gone through it, and rx/rz where on the
+  // body it touched (relative to the centre, world axes). Returns the impact
+  // speed in m/s.
+  collide(nx, nz, depth, rx = 0, rz = 0) {
     this.x += nx * depth;
     this.z += nz * depth;
-    const vn = this.vx * nx + this.vz * nz;
+    // Velocity of the touching point: the car's own plus its spin. A turn
+    // to the left (positive yaw rate) moves a point at r toward (rz, -rx).
+    const px = rz, pz = -rx;
+    const pvx = this.vx + this.yawRate * px, pvz = this.vz + this.yawRate * pz;
+    const vn = pvx * nx + pvz * nz;
     if (vn >= 0) return 0;
-    const restitution = 0.25;
-    this.vx -= (1 + restitution) * vn * nx;
-    this.vz -= (1 + restitution) * vn * nz;
-    // Scrub some speed along the wall and settle any spin.
-    const scrub = clamp(1 - Math.abs(vn) * 0.02, 0.75, 0.97);
-    this.vx *= scrub; this.vz *= scrub;
-    this.yawRate *= 0.5;
-    // Turn the car a little to run along the wall instead of nosing into it.
+    // A proper impulse at the contact point, so an off-centre knock turns
+    // the car. Low bounce: walls are steel barriers, not rubber.
+    const restitution = 0.2;
+    const rn = nx * px + nz * pz;
+    const j = -(1 + restitution) * vn / (1 / this.spec.mass + rn * rn / this.inertia);
+    this.vx += j * nx / this.spec.mass;
+    this.vz += j * nz / this.spec.mass;
+    this.yawRate += j * rn / this.inertia;
+    // Friction along the wall, in proportion to how hard it was hit (so a
+    // car sliding along the barrier keeps most of its speed). A gentle push
+    // slides almost freely, so the car can never get pinned nose-first.
+    const tx = -nz, tz = nx;
+    const vt = this.vx * tx + this.vz * tz;
+    const mu = 0.35 * clamp(-vn / 5, 0.1, 1);
+    const dvt = Math.min(Math.abs(vt), mu * j / this.spec.mass);
+    this.vx -= Math.sign(vt) * dvt * tx;
+    this.vz -= Math.sign(vt) * dvt * tz;
+    // Forgiving: settle the spin a hit causes, and turn the car a little to
+    // run along the wall instead of nosing into it.
+    this.yawRate = clamp(this.yawRate, -2.5, 2.5) * 0.7;
     const fx = Math.sin(this.heading), fz = Math.cos(this.heading);
     const into = fx * nx + fz * nz;
     if (into < 0) {
       const side = Math.sign(fx * -nz + fz * nx) || 1;
-      this.yawRate += side * Math.min(1.2, -into * 2) * Math.min(1, -vn / 8);
+      this.yawRate += side * Math.min(1.0, -into * 1.6) * Math.min(1, -vn / 8);
+      this.wallPivot = side * Math.min(1, -into * 1.6) * 0.9;
+      this.wallTimer = 0.1;
     }
     return -vn;
   }

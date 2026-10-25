@@ -60,7 +60,10 @@ export class Gearbox {
     if (this.shifting) return;
     const s = this.spec;
     const t = controls.throttle;
-    const upAt = 3600 + (s.autoUpshiftRpm - 3600) * t;
+    // Off the throttle, hold the gear into the mid revs so engine braking
+    // still works, instead of jumping to top gear and freewheeling.
+    const coasting = t < 0.05;
+    const upAt = coasting ? 4800 : 3600 + (s.autoUpshiftRpm - 3600) * t;
     if (this.gear < this.topGear && rpmAt(this.gear) > upAt) {
       this.shiftTo(this.gear + 1);
       return;
@@ -70,7 +73,9 @@ export class Gearbox {
       // driver floors it and the lower gear still has room to rev.
       const lower = rpmAt(this.gear - 1);
       const kickdown = t > 0.9 && lower < s.autoUpshiftRpm - 1500;
-      if ((rpmAt(this.gear) < s.autoDownshiftRpm && lower < upAt - 800) || kickdown) {
+      // When coasting, only drop a gear if the lower one stays calm.
+      const room = coasting ? 3200 : upAt - 800;
+      if ((rpmAt(this.gear) < s.autoDownshiftRpm && lower < room) || kickdown) {
         this.shiftTo(this.gear - 1);
       }
     }

@@ -1,8 +1,11 @@
-// Driving HUD: a segmented rev counter with the gear in the middle and the
-// speed underneath, drawn on a small canvas like an old console racer.
-// Plus a debug panel (F3) with the physics numbers.
+// Driving HUD: a pixel rev counter (a ring of chunky blocks) with the gear
+// in the middle and the speed underneath. It is drawn small on a canvas and
+// scaled up with square pixels, like the menus. Plus the car name tag and a
+// debug panel (F3) with the physics numbers.
 
-const SEGMENTS = 32;
+const SEGMENTS = 28;
+const FONT = '"Jersey 10", ui-monospace, monospace';
+const CYAN = '#3fd6e6', ORANGE = '#ff8b2b', RED = '#ff4a36', TEXT = '#f2f6f7';
 
 export class Hud {
   constructor(root) {
@@ -10,11 +13,18 @@ export class Hud {
     this.canvas = root.querySelector('#tach');
     this.g = this.canvas.getContext('2d');
     this.debugEl = root.querySelector('#debug');
+    this.tag = root.querySelector('#hud-car');
     this.debugOn = false;
     this.flash = 0;
+    this.gearPop = 0;
+    this.lastGear = null;
+    this.units = 'kmh';
+    this.shownKmh = 0;
   }
 
   show(on) { this.el.hidden = !on; }
+  setTouch(on) { this.el.classList.toggle('touch', on); }
+  setCar(title) { this.tag.innerHTML = title; }
 
   toggleDebug() {
     this.debugOn = !this.debugOn;
@@ -25,43 +35,69 @@ export class Hud {
     const g = this.g, W = this.canvas.width, H = this.canvas.height;
     const s = v.spec;
     g.clearRect(0, 0, W, H);
-    const cx = W / 2, cy = H * 0.55, R = W * 0.42;
-    const a0 = Math.PI * 0.8, a1 = Math.PI * 2.2;
-    const lit = Math.round((v.rpm / s.limiterRpm) * SEGMENTS);
+    g.imageSmoothingEnabled = false;
+    const cx = W / 2, cy = H * 0.5, R = W * 0.46;
+    const a0 = Math.PI * 0.75, a1 = Math.PI * 2.25;
+
+    // Backing disc, notched by the blocks around it.
+    g.fillStyle = 'rgba(6, 9, 12, 0.72)';
+    g.beginPath(); g.arc(cx, cy, R - 3, 0, Math.PI * 2); g.fill();
+
+    const lit = (v.rpm / s.limiterRpm) * SEGMENTS;
     const red = Math.round((s.redline / s.limiterRpm) * SEGMENTS) - 2;
-    this.flash = v.limiter ? (this.flash + dt * 18) % 2 : 0;
+    const shiftLight = v.rpm > s.autoUpshiftRpm - 400 && v.gearbox.mode === 'manual';
+    this.flash = v.limiter || shiftLight ? (this.flash + dt * 16) % 2 : 0;
     for (let i = 0; i < SEGMENTS; i++) {
       const a = a0 + (a1 - a0) * (i + 0.5) / SEGMENTS;
-      const len = i % 4 === 0 ? 14 : 10;
-      const on = i < lit;
-      g.strokeStyle = on
-        ? (i >= red ? (this.flash > 1 ? '#ff6a40' : '#e0301c') : '#f2a640')
-        : (i >= red ? 'rgba(160,40,30,0.45)' : 'rgba(200,190,170,0.18)');
-      g.lineWidth = 5;
-      g.beginPath();
-      g.moveTo(cx + Math.cos(a) * (R - len), cy + Math.sin(a) * (R - len));
-      g.lineTo(cx + Math.cos(a) * R, cy + Math.sin(a) * R);
-      g.stroke();
+      const on = i < Math.round(lit);
+      const hot = i >= red, warm = i >= red - 5;
+      let col = on ? (hot ? (this.flash > 1 ? TEXT : RED) : warm ? ORANGE : CYAN) : (hot ? '#3a1410' : '#12222a');
+      const big = i % 4 === 0;
+      const r0 = R - (big ? 12 : 9);
+      g.save();
+      g.translate(cx + Math.cos(a) * (r0 + R) / 2, cy + Math.sin(a) * (r0 + R) / 2);
+      g.rotate(a);
+      g.fillStyle = col;
+      g.fillRect(-(R - r0) / 2, -2.5, R - r0, 5);
+      g.restore();
     }
     // rpm numbers 1..7
-    g.fillStyle = 'rgba(230,220,200,0.55)';
-    g.font = 'bold 12px "DIN Condensed", "Arial Narrow", sans-serif';
+    g.fillStyle = 'rgba(134, 163, 173, 0.9)';
+    g.font = `12px ${FONT}`;
     g.textAlign = 'center'; g.textBaseline = 'middle';
     for (let k = 1; k <= 7; k++) {
       const a = a0 + (a1 - a0) * (k * 1000 / s.limiterRpm);
-      g.fillText(String(k), cx + Math.cos(a) * (R - 26), cy + Math.sin(a) * (R - 26));
+      g.fillText(String(k), Math.round(cx + Math.cos(a) * (R - 21)), Math.round(cy + Math.sin(a) * (R - 21)));
     }
+
+    // Gear, with a short pop when it changes.
     const gear = v.gearbox.gear === -1 ? 'R' : v.gearbox.gear === 0 ? 'N' : String(v.gearbox.gear);
-    g.fillStyle = v.gearbox.shifting ? '#9a8a70' : '#f4e8d0';
-    g.font = 'italic bold 52px "DIN Condensed", "Arial Narrow", sans-serif';
-    g.fillText(gear, cx, cy - 4);
-    const kmh = Math.round(Math.abs(v.speedForward) * 3.6);
-    g.fillStyle = '#f2a640';
-    g.font = 'italic bold 40px "DIN Condensed", "Arial Narrow", sans-serif';
-    g.fillText(String(kmh).padStart(3, ' '), cx, cy + R * 0.78);
-    g.fillStyle = 'rgba(230,220,200,0.6)';
-    g.font = 'bold 11px "DIN Condensed", "Arial Narrow", sans-serif';
-    g.fillText('KM/H', cx, cy + R * 0.78 + 24);
+    if (gear !== this.lastGear) { this.gearPop = this.lastGear === null ? 0 : 1; this.lastGear = gear; }
+    this.gearPop = Math.max(0, this.gearPop - dt * 5);
+    const size = Math.round(46 + this.gearPop * 14);
+    g.font = `${size}px ${FONT}`;
+    g.fillStyle = '#0d5d68';
+    g.fillText(gear, cx + 2, cy - 6 + 2);
+    g.fillStyle = v.gearbox.shifting ? CYAN : TEXT;
+    g.fillText(gear, cx, cy - 6);
+    if (v.gearbox.mode === 'manual') {
+      g.font = `12px ${FONT}`;
+      g.fillStyle = CYAN;
+      g.fillText('M', cx + 20, cy - 22);
+    }
+
+    // Speed, eased a touch so the digits do not flicker.
+    const kmh = Math.abs(v.speedForward) * 3.6;
+    this.shownKmh += (kmh - this.shownKmh) * Math.min(1, dt * 12);
+    const shown = Math.round(this.units === 'mph' ? this.shownKmh / 1.609 : this.shownKmh);
+    g.font = `30px ${FONT}`;
+    g.fillStyle = '#7a3510';
+    g.fillText(String(shown), cx + 2, cy + 26 + 2);
+    g.fillStyle = ORANGE;
+    g.fillText(String(shown), cx, cy + 26);
+    g.font = `11px ${FONT}`;
+    g.fillStyle = 'rgba(134, 163, 173, 0.9)';
+    g.fillText(this.units === 'mph' ? 'MPH' : 'KM/H', cx, cy + 44);
   }
 
   drawDebug(v, info) {

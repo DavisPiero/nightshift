@@ -2,25 +2,41 @@
 // defaults if anything is missing or broken. Only plain data is stored,
 // never Three.js objects or physics state.
 
+import { DEFAULT_KEYS } from '../input/keyboard.js';
+import { DEFAULT_TOUCH } from '../input/touch.js';
+import { DEFAULT_EFFECTS } from '../core/config.js';
+
 const KEY = 'nightshift.save';
-export const SAVE_VERSION = 1;
+export const SAVE_VERSION = 2;
 
 export function defaultSave() {
   return {
     version: SAVE_VERSION,
     platform: null,              // 'computer' | 'touch', null until chosen
     settings: {
-      graphics: null,            // 'low' | 'medium' | 'high', null = pick from platform
+      // Gameplay
       transmission: 'auto',
       assists: { steering: true, stability: true, drift: true },
-      audio: { master: 0.8, engine: 1, effects: 0.8 },
+      units: 'kmh',              // 'kmh' | 'mph'
       camera: 'chase',
+      chaseDistance: 1,          // 0.8 near, 1 normal, 1.25 far
+      shake: true,
+      // Graphics
+      graphics: null,            // 'low' | 'medium' | 'high', null = Low
+      effects: { ...DEFAULT_EFFECTS },
+      fov: 62,
+      // Audio
+      audio: { master: 0.8, engine: 1, effects: 0.8, ambience: 0.7 },
+      // Controls
+      keys: structuredClone(DEFAULT_KEYS),
+      touch: structuredClone(DEFAULT_TOUCH),
     },
     garage: {
-      selected: 'kaido-r',
-      owned: ['kaido-r'],
-      cars: { 'kaido-r': { paint: null, upgrades: {} } },
+      selected: 'skyliner-r34',
+      owned: ['skyliner-r34'],
+      cars: { 'skyliner-r34': { paint: null, upgrades: {} } },
     },
+    lastRace: { track: 'starter', weather: 'clear' },
     bestLaps: {},
   };
 }
@@ -51,13 +67,20 @@ export function loadSave() {
   if (!raw) return defaultSave();
   try {
     const data = JSON.parse(raw);
-    // Future versions migrate here before merging.
+    // Version 1 called the car "kaido-r".
+    if (data?.version === 1 && data.garage?.cars?.['kaido-r']) {
+      data.garage.cars = { 'skyliner-r34': data.garage.cars['kaido-r'] };
+      data.garage.selected = 'skyliner-r34';
+      data.garage.owned = ['skyliner-r34'];
+    }
     const save = mergeChecked(defaultSave(), data);
     save.version = SAVE_VERSION;
     if (!['computer', 'touch', null].includes(save.platform)) save.platform = null;
     if (!['low', 'medium', 'high', null].includes(save.settings.graphics)) save.settings.graphics = null;
     if (!['auto', 'manual'].includes(save.settings.transmission)) save.settings.transmission = 'auto';
     if (!['chase', 'cockpit'].includes(save.settings.camera)) save.settings.camera = 'chase';
+    if (!['kmh', 'mph'].includes(save.settings.units)) save.settings.units = 'kmh';
+    if (!['clear', 'rain', 'fog'].includes(save.lastRace.weather)) save.lastRace.weather = 'clear';
     return save;
   } catch {
     console.warn('NIGHTSHIFT: save was unreadable, starting fresh');

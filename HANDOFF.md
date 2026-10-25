@@ -1,27 +1,27 @@
-# Hand-off: end of session 1 (2026-10-25)
+# Hand-off: end of session 2 (2026-10-25)
 
 ## Repo state
-- Everything is on `main`, pushed to https://github.com/DavisPiero/nightshift, and live at
-  https://davispiero.github.io/nightshift/. There are no other branches. The working tree is clean.
-- `./tools/smoke.sh` passes. It covers the headless bot drive and the physics bench.
+- Milestone 3 work was built on `m3-ipad-and-polish`, then merged to `main` and pushed
+  (David asked for it to be merged and pushed without a further sign-off). The branch is deleted.
+- `node tools/drive-bench.mjs` passes. `./tools/smoke.sh` now loads the game twice
+  (computer/clear, iPad/rain). See STATE.md for how long it takes.
 
 ## Read first
-1. `CLAUDE.md`: hard rules, how to run and check, code map.
-2. `STATE.md`: where we are and the open questions.
-3. `SPEC.md`: what makes it fun, the milestones, what we're not building.
-4. `DECISIONS.md` when you need to know why something is the way it is. `BRIEF.md` is the full
-   original brief, for detail on Milestone 3 (section 9, iPad).
+1. `CLAUDE.md`: hard rules (car-name and UI rules changed this session), code map.
+2. `STATE.md`: where we are and the questions for David.
+3. `SPEC.md` (milestones were rewritten) and `DECISIONS.md` (15 new lines this session).
+
+## What changed, briefly
+- Physics: lean capped at ~3° around a roll centre; lift-off slowing; eight-point body
+  collisions with a contact impulse; low-speed wall pivot; front tyre force fades at walking pace.
+- New: `src/input/touch.js`, `src/ui/screens.js`, `src/ui/settings.js`, `src/graphics/effects.js`,
+  `src/world/weather.js`, `src/physics/weather.js`, `src/vehicles/cars.js` (was coupe-spec),
+  `src/vehicles/car-model.js` (was coupe-model), `src/vehicles/stats.js`, `src/world/tracks.js`,
+  `src/world/starter-track.js` (was test-road).
+- The save is now version 2; version 1 saves migrate (the car id kaido-r becomes skyliner-r34).
 
 ## Next
-Milestone 3: iPad touch controls. Add `src/input/touch.js` as another source for
-`Controls` (left analogue joystick for steering; right buttons for throttle, brake/reverse
-and handbrake; pause and camera buttons). Show it only when the platform is `touch`.
-Remove the "touch controls arrive in the next build" note (`#touch-note`).
-Test with the browser's iPad emulation, and say plainly that it hasn't been tested on a
-real iPad until it has. Cut draw calls first (parked cars and lamps, about 600 now).
+Get David's notes from a real iPad first. Then Milestone 6 (racing).
 
 ## Open questions for David
-- How does the car feel when you drive it?
-- How does the engine sound? Do you have engine recordings we're allowed to use?
-- Please confirm or change these guesses: the game is for Arlo; the car is "Kaido R"; the
-  road is "Harbour Loop"; the paint is off-white.
+See STATE.md, "Open with David".

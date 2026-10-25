@@ -4,8 +4,20 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
   <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
   <title>NIGHTSHIFT</title>
   <link rel="stylesheet" href="styles/main.css">
+  <script>
+    // The pixel font (Jersey 10, SIL Open Font License) from Google Fonts.
+    // Added from a script so the headless smoke test, which has no network,
+    // is never held up waiting for it.
+    if (!location.search.includes('smoke')) {
+      const l = document.createElement('link');
+      l.rel = 'stylesheet';
+      l.href = 'https://fonts.googleapis.com/css2?family=Jersey+10&display=swap';
+      document.head.appendChild(l);
+    }
+  </script>
   <script type="importmap">
     { "imports": { "three": "./vendor/three.module.min.js" } }
   </script>
@@ -13,52 +25,129 @@
 <body>
   <canvas id="view"></canvas>
 
+  <!-- Driving HUD -->
   <div id="hud" hidden>
-    <canvas id="tach" width="220" height="220"></canvas>
-    <button id="pause-button" aria-label="Pause">II</button>
+    <div id="hud-car" class="hud-tag"></div>
+    <canvas id="tach" width="132" height="132"></canvas>
+    <div id="hud-buttons">
+      <button id="pause-button" class="btn sq" aria-label="Pause"><i class="ico-pause"></i></button>
+    </div>
     <pre id="debug" hidden></pre>
   </div>
 
-  <div id="touch-note" hidden>Touch controls arrive in the next build. Use a keyboard for now.</div>
-
-  <div id="title" class="screen" hidden>
-    <div class="title-block">
-      <h1>NIGHTSHIFT</h1>
-      <p class="tag">street racing after dark</p>
-    </div>
-    <div id="platform-choice" class="choice">
-      <p class="label">How are you playing?</p>
-      <div class="row">
-        <button class="big" data-platform="computer"><span class="name">Computer</span><span class="sub">Keyboard</span></button>
-        <button class="big" data-platform="touch"><span class="name">iPad / Mobile</span><span class="sub">Touch screen</span></button>
-      </div>
-    </div>
-    <div id="title-ready" class="choice" hidden>
-      <button id="title-start" class="big"><span class="name">Drive</span><span class="sub">Press Enter</span></button>
-      <p class="label">Playing on <b id="title-platform">Computer</b> · <button id="title-change" class="link">change</button></p>
-    </div>
-    <p class="keys">W/S or arrows drive · A/D steer · Space handbrake · C camera · R reset · Esc pause</p>
+  <!-- Touch controls (iPad / phone). Built by src/input/touch.js. -->
+  <div id="touch" hidden></div>
+  <div id="rotate-note" class="screen dim" hidden>
+    <div class="pnl box center"><h2>Turn it sideways</h2><p class="muted">NIGHTSHIFT plays in landscape.</p></div>
   </div>
 
-  <div id="pause" class="screen dim" hidden>
-    <div id="pause-main" class="menu">
+  <!-- First visit: how are you playing? -->
+  <section id="scr-platform" class="screen" hidden>
+    <div class="brand-block">
+      <h1 class="brand">NIGHT<em>SHIFT</em></h1>
+      <p class="tag">street racing after dark</p>
+    </div>
+    <div class="pnl box">
+      <p class="label">How are you playing?</p>
+      <nav class="stack">
+        <button class="btn big pri" data-platform="computer"><span class="name">Computer</span><span class="sub">Keyboard</span></button>
+        <button class="btn big" data-platform="touch"><span class="name">iPad / Mobile</span><span class="sub">Touch screen</span></button>
+      </nav>
+      <p class="muted small">You can change this later in Settings.</p>
+    </div>
+  </section>
+
+  <!-- Main menu -->
+  <section id="scr-main" class="screen left" hidden>
+    <div class="menu-l">
+      <h1 class="brand">NIGHT<em>SHIFT</em></h1>
+      <p class="tag">street racing after dark</p>
+      <nav class="stack">
+        <button class="btn huge pri" data-go="tracks">Drive</button>
+        <button class="btn" data-go="garage">Garage</button>
+        <button class="btn" data-go="settings">Settings</button>
+      </nav>
+    </div>
+  </section>
+
+  <!-- Drive: pick a track -->
+  <section id="scr-tracks" class="screen" hidden>
+    <header class="bar"><button class="btn back" data-back>Back</button><h2>Choose a track</h2></header>
+    <div id="track-list" class="cards"></div>
+  </section>
+
+  <!-- Drive: weather and car, then race -->
+  <section id="scr-setup" class="screen" hidden>
+    <header class="bar"><button class="btn back" data-back>Back</button><h2 id="setup-title">Starter Track</h2></header>
+    <div class="setup">
+      <div class="pnl box">
+        <p class="label">Weather</p>
+        <div id="weather-list" class="choices"></div>
+        <p id="weather-note" class="muted small"></p>
+      </div>
+      <div class="pnl box">
+        <p class="label">Car</p>
+        <div class="car-pick">
+          <button class="btn sq" id="car-prev" aria-label="Previous car">&lt;</button>
+          <div class="car-name"><span id="setup-car-year" class="sub"></span><span id="setup-car-name" class="name"></span></div>
+          <button class="btn sq" id="car-next" aria-label="Next car">&gt;</button>
+        </div>
+        <div id="setup-stats" class="stats"></div>
+      </div>
+    </div>
+    <footer class="foot"><button id="race-go" class="btn huge pri">Race</button></footer>
+  </section>
+
+  <!-- Garage: view cars and their stats; mods come later -->
+  <section id="scr-garage" class="screen garage" hidden>
+    <header class="bar"><button class="btn back" data-back>Back</button><h2>Garage</h2></header>
+    <div class="garage-side pnl box">
+      <div class="car-pick">
+        <button class="btn sq" id="garage-prev" aria-label="Previous car">&lt;</button>
+        <div class="car-name"><span id="garage-car-year" class="sub"></span><span id="garage-car-name" class="name"></span></div>
+        <button class="btn sq" id="garage-next" aria-label="Next car">&gt;</button>
+      </div>
+      <p id="garage-blurb" class="muted small"></p>
+      <div id="garage-stats" class="stats"></div>
+      <p class="label">Paint</p>
+      <div id="garage-paints" class="swatches"></div>
+      <p id="garage-paint-name" class="muted small"></p>
+      <div class="soon">Mods: engine, tyres, suspension, body kits. Coming soon.</div>
+    </div>
+  </section>
+
+  <!-- Settings, four tabs -->
+  <section id="scr-settings" class="screen" hidden>
+    <header class="bar"><button class="btn back" data-back>Back</button><h2>Settings</h2></header>
+    <div class="pnl box wide">
+      <nav class="tabs" role="tablist">
+        <button class="tab" data-tab="gameplay">Gameplay</button>
+        <button class="tab" data-tab="graphics">Graphics</button>
+        <button class="tab" data-tab="audio">Audio</button>
+        <button class="tab" data-tab="controls">Controls</button>
+      </nav>
+      <div id="settings-body" class="tab-body"></div>
+    </div>
+  </section>
+
+  <!-- Pause -->
+  <section id="scr-pause" class="screen dim" hidden>
+    <div class="pnl box">
       <h2>Paused</h2>
-      <button id="pause-resume">Resume</button>
-      <button id="pause-reset">Reset car</button>
-      <button id="pause-camera">Switch camera</button>
-      <button id="pause-settings">Settings</button>
-      <button id="pause-title">Back to title</button>
+      <nav class="stack">
+        <button class="btn pri" id="pause-resume">Resume</button>
+        <button class="btn" id="pause-restart">Restart</button>
+        <button class="btn" id="pause-settings">Settings</button>
+        <button class="btn" id="pause-main">Main menu</button>
+      </nav>
     </div>
-    <div id="settings" class="menu" hidden>
-      <h2>Settings</h2>
-      <p class="label">Graphics</p>
-      <div class="seg"><button data-graphics="low">Low</button><button data-graphics="medium">Medium</button><button data-graphics="high">High</button></div>
-      <p class="label">Volume</p>
-      <input id="volume" type="range" min="0" max="100" step="1">
-      <p class="label">Playing on</p>
-      <div class="seg"><button data-set-platform="computer">Computer</button><button data-set-platform="touch">iPad / Mobile</button></div>
-      <button id="settings-back">Back</button>
-    </div>
+  </section>
+
+  <!-- Touch layout editor -->
+  <div id="layout-bar" class="pnl" hidden>
+    <span>Drag the controls where you want them.</span>
+    <button class="btn" id="layout-reset">Reset</button>
+    <button class="btn pri" id="layout-done">Done</button>
   </div>
 
   <script type="module" src="src/main.js"></script>
