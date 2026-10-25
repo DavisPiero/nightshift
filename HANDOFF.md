@@ -1,7 +1,7 @@
 # Hand-off: end of session 3 (2026-10-25)
 
 ## Repo state
-- Work is on branch `m4-feel-and-ratings`, committed, not merged. `main` is Milestone 3 (live).
+- Milestone 4 part 1 was signed off and merged to `main` (live). No other branches.
 - The bench and smoke test pass.
 - Bench baseline from before this session (R34): 0-100 5.58 s, top speed 272 km/h,
   braking 38.0 m, coast 61 km/h, bot lap 78.3 s. Now: 0-100 5.61 s (turbo lag), top speed

@@ -3,8 +3,7 @@
 _Last updated 2026-10-25, end of session 3 (Milestone 4, part 1 of 3)._
 
 ## Where we are
-Milestone 3 is live on `main`. Milestone 4 part 1 is on branch `m4-feel-and-ratings`,
-not merged (waiting for David's sign-off). It adds:
+Milestone 4 part 1 is signed off, merged to `main` and live. It adds:
 - the Feel panel (F4)
 - weight transfer you can see
 - turbo lag, whistle and flutter

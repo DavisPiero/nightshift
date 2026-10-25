@@ -21,7 +21,7 @@
    lift-off, collisions), pixel menus, settings in four tabs, weather, effects, a fuller
    track, the R34 and a proper cockpit. **In progress.** (This pulled in parts of 5, 7 and 8.)
 4. Feel, garage and world (David's second notes), in three parts: (1) feel pass, Feel
-   panel, ratings, parts, controllers, the Challenjer. **Built, awaiting sign-off.** (2) The
+   panel, ratings, parts, controllers, the Challenjer. **Done, signed off 2026-10-25.** (2) The
    garage: workshop, visual and performance mods, dyno, named builds. (3) Asset library,
    time of day, snow, weather patches, a Monza-inspired street track.
 5. Night circuit: a second, full track.
