@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "nightshift",
+      "runtimeExecutable": "env",
+      "runtimeArgs": ["NO_OPEN=1", "./run.sh", "8793"],
+      "port": 8793
+    }
+  ]
+}

@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <title>NIGHTSHIFT</title>
+  <link rel="stylesheet" href="styles/main.css">
+  <script type="importmap">
+    { "imports": { "three": "./vendor/three.module.min.js" } }
+  </script>
+</head>
+<body>
+  <canvas id="view"></canvas>
+
+  <div id="hud" hidden>
+    <canvas id="tach" width="220" height="220"></canvas>
+    <button id="pause-button" aria-label="Pause">II</button>
+    <pre id="debug" hidden></pre>
+  </div>
+
+  <div id="touch-note" hidden>Touch controls arrive in the next build. Use a keyboard for now.</div>
+
+  <div id="title" class="screen" hidden>
+    <div class="title-block">
+      <h1>NIGHTSHIFT</h1>
+      <p class="tag">street racing after dark</p>
+    </div>
+    <div id="platform-choice" class="choice">
+      <p class="label">How are you playing?</p>
+      <div class="row">
+        <button class="big" data-platform="computer"><span class="name">Computer</span><span class="sub">Keyboard</span></button>
+        <button class="big" data-platform="touch"><span class="name">iPad / Mobile</span><span class="sub">Touch screen</span></button>
+      </div>
+    </div>
+    <div id="title-ready" class="choice" hidden>
+      <button id="title-start" class="big"><span class="name">Drive</span><span class="sub">Press Enter</span></button>
+      <p class="label">Playing on <b id="title-platform">Computer</b> · <button id="title-change" class="link">change</button></p>
+    </div>
+    <p class="keys">W/S or arrows drive · A/D steer · Space handbrake · C camera · R reset · Esc pause</p>
+  </div>
+
+  <div id="pause" class="screen dim" hidden>
+    <div id="pause-main" class="menu">
+      <h2>Paused</h2>
+      <button id="pause-resume">Resume</button>
+      <button id="pause-reset">Reset car</button>
+      <button id="pause-camera">Switch camera</button>
+      <button id="pause-settings">Settings</button>
+      <button id="pause-title">Back to title</button>
+    </div>
+    <div id="settings" class="menu" hidden>
+      <h2>Settings</h2>
+      <p class="label">Graphics</p>
+      <div class="seg"><button data-graphics="low">Low</button><button data-graphics="medium">Medium</button><button data-graphics="high">High</button></div>
+      <p class="label">Volume</p>
+      <input id="volume" type="range" min="0" max="100" step="1">
+      <p class="label">Playing on</p>
+      <div class="seg"><button data-set-platform="computer">Computer</button><button data-set-platform="touch">iPad / Mobile</button></div>
+      <button id="settings-back">Back</button>
+    </div>
+  </div>
+
+  <script type="module" src="src/main.js"></script>
+</body>
+</html>

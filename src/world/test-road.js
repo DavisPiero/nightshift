@@ -1,0 +1,18 @@
+// The night test road: one closed loop through an industrial estate.
+// A long straight, a fast sweeper, an S-bend, a kink and one tight corner.
+// Points are in metres, in driving order; the start line is on the straight.
+
+export const TEST_ROAD = {
+  name: 'Harbour Loop',
+  halfWidth: 6,     // 12 m of tarmac
+  wall: 9.5,        // barriers 3.5 m beyond the road edge
+  start: 30,        // sample index of the start line
+  points: [
+    [0, -170], [0, -60], [0, 60], [0, 180],           // main straight
+    [20, 290], [100, 360], [215, 380], [320, 340],    // long sweeper
+    [370, 255], [355, 165], [290, 120], [265, 50],    // S-bend
+    [300, -20], [365, -70], [380, -160],              // kink
+    [345, -235], [260, -255], [150, -265],            // back straight
+    [70, -290], [20, -265],                           // tight corner onto the straight
+  ],
+};
