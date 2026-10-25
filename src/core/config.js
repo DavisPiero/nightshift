@@ -18,8 +18,6 @@ export const EFFECTS = {
   flames: { label: 'Exhaust flames', hint: 'Flames and pops from the exhaust when you lift off at high revs.' },
   skids: { label: 'Skid marks', hint: 'Dark marks left on the road by sliding tyres.' },
   sparks: { label: 'Sparks', hint: 'Sparks when the car scrapes a barrier.' },
-  moths: { label: 'Moths', hint: 'Moths circling the street lamps.' },
-  dust: { label: 'Floating dust', hint: 'Specks and mist drifting in the lamp light.' },
   beams: { label: 'Headlight beams', hint: 'Visible beams of light from the headlights.' },
   glow: { label: 'Lamp glow', hint: 'Soft halos round lamps and lights.' },
   reflections: { label: 'Wet reflections', hint: 'Lamps reflected in the road when it rains.' },
@@ -27,7 +25,7 @@ export const EFFECTS = {
   shadows: { label: 'Shadows', hint: 'Real shadows from the moon. Slower, best on a computer.' },
 };
 export const DEFAULT_EFFECTS = {
-  smoke: true, flames: true, skids: true, sparks: true, moths: true, dust: true,
+  smoke: true, flames: true, skids: true, sparks: true,
   beams: true, glow: true, reflections: true, dither: true, shadows: false,
 };
 

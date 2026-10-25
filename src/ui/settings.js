@@ -73,6 +73,7 @@ export class Settings {
     for (const action of Object.keys(KEY_LABELS)) this.keyRow(action);
     this.fixedRow('Pause', 'Esc');
     this.fixedRow('Debug panel', 'F3');
+    this.fixedRow('Feel panel (tune the handling)', 'F4');
     this.button('Keys', 'Reset to default', () => { s.keys = structuredClone(DEFAULT_KEYS); this.changed(); this.show('controls'); });
 
     this.heading('Touch screen');

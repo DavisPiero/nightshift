@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.3.0 (unreleased): feel, ratings, parts, a second car
+- Feel panel (F4): drag sliders for power, brakes, grip, drift ease, lean, dive, squat, camera pull and shake while driving.
+- Visible brake dive and launch squat, a nod on each upshift; the chase camera trails under power and closes in under braking.
+- Car ratings: D to X class, a 1-1000 score, and Speed, Acceleration, Handling, Braking from 1 to 10, measured from the physics.
+- Parts with trade-offs (engine, turbo, weight, tyres, brakes, suspension, gearing, four-wheel drive, wing, body kit). Fitting them in the garage comes next session.
+- New car: 2009 Dodga Challenjer SRT8, with a V8 sound.
+- Turbo whistle and flutter, gear changes you can hear, brake squeal on hard stops.
+- Game controllers, in driving and menus.
+- Removed the moths and dust round lamps; slower garage turntable.
+
 ## 0.2.0 (unreleased): iPad controls, menus, weather, effects
 - iPad / phone touch controls: floating joystick, gas, brake, handbrake, gear buttons in
   manual, camera and pause. Size, opacity, sensitivity, dead zone, response, and a drag-to-place layout editor.

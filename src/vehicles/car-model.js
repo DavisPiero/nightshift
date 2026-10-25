@@ -65,63 +65,49 @@ function loft(sections, materialFor, { capStart = true, capEnd = true } = {}) {
   return g;
 }
 
-// Lower body profile keyframes along the car (z), interpolated between.
-// [z, bottomY, sillW, shoulderY, shoulderW, topY, topW, crown]
-// The R34 has a high, flat waist, a long bonnet and a tall square tail.
-const BODY_KEYS = [
-  [-2.30, 0.31, 0.80, 0.74, 0.80, 0.90, 0.72, 0.00],
-  [-2.22, 0.22, 0.85, 0.79, 0.87, 0.99, 0.80, 0.01],
-  [-1.75, 0.20, 0.86, 0.79, 0.88, 1.00, 0.82, 0.01],
-  [-1.00, 0.19, 0.86, 0.78, 0.86, 1.00, 0.79, 0.01],
-  [0.00, 0.19, 0.85, 0.77, 0.85, 0.99, 0.77, 0.01],
-  [0.80, 0.19, 0.85, 0.76, 0.86, 0.95, 0.80, 0.02],
-  [1.35, 0.20, 0.86, 0.74, 0.87, 0.88, 0.81, 0.035],
-  [1.95, 0.21, 0.85, 0.71, 0.86, 0.82, 0.80, 0.035],
-  [2.20, 0.22, 0.83, 0.64, 0.84, 0.75, 0.77, 0.02],
-  [2.30, 0.25, 0.78, 0.55, 0.79, 0.67, 0.71, 0.00],
-];
+// Body profile helpers. Every car has a shape (see SHAPES at the bottom):
+// lower-body keyframes along its length, cabin keyframes, wheel and arch
+// positions, and a details() function for its lights, grille and so on.
+// Body keys: [z, bottomY, sillW, shoulderY, shoulderW, topY, topW, crown]
+// Cabin keys: [z, baseY, baseW, roofY, roofW]
 
-const WHEEL_Z = [1.34, -1.33];
-const WHEEL_R = 0.33;
-const ARCH_R = 0.45;
-const ARCH_TOP = 0.71;
-const FLARE = 0.05; // the GT-R's blistered arches
-
-function bodyKey(z) {
-  for (let i = 1; i < BODY_KEYS.length; i++) {
-    if (z <= BODY_KEYS[i][0] + 1e-6) {
-      const a = BODY_KEYS[i - 1], b = BODY_KEYS[i];
+function bodyKey(sh, z) {
+  const K = sh.body;
+  for (let i = 1; i < K.length; i++) {
+    if (z <= K[i][0] + 1e-6) {
+      const a = K[i - 1], b = K[i];
       const t = (z - a[0]) / (b[0] - a[0]);
       return a.map((v, k) => lerp(v, b[k], t));
     }
   }
-  return BODY_KEYS[BODY_KEYS.length - 1];
+  return K[K.length - 1];
 }
 
-function archHeight(z) {
+function archHeight(sh, z) {
   let y = 0;
-  for (const c of WHEEL_Z) {
+  for (const c of sh.wheelZ) {
     const d = Math.abs(z - c);
-    if (d < ARCH_R) y = Math.max(y, 0.3 + Math.sqrt(1 - (d / ARCH_R) ** 2) * (ARCH_TOP - 0.3));
+    if (d < sh.archR) y = Math.max(y, 0.3 + Math.sqrt(1 - (d / sh.archR) ** 2) * (sh.archTop - 0.3));
   }
   return y;
 }
 
 // How much the arch flare bulges out at this z (0..1), wider than the arch itself.
-function flareAt(z) {
+function flareAt(sh, z) {
   let f = 0;
-  for (const c of WHEEL_Z) f = Math.max(f, 1 - Math.min(1, Math.abs(z - c) / (ARCH_R + 0.35)));
+  for (const c of sh.wheelZ) f = Math.max(f, 1 - Math.min(1, Math.abs(z - c) / (sh.archR + 0.35)));
   return Math.min(1, f * 1.6);
 }
 
-function bodySections() {
-  const zs = new Set(BODY_KEYS.map((k) => k[0]));
-  for (const c of WHEEL_Z) for (let i = -6; i <= 6; i++) zs.add(+(c + i * (ARCH_R + 0.3) / 6 * 0.999).toFixed(4));
-  const sorted = [...zs].filter((z) => z >= -2.3 && z <= 2.3).sort((a, b) => a - b);
+function bodySections(sh) {
+  const zs = new Set(sh.body.map((k) => k[0]));
+  const z0 = sh.body[0][0], z1 = sh.body[sh.body.length - 1][0];
+  for (const c of sh.wheelZ) for (let i = -6; i <= 6; i++) zs.add(+(c + i * (sh.archR + 0.3) / 6 * 0.999).toFixed(4));
+  const sorted = [...zs].filter((z) => z >= z0 && z <= z1).sort((a, b) => a - b);
   return sorted.map((z) => {
-    const [, bottomY, sillW, shY, shW, topY, topW, crown] = bodyKey(z);
-    const arch = archHeight(z);
-    const fl = flareAt(z) * FLARE;
+    const [, bottomY, sillW, shY, shW, topY, topW, crown] = bodyKey(sh, z);
+    const arch = archHeight(sh, z);
+    const fl = flareAt(sh, z) * sh.flare;
     const y0 = Math.max(bottomY, arch), y2 = Math.max(bottomY + 0.12, arch);
     return {
       z,
@@ -129,14 +115,6 @@ function bodySections() {
     };
   });
 }
-
-// Cabin: [z, baseY, baseW, roofY, roofW]
-const CABIN_KEYS = [
-  [-1.12, 0.995, 0.78, 1.0, 0.76],
-  [-0.55, 1.0, 0.79, 1.32, 0.63],
-  [0.25, 0.985, 0.80, 1.345, 0.65],
-  [0.90, 0.945, 0.81, 0.96, 0.79],
-];
 
 // Light cone for the headlight beams: bright at the lamp, fading to nothing.
 function beamGeometry(length, radius) {
@@ -156,6 +134,8 @@ function beamGeometry(length, radius) {
 }
 
 export function buildCar(spec, paintColor = spec.paint, { simple = false } = {}) {
+  const sh = SHAPES[spec.id] || SHAPES['skyliner-r34'];
+  const CABIN_KEYS = sh.cabin;
   const root = new THREE.Group();
   root.name = spec.id;
   const sway = new THREE.Group();   // leans and pitches about the roll centre
@@ -190,7 +170,7 @@ export function buildCar(spec, paintColor = spec.paint, { simple = false } = {})
   // The flat top between the windscreen and the rear glass is left open
   // (material 3 draws nothing): the cabin sits there, and a lid at waist
   // height would hide the dashboard and wheel from the driver's seat.
-  const secs = bodySections();
+  const secs = bodySections(sh);
   const open = new THREE.MeshBasicMaterial({ visible: false });
   const lower = new THREE.Mesh(
     loft(secs, (k, j) => {
@@ -218,112 +198,30 @@ export function buildCar(spec, paintColor = spec.paint, { simple = false } = {})
   };
 
   // Solid core so nothing shows through the wheel arches.
-  box(1.30, 0.42, 4.3, black, 0, 0.42, 0);
+  box(sh.core[0], 0.42, sh.core[1], black, 0, 0.42, 0);
 
-  // A-pillars (solid, so they also show from inside the car) and the thick C-pillar trim.
-  for (const s of [1, -1]) {
-    const p = box(0.07, 0.75, 0.07, paint, s * 0.73, 1.15, 0.58);
-    p.rotation.x = -1.0;
-    p.rotation.z = s * 0.2;
-  }
-  // Black window surround along the doors.
-  for (const s of [1, -1]) box(0.012, 0.03, 1.5, trim, s * 0.795, 0.995, -0.1);
-
-  // --- Front end ---
-  for (const s of [1, -1]) {
-    // Angular headlight: a wedge that narrows toward the grille.
-    const housing = box(0.4, 0.11, 0.06, lampInner, s * 0.54, 0.665, 2.2);
-    housing.rotation.x = -0.4; housing.rotation.y = s * 0.12; housing.rotation.z = s * -0.08;
-    const lens = box(0.17, 0.07, 0.02, headlight, s * 0.62, 0.665, 2.235);
-    lens.rotation.x = -0.4; lens.rotation.y = s * 0.12;
-    const lens2 = box(0.12, 0.06, 0.02, headlight, s * 0.44, 0.655, 2.245);
-    lens2.rotation.x = -0.4; lens2.rotation.y = s * 0.1;
-    box(0.4, 0.018, 0.07, trim, s * 0.54, 0.722, 2.19).rotation.x = -0.4; // brow
-    box(0.12, 0.04, 0.03, amber, s * 0.7, 0.53, 2.255);                   // indicator
-    // Brake duct each side of the main intake.
-    box(0.2, 0.1, 0.05, black, s * 0.62, 0.37, 2.262);
-    box(0.2, 0.012, 0.055, trim, s * 0.62, 0.36, 2.263);
-  }
-  // Slim grille between the lamps, with one body-colour bar (no badge).
-  box(0.5, 0.075, 0.05, black, 0, 0.64, 2.225);
-  box(0.5, 0.018, 0.055, paint, 0, 0.645, 2.229);
-  // Big lower intake with a dark mesh and a centre bar.
-  box(0.86, 0.17, 0.05, black, 0, 0.42, 2.262);
-  box(0.86, 0.015, 0.056, trim, 0, 0.43, 2.264);
-  box(0.06, 0.17, 0.056, paint, 0, 0.42, 2.266);
-  box(0.42, 0.1, 0.02, plate, 0, 0.555, 2.272);           // plate on the bumper
-  const lip = box(1.62, 0.035, 0.18, carbon, 0, 0.235, 2.2); // splitter
-  lip.rotation.x = 0.03;
-  // Carbon vent on the bonnet.
-  const vent = box(0.62, 0.02, 0.36, carbon, 0, 0.87, 1.45);
-  vent.rotation.x = 0.12;
-  for (let i = 0; i < 4; i++) box(0.58, 0.012, 0.02, black, 0, 0.885 - i * 0.004, 1.33 + i * 0.08).rotation.x = 0.12;
-  // Fender ducts behind the front wheels (the GT-R's side vents).
-  for (const s of [1, -1]) {
-    for (let i = 0; i < 3; i++) box(0.012, 0.025, 0.2, black, s * 0.905, 0.6 - i * 0.05, 0.78);
+  // A-pillars (solid, so they also show from inside the car), running from
+  // the windscreen base up to the roof.
+  {
+    const [zr, , , ry, rw] = CABIN_KEYS[CABIN_KEYS.length - 2];
+    const [zb, by, bw] = CABIN_KEYS[CABIN_KEYS.length - 1];
+    const len = Math.hypot(ry - by, zb - zr);
+    for (const s of [1, -1]) {
+      const p = box(0.07, len, 0.07, paint, s * ((rw + bw) / 2 + 0.005), (ry + by) / 2, (zr + zb) / 2);
+      p.rotation.x = -(Math.PI / 2 - Math.atan2(ry - by, zb - zr));
+      p.rotation.z = s * 0.2;
+    }
+    // Black window surround along the doors.
+    const [zc, cy, cw] = CABIN_KEYS[1];
+    for (const s of [1, -1]) box(0.012, 0.03, Math.abs(zb - zc), trim, s * (cw + 0.005), cy, (zb + zc) / 2);
   }
 
-  // --- Sides ---
-  for (const s of [1, -1]) {
-    box(0.06, 0.07, 2.2, carbon, s * 0.88, 0.235, 0.0);   // side skirt
-    box(0.005, 0.025, 0.12, black, s * 0.885, 0.8, 0.05); // door handle
-    box(0.005, 0.012, 3.6, trim, s * 0.9, 0.69, 0.05).visible = false; // reserved for a stripe mod
-  }
-
-  // --- Rear: four round tail lights, boot lid, wing, diffuser, exhaust ---
-  box(1.36, 0.02, 0.03, black, 0, 0.88, -2.31);            // boot lid shut line
-  const tailGeo = new THREE.CylinderGeometry(0.092, 0.092, 0.04, 14);
-  const tailMeshes = [];
-  for (const x of [-0.66, -0.43, 0.43, 0.66]) {
-    const ring = new THREE.Mesh(new THREE.CylinderGeometry(0.115, 0.115, 0.03, 14), tailRing);
-    ring.rotation.x = Math.PI / 2;
-    ring.position.set(x, 0.78, -2.318);
-    body.add(ring);
-    const t = new THREE.Mesh(tailGeo, tail);
-    t.rotation.x = Math.PI / 2;
-    t.position.set(x, 0.78, -2.33);
-    body.add(t);
-    tailMeshes.push(t);
-    const chromeRing = new THREE.Mesh(new THREE.TorusGeometry(0.094, 0.01, 4, 14), chrome);
-    chromeRing.position.set(x, 0.78, -2.351);
-    body.add(chromeRing);
-  }
-  for (const s of [1, -1]) box(0.11, 0.05, 0.02, reverseLight, s * 0.2, 0.78, -2.33);
-  box(0.5, 0.11, 0.02, plate, 0, 0.56, -2.33);
-  box(1.5, 0.05, 0.1, trim, 0, 0.3, -2.27);                // rear valance
-  const diff = box(1.1, 0.04, 0.3, carbon, 0, 0.215, -2.17); // diffuser
-  diff.rotation.x = -0.12;
-  for (const x of [-0.3, 0, 0.3]) box(0.02, 0.08, 0.28, carbon, x, 0.24, -2.18);
-  const pipe = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.22, 10, 1, true), chrome);
-  pipe.rotation.x = Math.PI / 2;
-  pipe.position.set(-0.5, 0.27, -2.3);
-  body.add(pipe);
-  const pipeIn = new THREE.Mesh(new THREE.CircleGeometry(0.052, 10), black);
-  pipeIn.position.set(-0.5, 0.27, -2.39);
-  pipeIn.rotation.y = Math.PI;
-  body.add(pipeIn);
-  const exhaust = new THREE.Vector3(-0.5, 0.27, -2.42); // where flames come out (car space)
-
-  // Tall wing on two uprights, with endplates and a small flap.
-  for (const s of [1, -1]) {
-    const up = box(0.05, 0.22, 0.14, paint, s * 0.58, 1.08, -2.06);
-    up.rotation.x = -0.12;
-  }
-  const wing = box(1.56, 0.04, 0.3, paint, 0, 1.2, -2.1);
-  wing.rotation.x = 0.07;
-  const flap = box(1.5, 0.03, 0.08, paint, 0, 1.235, -2.24);
-  flap.rotation.x = -0.4;
-  for (const s of [1, -1]) box(0.02, 0.13, 0.36, paint, s * 0.78, 1.2, -2.12);
-
-  // Mirrors.
-  for (const s of [1, -1]) {
-    box(0.1, 0.03, 0.05, black, s * 0.85, 0.99, 0.74);
-    box(0.15, 0.09, 0.07, paint, s * 0.92, 1.01, 0.72);
-    box(0.13, 0.07, 0.005, chrome, s * 0.92, 1.01, 0.682);
-  }
+  const mats = { paint, trim, black, carbon, chrome, plate, headlight, lampInner, tail, tailRing, reverseLight, amber };
+  const { exhausts } = sh.details({ box, body, mats });
 
   // --- Cockpit (does not lean). Right-hand drive: the driver sits at -x. ---
-  const dx = -0.38;
+  const dx = sh.driverX;
+  cockpit.position.set(0, sh.cockpitOffset[0], sh.cockpitOffset[1]);
   let steeringWheel = new THREE.Group(), needles = [];
   if (!simple) {
     // Dashboard: a top slab under the windscreen, a face toward the cabin,
@@ -367,7 +265,7 @@ export function buildCar(spec, paintColor = spec.paint, { simple = false } = {})
     shifter.rotation.x = 0.2;
     box(0.05, 0.04, 0.05, black, 0.02, 0.85, 0.16, cockpit);
     // Door cards and the inside of the roof and pillars.
-    for (const s of [1, -1]) box(0.04, 0.42, 1.3, interior, s * 0.77, 0.78, -0.05, cockpit);
+    for (const s of [1, -1]) box(0.04, 0.42, 1.3, interior, s * sh.doorX, 0.78, -0.05, cockpit);
     const liner = new THREE.Mesh(new THREE.PlaneGeometry(1.25, 0.85), interior);
     liner.rotation.x = Math.PI / 2;
     liner.position.set(0, 1.315, -0.12);
@@ -417,12 +315,14 @@ export function buildCar(spec, paintColor = spec.paint, { simple = false } = {})
   // Wheels: five-spoke rims, sitting under the flared arches.
   const tyreMat = new THREE.MeshLambertMaterial({ map: Tex.tire(), color: 0x8a8a8a });
   const rimMat = new THREE.MeshLambertMaterial({ map: Tex.rim() });
-  const wheelGeo = new THREE.CylinderGeometry(WHEEL_R, WHEEL_R, 0.25, 14);
+  const WR = spec.wheelRadius;
+  const wheelGeo = new THREE.CylinderGeometry(WR, WR, sh.tyreWidth, 14);
   wheelGeo.rotateZ(Math.PI / 2);
   const wheels = [];
-  for (const [x, z, front] of [[0.79, WHEEL_Z[0], true], [-0.79, WHEEL_Z[0], true], [0.79, WHEEL_Z[1], false], [-0.79, WHEEL_Z[1], false]]) {
+  const [WZf, WZr] = sh.wheelZ, WX = sh.wheelX;
+  for (const [x, z, front] of [[WX, WZf, true], [-WX, WZf, true], [WX, WZr, false], [-WX, WZr, false]]) {
     const steer = new THREE.Group();
-    steer.position.set(x, WHEEL_R, z);
+    steer.position.set(x, WR, z);
     root.add(steer);
     // After rotating the cylinder its top cap faces -x and its bottom cap +x.
     const spin = new THREE.Mesh(wheelGeo, [tyreMat, x > 0 ? tyreMat : rimMat, x > 0 ? rimMat : tyreMat]);
@@ -441,8 +341,9 @@ export function buildCar(spec, paintColor = spec.paint, { simple = false } = {})
     sprites.push(s);
     return s;
   };
-  const headGlows = simple ? [] : [sprite(0xfff0c8, 0.9, 0.54, 0.66, 2.33), sprite(0xfff0c8, 0.9, -0.54, 0.66, 2.33)];
-  const tailGlows = simple ? [] : [-0.55, 0.55].map((x) => sprite(0xff2010, 0.7, x, 0.78, -2.44));
+  const [hx, hy, hz] = sh.headLamp, [tx, ty, tz] = sh.tailLamp;
+  const headGlows = simple ? [] : [sprite(0xfff0c8, 0.9, hx, hy, hz), sprite(0xfff0c8, 0.9, -hx, hy, hz)];
+  const tailGlows = simple ? [] : [-tx, tx].map((x) => sprite(0xff2010, 0.7, x, ty, tz));
 
   // Headlight beams: faint cones of light in the night air.
   const beams = [];
@@ -451,7 +352,7 @@ export function buildCar(spec, paintColor = spec.paint, { simple = false } = {})
     const beamGeo = beamGeometry(16, 2.6);
     for (const s of [1, -1]) {
       const b = new THREE.Mesh(beamGeo, beamMat);
-      b.position.set(s * 0.54, 0.66, 2.25);
+      b.position.set(s * hx, hy, hz - 0.08);
       b.rotation.x = 0.07;
       b.renderOrder = 2;
       body.add(b);
@@ -463,7 +364,7 @@ export function buildCar(spec, paintColor = spec.paint, { simple = false } = {})
   let lamp = null;
   if (!simple) {
     lamp = new THREE.SpotLight(0xfff0d0, 120, 70, 0.42, 0.55, 1.3);
-    lamp.position.set(0, 0.7, 2.0);
+    lamp.position.set(0, 0.7, hz - 0.3);
     lamp.target.position.set(0, -0.6, 22);
     root.add(lamp, lamp.target);
   }
@@ -487,9 +388,9 @@ export function buildCar(spec, paintColor = spec.paint, { simple = false } = {})
   let glowOn = true, beamsOn = true, inside = false;
   const tach = needles[0], speedo = needles[1];
   return {
-    root, body, sway, cockpit, steeringWheel, wheels, exhaust,
+    root, body, sway, cockpit, steeringWheel, wheels, exhausts,
     // Where the driver's eyes are, in car space.
-    cockpitEye: new THREE.Vector3(dx, 1.17, -0.08),
+    cockpitEye: new THREE.Vector3(dx, 1.17 + sh.cockpitOffset[0], -0.08 + sh.cockpitOffset[1]),
     headGlows,
     setPaint(color) { paint.color.set(color); },
     setGlow(on) { glowOn = on; for (const s of sprites) s.visible = on; this.setInterior(inside); },
@@ -602,3 +503,217 @@ export function bakeStatic(roots) {
   }
   return out;
 }
+
+// --- The R34: angular lamps, slim grille, big lower intake, bonnet vent,
+// fender ducts, four round tail lights, tall wing, diffuser. ---
+function r34Details({ box, body, mats: m }) {
+  // --- Front end ---
+  for (const s of [1, -1]) {
+    // Angular headlight: a wedge that narrows toward the grille.
+    const housing = box(0.4, 0.11, 0.06, m.lampInner, s * 0.54, 0.665, 2.2);
+    housing.rotation.x = -0.4; housing.rotation.y = s * 0.12; housing.rotation.z = s * -0.08;
+    const lens = box(0.17, 0.07, 0.02, m.headlight, s * 0.62, 0.665, 2.235);
+    lens.rotation.x = -0.4; lens.rotation.y = s * 0.12;
+    const lens2 = box(0.12, 0.06, 0.02, m.headlight, s * 0.44, 0.655, 2.245);
+    lens2.rotation.x = -0.4; lens2.rotation.y = s * 0.1;
+    box(0.4, 0.018, 0.07, m.trim, s * 0.54, 0.722, 2.19).rotation.x = -0.4; // brow
+    box(0.12, 0.04, 0.03, m.amber, s * 0.7, 0.53, 2.255);                   // indicator
+    // Brake duct each side of the main intake.
+    box(0.2, 0.1, 0.05, m.black, s * 0.62, 0.37, 2.262);
+    box(0.2, 0.012, 0.055, m.trim, s * 0.62, 0.36, 2.263);
+  }
+  // Slim grille between the lamps, with one body-colour bar (no badge).
+  box(0.5, 0.075, 0.05, m.black, 0, 0.64, 2.225);
+  box(0.5, 0.018, 0.055, m.paint, 0, 0.645, 2.229);
+  // Big lower intake with a dark mesh and a centre bar.
+  box(0.86, 0.17, 0.05, m.black, 0, 0.42, 2.262);
+  box(0.86, 0.015, 0.056, m.trim, 0, 0.43, 2.264);
+  box(0.06, 0.17, 0.056, m.paint, 0, 0.42, 2.266);
+  box(0.42, 0.1, 0.02, m.plate, 0, 0.555, 2.272);           // plate on the bumper
+  const lip = box(1.62, 0.035, 0.18, m.carbon, 0, 0.235, 2.2); // splitter
+  lip.rotation.x = 0.03;
+  // Carbon vent on the bonnet.
+  const vent = box(0.62, 0.02, 0.36, m.carbon, 0, 0.87, 1.45);
+  vent.rotation.x = 0.12;
+  for (let i = 0; i < 4; i++) box(0.58, 0.012, 0.02, m.black, 0, 0.885 - i * 0.004, 1.33 + i * 0.08).rotation.x = 0.12;
+  // Fender ducts behind the front wheels (the GT-R's side vents).
+  for (const s of [1, -1]) {
+    for (let i = 0; i < 3; i++) box(0.012, 0.025, 0.2, m.black, s * 0.905, 0.6 - i * 0.05, 0.78);
+  }
+
+  // --- Sides ---
+  for (const s of [1, -1]) {
+    box(0.06, 0.07, 2.2, m.carbon, s * 0.88, 0.235, 0.0);   // side skirt
+    box(0.005, 0.025, 0.12, m.black, s * 0.885, 0.8, 0.05); // door handle
+    box(0.005, 0.012, 3.6, m.trim, s * 0.9, 0.69, 0.05).visible = false; // reserved for a stripe mod
+  }
+
+  // --- Rear: four round tail lights, boot lid, wing, diffuser, exhaust ---
+  box(1.36, 0.02, 0.03, m.black, 0, 0.88, -2.31);            // boot lid shut line
+  const tailGeo = new THREE.CylinderGeometry(0.092, 0.092, 0.04, 14);
+  for (const x of [-0.66, -0.43, 0.43, 0.66]) {
+    const ring = new THREE.Mesh(new THREE.CylinderGeometry(0.115, 0.115, 0.03, 14), m.tailRing);
+    ring.rotation.x = Math.PI / 2;
+    ring.position.set(x, 0.78, -2.318);
+    body.add(ring);
+    const t = new THREE.Mesh(tailGeo, m.tail);
+    t.rotation.x = Math.PI / 2;
+    t.position.set(x, 0.78, -2.33);
+    body.add(t);
+    const chromeRing = new THREE.Mesh(new THREE.TorusGeometry(0.094, 0.01, 4, 14), m.chrome);
+    chromeRing.position.set(x, 0.78, -2.351);
+    body.add(chromeRing);
+  }
+  for (const s of [1, -1]) box(0.11, 0.05, 0.02, m.reverseLight, s * 0.2, 0.78, -2.33);
+  box(0.5, 0.11, 0.02, m.plate, 0, 0.56, -2.33);
+  box(1.5, 0.05, 0.1, m.trim, 0, 0.3, -2.27);                // rear valance
+  const diff = box(1.1, 0.04, 0.3, m.carbon, 0, 0.215, -2.17); // diffuser
+  diff.rotation.x = -0.12;
+  for (const x of [-0.3, 0, 0.3]) box(0.02, 0.08, 0.28, m.carbon, x, 0.24, -2.18);
+  const pipe = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.22, 10, 1, true), m.chrome);
+  pipe.rotation.x = Math.PI / 2;
+  pipe.position.set(-0.5, 0.27, -2.3);
+  body.add(pipe);
+  const pipeIn = new THREE.Mesh(new THREE.CircleGeometry(0.052, 10), m.black);
+  pipeIn.position.set(-0.5, 0.27, -2.39);
+  pipeIn.rotation.y = Math.PI;
+  body.add(pipeIn);
+
+  // Tall wing on two uprights, with endplates and a small flap.
+  for (const s of [1, -1]) {
+    const up = box(0.05, 0.22, 0.14, m.paint, s * 0.58, 1.08, -2.06);
+    up.rotation.x = -0.12;
+  }
+  const wing = box(1.56, 0.04, 0.3, m.paint, 0, 1.2, -2.1);
+  wing.rotation.x = 0.07;
+  const flap = box(1.5, 0.03, 0.08, m.paint, 0, 1.235, -2.24);
+  flap.rotation.x = -0.4;
+  for (const s of [1, -1]) box(0.02, 0.13, 0.36, m.paint, s * 0.78, 1.2, -2.12);
+
+  // Mirrors.
+  for (const s of [1, -1]) {
+    box(0.1, 0.03, 0.05, m.black, s * 0.85, 0.99, 0.74);
+    box(0.15, 0.09, 0.07, m.paint, s * 0.92, 1.01, 0.72);
+    box(0.13, 0.07, 0.005, m.chrome, s * 0.92, 1.01, 0.682);
+  }
+  return { exhausts: [new THREE.Vector3(-0.5, 0.27, -2.42)] };
+}
+
+// --- The Challenjer (2009 Challenger SRT8): a long flat bonnet with twin
+// scoops, four round lamps in a full-width black grille, a slab-sided body,
+// a fastback roof, a full-width tail-light bar, a ducktail lip, twin pipes. ---
+function challenjerDetails({ box, body, mats: m }) {
+  const roundLamp = (x, y, z, r, mat) => {
+    const l = new THREE.Mesh(new THREE.CylinderGeometry(r, r, 0.04, 14), mat);
+    l.rotation.x = Math.PI / 2; l.position.set(x, y, z); body.add(l);
+    const ring = new THREE.Mesh(new THREE.TorusGeometry(r + 0.005, 0.01, 4, 14), m.chrome);
+    ring.position.set(x, y, z + 0.02); body.add(ring);
+  };
+  // Front: deep full-width grille with the four lamps set into it.
+  box(1.64, 0.24, 0.06, m.black, 0, 0.73, 2.49);
+  box(1.64, 0.02, 0.07, m.paint, 0, 0.86, 2.49);          // body-colour brow over the grille
+  for (const s of [1, -1]) {
+    roundLamp(s * 0.66, 0.73, 2.51, 0.085, m.headlight);
+    roundLamp(s * 0.46, 0.73, 2.51, 0.07, m.headlight);
+    box(0.1, 0.03, 0.03, m.amber, s * 0.72, 0.52, 2.515);  // parking light
+    box(0.14, 0.05, 0.03, m.headlight, s * 0.62, 0.4, 2.505); // fog light
+  }
+  for (let i = -2; i <= 2; i++) box(0.012, 0.2, 0.065, m.trim, i * 0.12, 0.73, 2.495); // grille bars
+  box(1.2, 0.13, 0.05, m.black, 0, 0.42, 2.505);           // lower intake
+  box(0.42, 0.1, 0.02, m.plate, 0, 0.56, 2.52);
+  const chin = box(1.7, 0.04, 0.16, m.black, 0, 0.27, 2.45);
+  chin.rotation.x = 0.04;
+  // Twin bonnet scoops, open at the front.
+  for (const s of [1, -1]) {
+    const scoop = box(0.28, 0.05, 0.5, m.paint, s * 0.3, 0.965, 1.65);
+    scoop.rotation.x = 0.04;
+    box(0.24, 0.035, 0.02, m.black, s * 0.3, 0.975, 1.905);
+  }
+  // Sides: door handle, front side marker, a sharp body crease.
+  for (const s of [1, -1]) {
+    box(0.005, 0.025, 0.14, m.black, s * 0.945, 0.86, 0.35);
+    box(0.006, 0.035, 0.08, m.amber, s * 0.94, 0.66, 2.2);
+    box(0.006, 0.012, 4.4, m.trim, s * 0.952, 0.8, 0).visible = false; // reserved for a stripe mod
+  }
+  // Rear: a full-width tail-light bar, reverse lights in the middle, a
+  // ducktail lip, bumper, diffuser shape and two pipes.
+  box(1.66, 0.16, 0.04, m.black, 0, 0.86, -2.505);
+  for (const s of [1, -1]) box(0.68, 0.1, 0.03, m.tail, s * 0.43, 0.86, -2.52);
+  box(0.18, 0.1, 0.03, m.reverseLight, 0, 0.86, -2.52);
+  const lipR = box(1.6, 0.04, 0.14, m.paint, 0, 1.0, -2.44);
+  lipR.rotation.x = -0.25;
+  box(0.5, 0.11, 0.02, m.plate, 0, 0.62, -2.52);
+  box(1.7, 0.06, 0.1, m.trim, 0, 0.32, -2.47);
+  const ex = [];
+  for (const s of [1, -1]) {
+    const pipe = new THREE.Mesh(new THREE.CylinderGeometry(0.055, 0.055, 0.2, 10, 1, true), m.chrome);
+    pipe.rotation.x = Math.PI / 2;
+    pipe.position.set(s * 0.56, 0.3, -2.5);
+    body.add(pipe);
+    ex.push(new THREE.Vector3(s * 0.56, 0.3, -2.6));
+  }
+  // Mirrors.
+  for (const s of [1, -1]) {
+    box(0.1, 0.03, 0.05, m.black, s * 0.92, 1.06, 0.82);
+    box(0.15, 0.1, 0.07, m.paint, s * 0.99, 1.08, 0.8);
+    box(0.13, 0.08, 0.005, m.chrome, s * 0.99, 1.08, 0.762);
+  }
+  return { exhausts: ex };
+}
+
+// Each car's proportions. The driver sits at driverX (negative = right-hand
+// drive); cockpitOffset moves the whole cockpit [up, forward] to fit.
+const SHAPES = {
+  'skyliner-r34': {
+    body: [
+      [-2.30, 0.31, 0.80, 0.74, 0.80, 0.90, 0.72, 0.00],
+      [-2.22, 0.22, 0.85, 0.79, 0.87, 0.99, 0.80, 0.01],
+      [-1.75, 0.20, 0.86, 0.79, 0.88, 1.00, 0.82, 0.01],
+      [-1.00, 0.19, 0.86, 0.78, 0.86, 1.00, 0.79, 0.01],
+      [0.00, 0.19, 0.85, 0.77, 0.85, 0.99, 0.77, 0.01],
+      [0.80, 0.19, 0.85, 0.76, 0.86, 0.95, 0.80, 0.02],
+      [1.35, 0.20, 0.86, 0.74, 0.87, 0.88, 0.81, 0.035],
+      [1.95, 0.21, 0.85, 0.71, 0.86, 0.82, 0.80, 0.035],
+      [2.20, 0.22, 0.83, 0.64, 0.84, 0.75, 0.77, 0.02],
+      [2.30, 0.25, 0.78, 0.55, 0.79, 0.67, 0.71, 0.00],
+    ],
+    cabin: [
+      [-1.12, 0.995, 0.78, 1.0, 0.76],
+      [-0.55, 1.0, 0.79, 1.32, 0.63],
+      [0.25, 0.985, 0.80, 1.345, 0.65],
+      [0.90, 0.945, 0.81, 0.96, 0.79],
+    ],
+    wheelZ: [1.34, -1.33], wheelX: 0.79, tyreWidth: 0.25,
+    archR: 0.45, archTop: 0.71, flare: 0.05, // the GT-R's blistered arches
+    core: [1.30, 4.3],
+    driverX: -0.38, cockpitOffset: [0, 0], doorX: 0.77,
+    headLamp: [0.54, 0.66, 2.33], tailLamp: [0.55, 0.78, -2.44],
+    details: r34Details,
+  },
+  'challenjer-srt8': {
+    body: [
+      [-2.51, 0.34, 0.86, 0.80, 0.88, 0.98, 0.84, 0.00],
+      [-2.42, 0.25, 0.92, 0.86, 0.95, 1.02, 0.88, 0.00],
+      [-1.90, 0.22, 0.93, 0.86, 0.96, 1.03, 0.89, 0.01],
+      [-1.00, 0.21, 0.93, 0.85, 0.94, 1.03, 0.86, 0.01],
+      [0.00, 0.21, 0.93, 0.85, 0.93, 1.02, 0.84, 0.01],
+      [0.95, 0.21, 0.93, 0.85, 0.94, 0.99, 0.88, 0.02],
+      [1.60, 0.22, 0.93, 0.85, 0.95, 0.98, 0.90, 0.03],
+      [2.20, 0.24, 0.92, 0.82, 0.94, 0.96, 0.90, 0.02],
+      [2.42, 0.27, 0.90, 0.72, 0.92, 0.92, 0.88, 0.00],
+      [2.51, 0.33, 0.86, 0.62, 0.88, 0.86, 0.84, 0.00],
+    ],
+    cabin: [
+      [-1.35, 1.02, 0.86, 1.03, 0.84],
+      [-0.75, 1.03, 0.86, 1.43, 0.70],
+      [0.20, 1.02, 0.86, 1.45, 0.72],
+      [0.98, 0.99, 0.87, 1.00, 0.86],
+    ],
+    wheelZ: [1.52, -1.43], wheelX: 0.83, tyreWidth: 0.27,
+    archR: 0.47, archTop: 0.76, flare: 0.015,
+    core: [1.44, 4.8],
+    driverX: 0.4, cockpitOffset: [0.06, 0.08], doorX: 0.83,
+    headLamp: [0.56, 0.73, 2.58], tailLamp: [0.6, 0.86, -2.6],
+    details: challenjerDetails,
+  },
+};

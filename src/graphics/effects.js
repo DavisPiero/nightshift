@@ -1,6 +1,5 @@
 // Small effects, each switchable in Settings > Graphics: tyre smoke (spray
-// in the wet), exhaust flames, skid marks, sparks, moths round the lamps and
-// floating dust. Particles are square points in the low-res render, so they
+// in the wet), exhaust flames, skid marks and sparks. Particles are square points in the low-res render, so they
 // read as chunky pixels like everything else.
 
 import * as THREE from 'three';
@@ -150,10 +149,8 @@ export class Effects {
     this.smoke = new Particles(500, false);
     this.fire = new Particles(160, true);
     this.sparks = new Particles(260, true);
-    this.dust = new Particles(420, true);
-    this.moths = new Particles(64, true);
     this.skids = new SkidMarks();
-    scene.add(this.smoke.points, this.fire.points, this.sparks.points, this.dust.points, this.moths.points, this.skids.mesh);
+    scene.add(this.smoke.points, this.fire.points, this.sparks.points, this.skids.mesh);
     this.onPop = null;
     this.popTimer = 0;
     this.popGap = 0;
@@ -161,7 +158,6 @@ export class Effects {
     this.lastShift = 0;
     this.smokeAcc = 0;
     this.time = 0;
-    this.dustSeeded = false;
   }
 
   setEnabled(fx) {
@@ -169,8 +165,6 @@ export class Effects {
     this.smoke.points.visible = true; // also carries rain spray
     this.fire.points.visible = !!fx.flames;
     this.sparks.points.visible = !!fx.sparks;
-    this.dust.points.visible = !!fx.dust;
-    this.moths.points.visible = !!fx.moths;
     this.skids.mesh.visible = !!fx.skids;
   }
 
@@ -197,7 +191,7 @@ export class Effects {
 
   update(dt, v, model, camera, nearLamps, weather) {
     const scale = this.scaleFor(camera);
-    for (const p of [this.smoke, this.fire, this.sparks, this.dust, this.moths]) {
+    for (const p of [this.smoke, this.fire, this.sparks]) {
       p.uniforms.scale.value = scale;
       p.uniforms.fogNear.value = this.scene.fog.near;
       p.uniforms.fogFar.value = this.scene.fog.far;
@@ -238,7 +232,7 @@ export class Effects {
 
     // Exhaust pops: lifting off at high revs, and on fast upshifts.
     this.popTimer -= dt; this.popGap -= dt;
-    if (this.lastThrottle > 0.6 && v.throttle < 0.25 && v.rpm > 4500) this.popTimer = 0.35 + Math.random() * 0.4;
+    if (this.lastThrottle > 0.6 && v.throttle < 0.25 && v.rpm > 4500) this.popTimer = (0.35 + Math.random() * 0.4) * (v.spec.pops ?? 1);
     if (v.gearbox.shiftCount !== this.lastShift) {
       if (v.gearbox.lastShift > 0 && v.rpm > 5200 && this.lastThrottle > 0.8) this.popTimer = Math.max(this.popTimer, 0.12);
       this.lastShift = v.gearbox.shiftCount;
@@ -248,8 +242,8 @@ export class Effects {
       this.popGap = 0.05 + Math.random() * 0.12;
       const strength = 0.5 + Math.random() * 0.5;
       this.onPop?.(strength);
-      if (this.on.flames) {
-        _v.copy(model.exhaust);
+      if (this.on.flames) for (const pipe of model.exhausts) {
+        _v.copy(pipe);
         model.body.localToWorld(_v);
         _w.set(Math.sin(v.heading), 0, Math.cos(v.heading));
         for (let i = 0; i < 9; i++) {
@@ -262,57 +256,6 @@ export class Effects {
     }
     this.fire.update(dt, 0, 2);
     this.sparks.update(dt, 9, 0.6);
-
-    // Moths: little pale specks circling the nearest lamp heads.
-    if (this.on.moths) {
-      const m = this.moths;
-      for (let i = 0; i < m.max; i++) {
-        const lamp = nearLamps[(i / 8) | 0]?.[0];
-        if (!lamp) { m.size[i] = 0; continue; }
-        const t = this.time * (1.4 + (i % 5) * 0.37) + i * 2.1;
-        const r = 0.35 + (i % 3) * 0.25 + Math.sin(t * 2.3) * 0.12;
-        m.pos[i * 3] = lamp.x + Math.cos(t) * r;
-        m.pos[i * 3 + 1] = lamp.y + 0.1 + Math.sin(t * 1.7) * 0.35;
-        m.pos[i * 3 + 2] = lamp.z + Math.sin(t * 1.3) * r;
-        m.size[i] = 0.06;
-        m.tint.set([1, 0.85, 0.6, 0.55 + 0.45 * Math.sin(t * 7) ** 2], i * 4);
-      }
-      m.upload();
-    }
-
-    // Floating dust: specks drifting round the camera, warmer near lamps.
-    if (this.on.dust) {
-      const d = this.dust, R = 24;
-      const cx = camera.position.x, cy = camera.position.y, cz = camera.position.z;
-      if (!this.dustSeeded) {
-        for (let i = 0; i < d.max; i++) {
-          d.pos.set([cx + (Math.random() - 0.5) * R * 2, Math.random() * 9, cz + (Math.random() - 0.5) * R * 2], i * 3);
-          d.vel.set([(Math.random() - 0.5) * 0.3, (Math.random() - 0.5) * 0.15, (Math.random() - 0.5) * 0.3], i * 3);
-        }
-        this.dustSeeded = true;
-      }
-      for (let i = 0; i < d.max; i++) {
-        const j = i * 3;
-        d.pos[j] += (d.vel[j] + Math.sin(this.time * 0.3 + i) * 0.1) * dt;
-        d.pos[j + 1] += d.vel[j + 1] * dt;
-        d.pos[j + 2] += d.vel[j + 2] * dt;
-        // Wrap round the camera so there are always specks nearby.
-        if (d.pos[j] - cx > R) d.pos[j] -= R * 2; else if (cx - d.pos[j] > R) d.pos[j] += R * 2;
-        if (d.pos[j + 2] - cz > R) d.pos[j + 2] -= R * 2; else if (cz - d.pos[j + 2] > R) d.pos[j + 2] += R * 2;
-        if (d.pos[j + 1] < 0.1) d.pos[j + 1] = 9; else if (d.pos[j + 1] > 9) d.pos[j + 1] = 0.1;
-        // Lit by the nearest lamp: brighter under it.
-        let lit = 0.12;
-        for (let k = 0; k < 3 && nearLamps[k]; k++) {
-          const L = nearLamps[k][0];
-          const q = ((d.pos[j] - L.x) ** 2 + (d.pos[j + 2] - L.z) ** 2) / 40;
-          lit = Math.max(lit, Math.exp(-q) * (d.pos[j + 1] < L.y ? 1 : 0.3));
-        }
-        d.size[i] = i % 7 === 0 ? 0.09 : 0.045;
-        d.tint.set([1, 0.78, 0.5, (wet ? 0.18 : 0.35) * lit * (0.6 + 0.4 * Math.sin(this.time * 2 + i))], i * 4);
-      }
-      d.upload();
-      void cy;
-    }
   }
 
   // Point size in render pixels for 1 m at 1 m away.

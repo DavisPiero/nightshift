@@ -17,7 +17,10 @@
 // Browsers only allow sound after a tap or key press, so start() is called
 // from the first one.
 
-const CYLINDERS = 6;
+// Each car's engine has a profile (spec.sound): cylinders, how lumpy it
+// burbles (a cross-plane V8 lopes, a straight six is smooth), how dark it is,
+// how much sub-bass and how much top-end rasp.
+const DEFAULT_SOUND = { cylinders: 6, burble: 0.2, pitch: 1, sub: 1, rasp: 1 };
 
 function noiseBuffer(ctx, seconds = 2) {
   const b = ctx.createBuffer(1, ctx.sampleRate * seconds, ctx.sampleRate);
@@ -44,8 +47,10 @@ function exhaustWave(ctx, amps) {
 }
 
 class EngineVoice {
-  constructor(ctx, out, noise) {
+  constructor(ctx, out, noise, sound = DEFAULT_SOUND) {
     this.ctx = ctx;
+    this.sound = { ...DEFAULT_SOUND, ...sound };
+    const v8 = this.sound.cylinders >= 8;
     const t = ctx.currentTime;
     this.out = ctx.createGain();
     this.out.gain.value = 0;
@@ -69,7 +74,12 @@ class EngineVoice {
     this.lfo.connect(this.lfoDepth).connect(this.lump.gain);
     this.lfo.start(t);
 
-    const voices = [
+    const voices = v8 ? [
+      // V8 low voice: a strong half order (the lope) under a fat fundamental.
+      [1.0, 0.8, 0.75, 0.3, 0.35, 0.12, 0.15, 0.05, 0.06, 0.03],
+      // V8 high voice: a hoarse, less sharp top end than the six.
+      [0.7, 1.0, 0.6, 0.5, 0.35, 0.28, 0.2, 0.14, 0.1, 0.08],
+    ] : [
       // Low-rpm voice: heavy fundamental and half order, little top end.
       [1.0, 0.95, 0.55, 0.35, 0.18, 0.2, 0.08, 0.1, 0.04, 0.05],
       // High-rpm voice: more mid harmonics for a harder edge.
@@ -109,15 +119,23 @@ class EngineVoice {
     this.intake.connect(this.intakeFilter).connect(this.intakeGain).connect(this.out);
     this.intake.start(t);
 
+    // Turbo whistle (rises with boost) and supercharger whine.
+    this.whistle = ctx.createOscillator();
+    this.whistle.type = 'sine';
+    this.whistleGain = ctx.createGain(); this.whistleGain.gain.value = 0;
+    this.whistle.connect(this.whistleGain).connect(this.out);
+    this.whistle.start(t);
+
     this.noise = noise;
     this.lastThrottle = 0;
     this.lastRpm = 0;
-    this.popCooldown = 0;
+    this.dip = 0;          // > 0 just after a gear change
   }
 
-  update(dt, { rpm, throttle, load, redline, limiter }) {
+  update(dt, { rpm, throttle, load, redline, limiter, boost = 0, turbo = false, whine = false, loud = 1 }) {
     const ctx = this.ctx, t = ctx.currentTime, k = 0.03;
-    const firing = rpm / 60 * CYLINDERS / 2;
+    const S = this.sound;
+    const firing = rpm / 60 * S.cylinders / 2;
     const base = firing / 2; // the waves are built on half the firing frequency
     const r = Math.min(1, Math.max(0, (rpm - 900) / (redline - 900)));
     const on = Math.max(0, load);
@@ -126,7 +144,9 @@ class EngineVoice {
     const [lo, hi] = this.layers;
     const loMix = Math.cos(r * Math.PI / 2), hiMix = Math.sin(r * Math.PI / 2);
     const level = 0.22 + 0.5 * throttle + 0.15 * r;
-    for (const [L, mix, open] of [[lo, loMix, 5], [hi, hiMix, 7]]) {
+    for (const [L, mix0, open0] of [[lo, loMix, 5], [hi, hiMix, 7]]) {
+      const mix = L === hi ? mix0 * S.rasp : mix0;
+      const open = open0 * S.pitch;
       L.osc.frequency.setTargetAtTime(base, t, 0.012);
       L.osc2.frequency.setTargetAtTime(base, t, 0.012);
       // Filter opens with throttle: closed and muffled when coasting. The fixed
@@ -134,16 +154,32 @@ class EngineVoice {
       L.filter.frequency.setTargetAtTime(base * (2.2 + open * (0.25 + 0.75 * throttle)) + 260, t, k);
       L.gain.gain.setTargetAtTime(mix * level, t, k);
     }
-    this.lfo.frequency.setTargetAtTime(rpm / 60, t, 0.02);
-    this.lfoDepth.gain.setTargetAtTime(0.32 - 0.22 * r, t, k);
+    // The lope: a V8 pulses once every two turns of the crank.
+    this.lfo.frequency.setTargetAtTime(rpm / 60 / (S.cylinders >= 8 ? 2 : 1), t, 0.02);
+    this.lfoDepth.gain.setTargetAtTime((0.32 - 0.22 * r) * (0.6 + S.burble), t, k);
     this.sub.frequency.setTargetAtTime(base, t, 0.012);
-    this.subGain.gain.setTargetAtTime(0.18 + 0.32 * on, t, k);
+    this.subGain.gain.setTargetAtTime((0.18 + 0.32 * on) * S.sub, t, k);
     this.intakeFilter.frequency.setTargetAtTime(firing * 3.2 + 300, t, k);
     this.intakeGain.gain.setTargetAtTime(throttle * (0.05 + 0.22 * r), t, k);
-    this.out.gain.setTargetAtTime(limiter ? 0.6 : 0.9, t, 0.01);
+    // A gear change dips the note for a moment; this is applied here
+    // (rather than scheduled once) so the steady level cannot override it.
+    this.dip = Math.max(0, this.dip - dt / 0.2);
+    this.out.gain.setTargetAtTime((limiter ? 0.6 : 0.9) * loud * (1 - 0.65 * this.dip), t, 0.01);
 
-    // Lift off at high rpm: blow-off valve.
-    if (this.lastThrottle > 0.7 && throttle < 0.3 && rpm > 4000) this.blowOff(r);
+    // Turbo: a whistle that rises with boost; a supercharger whines with revs.
+    if (turbo) {
+      this.whistle.frequency.setTargetAtTime(1600 + 3800 * boost, t, 0.05);
+      this.whistleGain.gain.setTargetAtTime(boost * throttle * 0.035, t, 0.05);
+    } else if (whine) {
+      this.whistle.frequency.setTargetAtTime(rpm / 60 * 9, t, 0.02);
+      this.whistleGain.gain.setTargetAtTime(throttle * (0.01 + 0.03 * r), t, 0.05);
+    } else this.whistleGain.gain.setTargetAtTime(0, t, 0.05);
+
+    // Lift off on boost: the blow-off valve and the chatter of turbo flutter.
+    if (turbo && this.lastThrottle > 0.7 && throttle < 0.3 && boost > 0.4) {
+      this.blowOff(r);
+      this.flutter(boost);
+    }
     this.lastThrottle = throttle;
     this.lastRpm = rpm;
   }
@@ -169,13 +205,27 @@ class EngineVoice {
   }
   blowOff(r) { this.burst(0.45, 'bandpass', 2600, 2.5, 0.12 + r * 0.1, 900); }
 
-  // A short drop in level as the clutch goes in.
-  shift() {
-    const g = this.out.gain, t = this.ctx.currentTime;
-    g.cancelScheduledValues(t);
-    g.setValueAtTime(g.value, t);
-    g.linearRampToValueAtTime(0.35, t + 0.04);
-    g.linearRampToValueAtTime(0.9, t + 0.2);
+  // Turbo flutter: a fast chatter of air as the throttle shuts on boost.
+  flutter(boost) {
+    const ctx = this.ctx, t = ctx.currentTime, len = 0.35 + boost * 0.25;
+    const src = ctx.createBufferSource(); src.buffer = this.noise;
+    const f = ctx.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = 1100; f.Q.value = 1.2;
+    const g = ctx.createGain(); g.gain.value = 0;
+    const rate = 17 + Math.random() * 5;
+    for (let i = 0; i < len * rate; i++) {
+      const at = t + i / rate, a = 0.22 * boost * (1 - i / (len * rate));
+      g.gain.setValueAtTime(a, at);
+      g.gain.setValueAtTime(a * 0.15, at + 0.5 / rate);
+    }
+    g.gain.setValueAtTime(0, t + len);
+    src.connect(f).connect(g).connect(this.out);
+    src.start(t, Math.random()); src.stop(t + len + 0.05);
+  }
+
+  // A gear change: the note dips and the gearbox clunks.
+  shift(up) {
+    this.dip = 1;
+    this.burst(0.07, 'lowpass', 180, 0.7, up ? 0.35 : 0.25);
   }
 }
 
@@ -205,7 +255,7 @@ export class GameAudio {
     this.engineLevel = ctx.createGain(); // lowered behind the menus
     this.engineLevel.connect(this.engineBus);
     this.noise = noiseBuffer(ctx);
-    this.engine = new EngineVoice(ctx, this.engineLevel, this.noise);
+    this.engine = new EngineVoice(ctx, this.engineLevel, this.noise, this.sound);
 
     // Tyre squeal: two resonant noise bands.
     const sq = ctx.createBufferSource(); sq.buffer = this.noise; sq.loop = true;
@@ -249,6 +299,16 @@ export class GameAudio {
     this.applyVolumes();
   }
 
+  // Pick the engine sound for a car (rebuilds the engine voice if sound is running).
+  setEngine(spec) {
+    this.sound = spec.sound;
+    if (!this.ctx || !this.engine) return;
+    const old = this.engine;
+    old.out.gain.setTargetAtTime(0, this.ctx.currentTime, 0.05);
+    setTimeout(() => old.out.disconnect(), 300);
+    this.engine = new EngineVoice(this.ctx, this.engineLevel, this.noise, this.sound);
+  }
+
   setVolumes(v) { this.volumes = { ...this.volumes, ...v }; this.applyVolumes(); }
   setMuted(m) { this.muted = m; this.applyVolumes(); }
 
@@ -272,13 +332,16 @@ export class GameAudio {
     this.engine.update(dt, {
       rpm: v.rpm, throttle: v.throttle, load: v.load,
       redline: v.spec.redline, limiter: v.limiter,
+      boost: v.boost, turbo: !!v.spec.turbo, whine: !!v.spec.whine, loud: v.spec.exhaustVolume ?? 1,
     });
     if (v.gearbox.shiftCount !== this._shifts) {
-      if (this._shifts !== undefined) this.engine.shift();
+      if (this._shifts !== undefined) this.engine.shift(v.gearbox.lastShift > 0);
       this._shifts = v.gearbox.shiftCount;
     }
     const slide = Math.max(v.rearSlide, v.frontSlide * 0.7);
-    const squeal = v.speed > 4 ? Math.min(1, slide) * Math.min(1, v.speed / 15) : 0;
+    // Squeal when sliding, and when braking right at the limit at speed.
+    const hardStop = v.brakeGrip > 0.85 && v.speed > 12 ? (v.brakeGrip - 0.85) * 4 : 0;
+    const squeal = v.speed > 4 ? Math.min(1, Math.max(slide, hardStop)) * Math.min(1, v.speed / 15) : 0;
     this.squealGain.gain.setTargetAtTime(squeal * (wet ? 0.07 : 0.22) * level, t, 0.05);
     this.hissGain.gain.setTargetAtTime(wet ? Math.min(1, v.speed / 30) * 0.12 * level : 0, t, 0.1);
     this.rainGain.gain.setTargetAtTime(wet ? 0.16 : 0, t, 0.5);

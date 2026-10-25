@@ -32,20 +32,20 @@ way they are, HANDOFF.md for how the last session ended. BRIEF.md is the origina
 - Smoke test (headless Chrome, computer/clear then iPad/rain; a bot drives for 20 s through
   both cameras, then the bench): `./tools/smoke.sh`
 - Driving bench (physics only, in Node: 0-100, braking, coasting, body lean, spins with/without
-  assists, bot laps in each weather, wall hits): `node tools/drive-bench.mjs`. Run it after any
+  assists, bot laps in each weather and car, ratings and parts, wall hits): `node tools/drive-bench.mjs`. Run it after any
   physics or car-spec change.
 
 ## Code map
 - `src/main.js` start-up, game states (menu, driving, paused), smoke-test bot
 - `src/core/` fixed-step loop, graphics presets, effect list and URL switches
-- `src/input/` the shared control state, keyboard (rebindable), touch (joystick, buttons, layout editor)
+- `src/input/` the shared control state, keyboard (rebindable), touch (joystick, buttons, layout editor), gamepad
 - `src/physics/` car physics (`vehicle.js`), gearbox, wall collisions, weather grip table
-- `src/vehicles/` car list with specs (`cars.js`), the car model built in code, measured stats
+- `src/vehicles/` car list with specs (`cars.js`), parts (`parts.js`), the final-numbers pipeline (`tuning.js`), ratings (`stats.js`), the car models built in code (one shape per car in `car-model.js`)
 - `src/world/` track centre-line maths, the track list and points, scenery, weather visuals
 - `src/graphics/` low-res renderer with colour grade and dither, painted textures, effects (particles, skid marks)
 - `src/cameras/` chase and cockpit cameras, camera shake
 - `src/audio/` engine, tyres, wind, impacts, exhaust pops, rain and night ambience (all synthesised)
-- `src/ui/` screens (menus, garage, pause), settings tabs, HUD rev counter and debug panel
+- `src/ui/` screens (menus, garage, pause), settings tabs, HUD rev counter, debug panel (F3), Feel panel (F4)
 - `src/save/` versioned localStorage save (version 2; migrates version 1)
 - `tools/` smoke test and driving bench
 

@@ -9,7 +9,7 @@
 import * as THREE from 'three';
 import { Tex } from '../graphics/textures.js';
 import { buildCar, bakeStatic } from '../vehicles/car-model.js';
-import { SKYLINER_R34 } from '../vehicles/cars.js';
+import { SKYLINER_R34, CHALLENJER_SRT8 } from '../vehicles/cars.js';
 
 function rng(seed) {
   let s = seed >>> 0;
@@ -317,7 +317,7 @@ export function buildTrackScene(track, def) {
     slab.rotation.x = -Math.PI / 2;
     slab.position.set(0, 0.015, -3);
     st.add(slab);
-    lamps.push(new THREE.Vector3(c1.x, 4.6, c1.z)); // moths gather under the canopy too
+    lamps.push(new THREE.Vector3(c1.x, 4.6, c1.z)); // a real light under the canopy when close
   }
 
   // Container yard by the harbour, outside the long sweeper.
@@ -513,7 +513,7 @@ export function buildTrackScene(track, def) {
   const parkedColours = [0x40484e, 0x6a2620, 0x8c8a80, 0x23303a, 0x4a4436, 0x5a5e60];
   const parked = [];
   const park = (x, z, ry, n) => {
-    const car = buildCar(SKYLINER_R34, parkedColours[n % parkedColours.length], { simple: true });
+    const car = buildCar(n % 3 === 1 ? CHALLENJER_SRT8 : SKYLINER_R34, parkedColours[n % parkedColours.length], { simple: true });
     car.root.position.set(x, 0, z);
     car.root.rotation.y = ry;
     parked.push(car.root);
