@@ -8,7 +8,10 @@ const damp = (k, dt) => 1 - Math.exp(-k * dt);
 const _v = new THREE.Vector3();
 const _t = new THREE.Vector3();
 
-// Shared options from Settings.
+// Shared options from Settings (distance, fov, shake) and the Feel panel
+// (speedFov: extra degrees at speed, gLag: how much the camera trails the car
+// under acceleration and closes in under braking, shakeScale).
+export const CAMERA_FEEL = { speedFov: 16, gLag: 1, shakeScale: 1 };
 const OPTIONS = { distance: 1, fov: 62, shake: true };
 
 // A little shake: road buzz that grows with speed, plus a kick on wall hits.
@@ -19,7 +22,7 @@ class Shake {
     this.t += dt;
     this.kick = Math.max(0, this.kick - dt * 3);
     if (!OPTIONS.shake) return [0, 0];
-    const buzz = Math.min(1, v.speed / 70) ** 2 * 0.012 + v.rearSlide * 0.008 + this.kick * 0.09;
+    const buzz = (Math.min(1, v.speed / 70) ** 2 * 0.016 + v.rearSlide * 0.01 + this.kick * 0.09) * CAMERA_FEEL.shakeScale;
     return [
       (Math.sin(this.t * 37.1) + Math.sin(this.t * 23.3)) * 0.5 * buzz * scale,
       (Math.sin(this.t * 41.7) + Math.sin(this.t * 29.9)) * 0.5 * buzz * scale,
@@ -53,7 +56,11 @@ class ChaseCamera {
     this.yaw += snap ? d : d * damp(4.5, dt);
 
     const speedK = Math.min(1, v.speed / 60);
-    const dist = (this.distance + speedK * 0.6) * OPTIONS.distance;
+    // Trail the car a little under power and close in under braking, so you
+    // feel the shove and the stop. Eased, so it never jerks.
+    const lagTarget = Math.max(-0.9, Math.min(0.9, v.aLong * 0.09)) * CAMERA_FEEL.gLag;
+    this.lag = snap ? 0 : (this.lag ?? 0) + (lagTarget - (this.lag ?? 0)) * damp(3, dt);
+    const dist = (this.distance + speedK * 0.6 + this.lag) * OPTIONS.distance;
     const tx = v.x - Math.sin(this.yaw) * dist;
     const tz = v.z - Math.cos(this.yaw) * dist;
     const ty = (this.height + speedK * 0.2) * (0.6 + 0.4 * OPTIONS.distance);
@@ -68,7 +75,7 @@ class ChaseCamera {
     cam.position.y += sy;
     cam.lookAt(v.x + Math.sin(v.heading) * 2.5 + sx, 0.9, v.z + Math.cos(v.heading) * 2.5);
     // Wider view at speed, eased so it never jumps.
-    const fov = OPTIONS.fov + speedK * 12;
+    const fov = OPTIONS.fov + speedK * speedK * CAMERA_FEEL.speedFov;
     this.fov += (fov - this.fov) * damp(2, dt);
     cam.fov = this.fov;
     cam.near = 0.1;

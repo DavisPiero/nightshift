@@ -10,6 +10,9 @@ import { TrackPath } from '../src/world/track-path.js';
 import { STARTER_TRACK as TEST_ROAD } from '../src/world/starter-track.js';
 import { keepOnTrack } from '../src/physics/walls.js';
 import { applyWeather } from '../src/physics/weather.js';
+import { CHALLENJER_SRT8 } from '../src/vehicles/cars.js';
+import { carStats } from '../src/vehicles/stats.js';
+import { applyParts } from '../src/vehicles/parts.js';
 
 const DT = 1 / 120;
 const NO_ASSISTS = { steering: false, stability: false, drift: false };
@@ -79,11 +82,16 @@ check(to100.t > 4.5 && to100.t < 7.5, '0-100 should be 4.5-7.5 s');
 {
   // Body lean in a hard corner, for looks: small, never enough to touch the road.
   const { v } = launch(100);
-  let roll = 0, pitch = 0;
+  let roll = 0, dive = 0, squat = 0;
   for (let t = 0; t < 5; t += DT) { v.step(DT, controls({ steer: 0.6, throttle: 1 })); roll = Math.max(roll, Math.abs(v.roll)); }
-  for (let t = 0; t < 2; t += DT) { v.step(DT, controls({ brake: 1 })); pitch = Math.max(pitch, Math.abs(v.pitch)); }
-  console.log(`  body lean: roll ${(roll * 180 / Math.PI).toFixed(1)}° in a hard corner, pitch ${(pitch * 180 / Math.PI).toFixed(1)}° braking`);
-  check(roll < 0.065 && pitch < 0.05, 'roll under ~3.5° and pitch under ~3°');
+  for (let t = 0; t < 2; t += DT) { v.step(DT, controls({ brake: 1 })); dive = Math.max(dive, v.pitch); }
+  const l = new Vehicle(CAR);
+  for (let t = 0; t < 1.5; t += DT) { l.step(DT, controls({ throttle: 1 })); squat = Math.max(squat, -l.pitch); }
+  const d = (r) => (r * 180 / Math.PI).toFixed(1);
+  console.log(`  body: roll ${d(roll)}° in a hard corner, dive ${d(dive)}° braking, squat ${d(squat)}° launching`);
+  check(roll < 0.065, 'roll under ~3.5°');
+  check(dive > 0.035 && dive < 0.07, 'brake dive should be visible: 2-4°');
+  check(squat > 0.012 && squat < 0.05, 'launch squat should be visible: 0.7-3°');
 }
 
 {
@@ -113,9 +121,9 @@ for (const [name, speed, script, secs] of tests) {
 }
 
 console.log('Lap of ' + TEST_ROAD.name);
-function botLap(assists, weather = 'clear') {
+function botLap(assists, weather = 'clear', car = CAR) {
   const track = new TrackPath(TEST_ROAD);
-  const v = new Vehicle(CAR, assists);
+  const v = new Vehicle(car, assists);
   const grip = applyWeather(v, weather).grip;
   const s0 = TEST_ROAD.start;
   v.reset(track.x[s0], track.z[s0], track.headingAt(s0));
@@ -128,7 +136,7 @@ function botLap(assists, weather = 'clear') {
     const ang = Math.atan2(dx * fz - dz * fx, dx * fx + dz * fz);
     let kmax = 0;
     for (let k = 0; k < 20 + v.speed * v.speed / 14; k += 2) kmax = Math.max(kmax, Math.abs(track.curvature[track.wrap(hint + k)]));
-    const vmax = Math.sqrt(CAR.tireGrip * grip * 9.81 * 0.85 / Math.max(kmax, 1e-4));
+    const vmax = Math.sqrt(car.tireGrip * grip * 9.81 * 0.85 / Math.max(kmax, 1e-4));
     const c = controls({
       steer: Math.max(-1, Math.min(1, -ang * 2.2)),
       throttle: v.speed < vmax - 1 ? 1 : 0,
@@ -170,6 +178,27 @@ console.log('Weather');
     if (id === 'rain') check(d > 45, 'braking in the rain should take longer than in the dry');
     check(lap.done && lap.hits === 0, `bot should lap cleanly in ${id} with assists on`);
   }
+}
+
+console.log('Second car and ratings');
+{
+  const lap = botLap(DEFAULT_ASSISTS, 'clear', CHALLENJER_SRT8);
+  console.log(`  ${CHALLENJER_SRT8.model} bot lap: ${lap.done ? lap.t.toFixed(1) + ' s' : 'did not finish'}, wall hits ${lap.hits}, max slide ${deg(lap.maxBeta)}°`);
+  check(lap.done && lap.hits === 0, 'the Challenjer should lap cleanly with assists on');
+  const fmt = (r) => `${r.cls} ${r.pi} (speed ${r.stats.speed}, accel ${r.stats.accel}, handling ${r.stats.handling}, braking ${r.stats.braking})`;
+  const r34 = carStats(CAR), ch = carStats(CHALLENJER_SRT8);
+  console.log(`  ratings: ${CAR.model} ${fmt(r34)}; ${CHALLENJER_SRT8.model} ${fmt(ch)}`);
+  check(r34.cls === 'A' && ch.cls === 'B', 'stock classes: the R34 is A, the Challenjer is B');
+  // Every part must move the stats the way its description says.
+  const with_ = (parts, car = CAR) => carStats(applyParts(car, parts)).stats;
+  const up = (a, b, k) => a[k] > b[k];
+  const base = r34.stats;
+  check(up(with_({ induction: 'big' }), base, 'accel'), 'a big turbo should raise acceleration');
+  check(up(with_({ tyres: 'semi' }), base, 'handling'), 'semi-slicks should raise handling');
+  check(up(with_({ brakes: 'race' }), base, 'braking'), 'a big brake kit should raise braking');
+  check(up(with_({ gearing: 'short' }), base, 'accel') && up(base, with_({ gearing: 'short' }), 'speed'), 'short gears: more acceleration, less top speed');
+  check(up(with_({ aero: 'gt' }), base, 'handling') && up(base, with_({ aero: 'gt' }), 'speed'), 'a GT wing: more handling, less top speed');
+  check(up(with_({ induction: 'super' }, CHALLENJER_SRT8), ch.stats, 'accel'), 'a supercharger should raise acceleration');
 }
 
 console.log('Walls');

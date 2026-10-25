@@ -44,17 +44,23 @@ function gripCurve(alpha, peak, slide) {
 
 export class Vehicle {
   constructor(spec, assists = DEFAULT_ASSISTS) {
-    this.spec = spec;
+    this.setSpec(spec);
     this.assists = { ...assists };
     this.gearbox = new Gearbox(spec);
     // Road surface, set by the weather: grip multiplies tyre friction, slide
     // is the share of grip left when fully sideways (wet roads let go sooner).
     this.surface = { grip: 1, slide: 1 };
+    this.reset(0, 0, 0);
+  }
+
+  // Swap in a changed spec (parts, Feel panel) without losing position or speed.
+  setSpec(spec) {
+    this.spec = spec;
+    if (this.gearbox) this.gearbox.spec = spec;
     const L = spec.wheelbase;
     this.cgToFront = L * (1 - spec.frontWeight);
     this.cgToRear = L * spec.frontWeight;
     this.inertia = spec.mass * (L * L + 4 * spec.halfWidth * spec.halfWidth) / 12 * 1.6 * spec.yawInertiaScale;
-    this.reset(0, 0, 0);
   }
 
   reset(x, z, heading) {
@@ -64,6 +70,7 @@ export class Vehicle {
     this.throttle = 0;
     this.rpm = this.spec.idleRpm;
     this.spin = 0;            // rear wheelspin, 0..1
+    this.boost = 0;           // turbo boost, 0..1
     this.aLong = 0; this.aLat = 0;
     this.frontWheelAngle = 0; this.rearWheelAngle = 0;
     this.pitch = 0; this.pitchVel = 0; this.roll = 0; this.rollVel = 0;
@@ -129,18 +136,31 @@ export class Vehicle {
     const L = s.wheelbase;
     const a = this.cgToFront, b = this.cgToRear;
     const transfer = s.mass * clamp(this.aLong, -12, 12) * s.cgHeight / L;
-    const nFront = Math.max(0.2 * s.mass * G, s.mass * G * b / L - transfer);
-    const nRear = Math.max(0.2 * s.mass * G, s.mass * G * a / L + transfer);
+    // Wings and body kits press the car down at speed (s.downforce is N per (m/s)²).
+    const df = (s.downforce || 0) * speed * speed;
+    const nFront = Math.max(0.2 * s.mass * G, s.mass * G * b / L - transfer) + df * 0.4;
+    const nRear = Math.max(0.2 * s.mass * G, s.mass * G * a / L + transfer) + df * 0.6;
 
-    // Engine and drive force at the rear wheels.
+    // Turbo boost builds with revs and throttle, and takes a moment to come
+    // in (lag). Without boost the engine makes `share` less torque.
+    if (s.turbo) {
+      const tb = s.turbo;
+      const want = this.throttle * clamp((this.rpm - tb.spoolRpm) / 1300, 0, 1);
+      this.boost += (want - this.boost) * Math.min(1, dt / (want > this.boost ? tb.lag : 0.12));
+    } else this.boost = 0;
+    const boostFactor = s.turbo ? 1 - s.turbo.share * (1 - this.boost) : 1;
+
+    // Engine and drive force at the driven wheels.
     const ratio = Math.abs(gb.ratio()) * s.finalDrive;
     let coupled = Math.abs(vLong) / s.wheelRadius * ratio * RPM_PER_RADS;
     let driveForce = 0;
     let engineTorque = 0;
     if (ratio > 0 && !gb.shifting) {
       const rpmForTorque = Math.max(coupled, s.idleRpm);
-      this.limiter = this.rpm >= s.limiterRpm;
-      const full = this.limiter ? 0 : torqueAt(s.torqueCurve, rpmForTorque);
+      // The limiter follows the wheels, not wheelspin flare: spinning the
+      // tyres must never cut the power (more power would launch slower).
+      this.limiter = coupled >= s.limiterRpm || (this.rpm >= s.limiterRpm && this.spin < 0.2);
+      const full = this.limiter ? 0 : torqueAt(s.torqueCurve, rpmForTorque) * (s.torqueScale ?? 1) * boostFactor;
       const drag = s.engineBraking * clamp(rpmForTorque / s.redline, 0, 1);
       engineTorque = this.throttle * full - (1 - this.throttle) * drag;
       // Pull away gently from a standstill instead of stalling.
@@ -154,6 +174,13 @@ export class Vehicle {
     const muR = s.tireGrip * s.rearGripScale * this.surface.grip;
     const slideGrip = s.slideGrip * this.surface.slide;
     const rearCap = muR * nRear;
+    const frontCap = muF * nFront;
+
+    // Four-wheel drive sends part of the push to the front tyres.
+    const fShare = s.drivetrain === 'awd' ? (s.frontTorqueShare ?? 0.35) : 0;
+    let frontDrive = driveForce * fShare;
+    driveForce -= frontDrive;
+    if (Math.abs(frontDrive) > frontCap * 0.9) frontDrive = Math.sign(frontDrive) * frontCap * 0.9;
 
     // Wheelspin when the engine pushes harder than the rear tyres can take.
     let excess = 0;
@@ -174,7 +201,9 @@ export class Vehicle {
     if (c.handbrake && Math.abs(vLong) > 0.05) brakeRear += s.handbrakeForce;
 
     let fRearLong = driveForce - dir * brakeRear;
-    const fFrontLong = -dir * brakeFront;
+    const fFrontLong = frontDrive - dir * brakeFront;
+    // Front tyres pulling the car have less left for turning.
+    const frontLatShare = frontDrive ? Math.sqrt(Math.max(0.3, 1 - (frontDrive / frontCap) ** 2)) : 1;
 
     // Rear lateral grip shrinks while the tyres are busy pushing or locked.
     let rearLatCap = Math.sqrt(Math.max(0, rearCap * rearCap - fRearLong * fRearLong));
@@ -193,9 +222,11 @@ export class Vehicle {
     // (the crawl blend below does that); their slip angle is not real, so
     // fade their sideways force out instead of letting it drag the car.
     const crawlTyre = clamp(1 - speed / 4, 0, 1);
-    const latF = -muF * nFront * gripCurve(alphaF, s.slipPeak, slideGrip) * (1 - crawlTyre * 0.85);
+    const latF = -muF * nFront * gripCurve(alphaF, s.slipPeak, slideGrip) * (1 - crawlTyre * 0.85) * frontLatShare;
     const latR = -rearLatCap * gripCurve(alphaR, s.slipPeak, slideGrip);
     this.frontSlide = clamp(Math.abs(alphaF) / s.slipPeak - 1, 0, 1);
+    // How close the brakes are to locking (for the squeal of a hard stop).
+    this.brakeGrip = brake > 0 ? clamp(brakeFront / (muF * nFront * 0.95), 0, 1) : 0;
     this.rearSlide = clamp(Math.max(Math.abs(alphaR) / s.slipPeak - 0.8, this.spin, c.handbrake && speed > 3 ? 0.7 : 0), 0, 1);
 
     // Air and rolling resistance.
@@ -298,7 +329,14 @@ export class Vehicle {
     // Body pitch and roll on stiff springs, for looks. Capped so the body
     // never tips far enough to touch the road.
     const kS = s.suspensionStiffness, kD = s.suspensionDamping;
-    const pitchTarget = clamp(-this.aLong * s.pitchScale, -s.maxPitch, s.maxPitch);
+    // The nose dives under braking and squats a little less under power.
+    const squat = this.aLong > 0 ? (s.squatShare ?? 0.6) : 1;
+    const pitchTarget = clamp(-this.aLong * s.pitchScale * squat, -s.maxPitch, s.maxPitch);
+    // A gear change cuts the power for a moment: the nose nods.
+    if (gb.shiftCount !== this.lastShiftCount) {
+      if (this.lastShiftCount !== undefined && gb.lastShift > 0 && this.throttle > 0.5) this.pitchVel += s.shiftKick ?? 0.25;
+      this.lastShiftCount = gb.shiftCount;
+    }
     const rollTarget = clamp(this.aLat * s.rollScale, -s.maxRoll, s.maxRoll);
     this.pitchVel += ((pitchTarget - this.pitch) * kS - this.pitchVel * kD) * dt;
     this.pitch += this.pitchVel * dt;
