@@ -23,7 +23,7 @@ Bench and smoke test pass (now with the R35 and the Underground).
 ## Open with David
 - Moths: there is no moth code since 2026-10-25 (commit b40a79b). If you still see dots
   round lamps, it may be an old cached page: reload with Shift held. Otherwise send a screenshot.
-- The R35 is a third car (2017 Nissani GT-Ar). Should it replace the R34 instead? Is the name OK?
+- Is the R35's name "2017 Nissani GT-Ar" OK? (It stays as a third car: David, 2026-10-26.)
 - The Challenjer is modelled on your sheet (a 2015-style face) but keeps its 2009 name and figures. OK?
 - Guesses to confirm: pink as the main action colour; the Underground has no rain;
   in the garage the headlights stay lit but the beams are off.
