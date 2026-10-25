@@ -207,9 +207,9 @@ export class Body {
   // A patch laid on the surface over z0..z1, from t0 to t1 along the
   // section (each may be a function of z for slanted shapes), lifted by
   // `lift` so it sits just above the paint. Both sides unless one is given.
-  decal(z0, z1, t0, t1, { lift = 0.004, sides = [1, -1], nz = 6, nt = 4 } = {}) {
+  decal(z0, z1, t0, t1, { lift = 0.004, sides = [1, -1], nz = 6, nt = 4, uv = false } = {}) {
     const T0 = typeof t0 === 'function' ? t0 : () => t0, T1 = typeof t1 === 'function' ? t1 : () => t1;
-    const pos = [], idx = [];
+    const pos = [], idx = [], uvs = [];
     for (const side of sides) {
       const base = pos.length / 3;
       for (let a = 0; a <= nz; a++) {
@@ -218,6 +218,8 @@ export class Body {
           const t = lerp(T0(z), T1(z), b / nt);
           const p = this.point(z, t, side).add(this.normal(z, t, side).multiplyScalar(lift));
           pos.push(p.x, p.y, p.z);
+          // Texture reads the right way round from either side of the car.
+          uvs.push(side > 0 ? 1 - a / nz : a / nz, b / nt);
         }
       }
       for (let a = 0; a < nz; a++) for (let b = 0; b < nt; b++) {
@@ -227,6 +229,7 @@ export class Body {
     }
     const g = new THREE.BufferGeometry();
     g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+    if (uv) g.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
     g.setIndex(idx);
     g.computeVertexNormals();
     // Wind toward the outside whichever way the patch was given.

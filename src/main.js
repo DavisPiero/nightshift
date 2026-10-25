@@ -28,7 +28,7 @@ import { CameraManager } from './cameras/cameras.js';
 import { GameAudio } from './audio/audio.js';
 import { Hud } from './ui/hud.js';
 import { Screens } from './ui/screens.js';
-import { loadSave, writeSave } from './save/save.js';
+import { loadSave, writeSave, activeBuild } from './save/save.js';
 
 class Game {
   constructor() {
@@ -160,17 +160,16 @@ class Game {
     if (this.vehicle) this.resetCar(info.def.start);
   }
 
-  // The numbers the car drives with: stock, plus fitted parts, plus Feel.
+  // The numbers the car drives with: stock, plus the active build's parts
+  // and ride height, plus Feel.
   currentSpec() {
-    const id = this.carSpec.id;
-    const car = this.save.garage.cars[id] || (this.save.garage.cars[id] = { paint: null, upgrades: {} });
-    return buildSpec(this.carSpec, { parts: car.upgrades }, this.save.settings.feel[id]);
+    return buildSpec(this.carSpec, activeBuild(this.save, this.carSpec), this.save.settings.feel[this.carSpec.id]);
   }
 
-  // Any car with its saved parts fitted (no Feel settings): for menus and ratings.
+  // Any car as its active build (no Feel settings): for menus and ratings.
   specFor(id) {
     const car = getCar(id);
-    return buildSpec(car, { parts: this.save.garage.cars[id]?.upgrades || {} });
+    return buildSpec(car, activeBuild(this.save, car));
   }
 
   // Rating of the car as currently built.
@@ -185,11 +184,20 @@ class Game {
   }
 
   buildCarModel() {
-    if (this.model) { this.scene.remove(this.model.root); this.model.dispose?.(); }
-    const paint = this.save.garage.cars[this.carSpec.id]?.paint ?? this.carSpec.paint;
-    this.model = buildCar(this.carSpec, paint);
-    this.scene.add(this.model.root);
-    this.audio?.setEngine(this.carSpec);
+    const parent = this.model?.root.parent || this.scene;
+    if (this.model) { this.model.root.removeFromParent(); this.model.dispose?.(); }
+    this.model = buildCar(this.specFor(this.carSpec.id), activeBuild(this.save, this.carSpec).look);
+    parent.add(this.model.root);
+    this.audio?.setEngine(this.currentSpec());
+  }
+
+  // The garage changed the active build (parts or looks): drive with it and
+  // show it.
+  buildChanged() {
+    this.vehicle.setSpec(this.currentSpec());
+    this.buildCarModel();
+    this.applyGraphics();
+    this.saveNow();
   }
 
   get graphicsName() {
@@ -281,7 +289,6 @@ class Game {
     this.applySettings();
   }
 
-  setPaint(color) { this.model.setPaint(color); }
 
   previewWeather(id) {
     this.weatherId = id;
@@ -405,9 +412,16 @@ class Game {
     }
     this.model.setLights(!garage);
     if (garage) {
+      // The turntable turns slowly, or swings round to show what a garage tab
+      // is about (the wheels, the wing, the side).
+      const view = this.garageView();
       this.turntable += dt * (this.menuView === 'garage' ? 0.1 : 0.05);
+      const target = view.turn ?? ((this.menuView === 'garage' ? 2.4 : -0.65) + Math.sin(this.turntable) * (this.menuView === 'garage' ? 3.2 : 0.35));
+      this.turnNow ??= target;
+      const d = Math.atan2(Math.sin(target - this.turnNow), Math.cos(target - this.turnNow));
+      this.turnNow += d * Math.min(1, dt * 3);
       root.position.set(0, 0.06, 0);
-      root.rotation.y = this.fixedTurn ?? ((this.menuView === 'garage' ? 2.4 : -0.65) + Math.sin(this.turntable) * (this.menuView === 'garage' ? 3.2 : 0.35));
+      root.rotation.y = this.fixedTurn ?? this.turnNow;
     } else {
       root.position.set(v.x, 0, v.z);
       root.rotation.y = v.heading;
@@ -424,7 +438,7 @@ class Game {
     this.moon.target.position.set(v.x, 0, v.z);
 
     if (this.state === 'menu') {
-      if (garage) this.garageCamera(); else this.menuCamera(dt);
+      if (garage) this.garageCamera(dt); else this.menuCamera(dt);
       this.model.setInterior(false);
       this.audio.update(dt, v, this.weatherId, garage ? 0 : 0.25);
     } else {
@@ -457,11 +471,23 @@ class Game {
     if (this.smoke) this.smoke.frame(this);
   }
 
-  // Fixed camera in the garage; the turntable does the moving.
-  garageCamera() {
-    const view = this.garage.views[this.menuView] || this.garage.views.garage;
-    this.camera.position.set(...view.pos);
-    this.camera.lookAt(...view.look);
+  // Which camera spot the garage scene uses: the car pick, or the garage's
+  // current tab (several tabs share a spot).
+  garageView() {
+    const v = this.garage.views;
+    if (this.menuView === 'setup') return v.setup;
+    const t = this.garageTab;
+    return t === 'wheels' ? v.wheels : t === 'body' ? v.body : ['engine', 'chassis', 'drive'].includes(t) ? v.side : t ? v.paint : v.garage;
+  }
+
+  // The garage camera glides between spots; the turntable does the rest.
+  garageCamera(dt = 0) {
+    const view = this.garageView();
+    const k = this.camLook && dt ? Math.min(1, dt * 4) : 1;
+    this.camPos = (this.camPos || new THREE.Vector3(...view.pos)).lerp(new THREE.Vector3(...view.pos), k);
+    this.camLook = (this.camLook || new THREE.Vector3(...view.look)).lerp(new THREE.Vector3(...view.look), k);
+    this.camera.position.copy(this.camPos);
+    this.camera.lookAt(this.camLook);
     // Narrower screens (an iPad is 4:3) get a wider lens, so they see as
     // much from side to side as a 16:9 screen does.
     const aspect = this.renderer.width / Math.max(1, this.renderer.height);

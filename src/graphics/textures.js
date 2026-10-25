@@ -416,24 +416,56 @@ export const Tex = {
     g.clearRect(0, 0, w, h);
     const c = w / 2;
     g.fillStyle = color;
-    g.beginPath(); g.arc(c, c, 31, 0, Math.PI * 2); g.arc(c, c, 26, 0, Math.PI * 2, true); g.fill(); // lip
-    const spokes = style === 'ten' ? 10 : 5;
-    const pairs = style === 'split' ? [-0.13, 0.13] : [0];
-    const wid = style === 'ten' ? 0.1 : style === 'split' ? 0.07 : 0.2;
-    for (let i = 0; i < spokes; i++) for (const o of pairs) {
-      const a = (i / spokes) * Math.PI * 2 + o;
-      g.beginPath();
-      g.moveTo(c + Math.cos(a - wid * 1.6) * 8, c + Math.sin(a - wid * 1.6) * 8);
-      g.lineTo(c + Math.cos(a - wid) * 27, c + Math.sin(a - wid) * 27);
-      g.lineTo(c + Math.cos(a + wid) * 27, c + Math.sin(a + wid) * 27);
-      g.lineTo(c + Math.cos(a + wid * 1.6) * 8, c + Math.sin(a + wid * 1.6) * 8);
-      g.fill();
+    const lip = style === 'dish' ? 21 : 26; // a deep dish has a wide lip
+    g.beginPath(); g.arc(c, c, 31, 0, Math.PI * 2); g.arc(c, c, lip, 0, Math.PI * 2, true); g.fill();
+    if (style === 'mesh') {
+      // Cross-laced mesh: thin spokes both ways round, like a BBS.
+      g.strokeStyle = color; g.lineWidth = 2;
+      for (let i = 0; i < 12; i++) for (const d of [1, -1]) {
+        const a = (i / 12) * Math.PI * 2;
+        g.beginPath(); g.moveTo(c + Math.cos(a) * 9, c + Math.sin(a) * 9); g.lineTo(c + Math.cos(a + d * 0.5) * 27, c + Math.sin(a + d * 0.5) * 27); g.stroke();
+      }
+    } else {
+      const spokes = style === 'ten' ? 10 : style === 'six' ? 6 : 5;
+      const pairs = style === 'split' ? [-0.13, 0.13] : [0];
+      const wid = style === 'ten' ? 0.1 : style === 'split' ? 0.07 : style === 'six' ? 0.14 : style === 'dish' ? 0.16 : 0.2;
+      const reach = style === 'dish' ? lip + 1 : 27;
+      for (let i = 0; i < spokes; i++) for (const o of pairs) {
+        const a = (i / spokes) * Math.PI * 2 + o;
+        g.beginPath();
+        g.moveTo(c + Math.cos(a - wid * 1.6) * 8, c + Math.sin(a - wid * 1.6) * 8);
+        g.lineTo(c + Math.cos(a - wid) * reach, c + Math.sin(a - wid) * reach);
+        g.lineTo(c + Math.cos(a + wid) * reach, c + Math.sin(a + wid) * reach);
+        g.lineTo(c + Math.cos(a + wid * 1.6) * 8, c + Math.sin(a + wid * 1.6) * 8);
+        g.fill();
+      }
     }
     g.beginPath(); g.arc(c, c, 9, 0, Math.PI * 2); g.fill(); // hub
     g.fillStyle = 'rgba(0,0,0,0.45)';
     for (let i = 0; i < 5; i++) { const a = i / 5 * Math.PI * 2 + 0.6; g.fillRect(c + Math.cos(a) * 5 - 1, c + Math.sin(a) * 5 - 1, 2, 2); }
     g.fillStyle = 'rgba(255,255,255,0.35)';
     g.beginPath(); g.arc(c, c, 30, Math.PI * 1.1, Math.PI * 1.5); g.arc(c, c, 28, Math.PI * 1.5, Math.PI * 1.1, true); g.fill();
+  })),
+
+  // Race number roundel: a disc in the decal colour with a dark number.
+  roundel: (colour = 0xf2f2ee) => cached('roundel' + colour, () => canvasTexture([64, 64], (g, w, h) => {
+    g.clearRect(0, 0, w, h);
+    g.fillStyle = '#' + colour.toString(16).padStart(6, '0');
+    g.beginPath(); g.arc(w / 2, h / 2, 30, 0, Math.PI * 2); g.fill();
+    const dark = (colour >> 16) + ((colour >> 8) & 255) + (colour & 255) > 300;
+    g.fillStyle = dark ? '#111214' : '#f2f2ee';
+    g.font = 'bold 34px "Jersey 10", monospace';
+    g.textAlign = 'center'; g.textBaseline = 'middle';
+    g.fillText('08', w / 2, h / 2 + 2);
+  })),
+
+  // A vertical sticker of Japanese text, white (tinted by the material).
+  sticker: (text) => cached('sticker' + text, () => canvasTexture([32, 32 * text.length], (g, w, h) => {
+    g.clearRect(0, 0, w, h);
+    g.fillStyle = '#fff';
+    g.font = `bold 28px "Hiragino Sans", "Noto Sans JP", "Yu Gothic", "Meiryo", sans-serif`;
+    g.textAlign = 'center'; g.textBaseline = 'middle';
+    [...text].forEach((ch, i) => g.fillText(ch, w / 2, 16 + i * 32));
   })),
 
   // --- Garage ---

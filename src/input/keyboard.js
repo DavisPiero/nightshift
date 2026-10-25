@@ -45,6 +45,7 @@ export class KeyboardSource {
 
     window.addEventListener('keydown', (e) => {
       if (this.capture) { e.preventDefault(); e.nsCaptured = true; const cb = this.capture; this.capture = null; cb(e.code); return; }
+      if (e.target?.tagName === 'INPUT' && e.target.type === 'text') return; // typing a build name
       const name = FIXED[e.code] || this.byCode.get(e.code);
       if (!name) return;
       e.preventDefault();

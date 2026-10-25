@@ -5,9 +5,11 @@
 import { DEFAULT_KEYS } from '../input/keyboard.js';
 import { DEFAULT_TOUCH } from '../input/touch.js';
 import { DEFAULT_EFFECTS } from '../core/config.js';
+import { checkLook, defaultLook } from '../vehicles/looks.js';
 
 const KEY = 'nightshift.save';
-export const SAVE_VERSION = 2;
+export const SAVE_VERSION = 3;
+export const MAX_BUILDS = 3;
 
 export function defaultSave() {
   return {
@@ -35,7 +37,7 @@ export function defaultSave() {
     garage: {
       selected: 'skyliner-r34',
       owned: ['skyliner-r34'],
-      cars: { 'skyliner-r34': { paint: null, upgrades: {} } },
+      cars: {},                  // per car id: { active, builds: [{ name, parts, look }] }
     },
     lastRace: { track: 'starter', weather: 'clear' },
     bestLaps: {},
@@ -75,6 +77,13 @@ export function loadSave() {
       data.garage.owned = ['skyliner-r34'];
     }
     const save = mergeChecked(defaultSave(), data);
+    // Version 2 kept one paint and one set of parts per car: they become
+    // that car's first build.
+    for (const [id, c] of Object.entries(save.garage.cars)) {
+      if (c && !Array.isArray(c.builds)) {
+        save.garage.cars[id] = { active: 0, builds: [{ name: 'My build', parts: c.upgrades || {}, look: typeof c.paint === 'number' ? { paint: c.paint } : {} }] };
+      }
+    }
     save.version = SAVE_VERSION;
     if (!['computer', 'touch', null].includes(save.platform)) save.platform = null;
     if (!['low', 'medium', 'high', null].includes(save.settings.graphics)) save.settings.graphics = null;
@@ -87,6 +96,34 @@ export function loadSave() {
     console.warn('NIGHTSHIFT: save was unreadable, starting fresh');
     return defaultSave();
   }
+}
+
+// A car's garage entry, made or repaired as needed: its builds (each with a
+// name, parts and a complete look) and which one is raced.
+export function garageCar(save, car) {
+  const cars = save.garage.cars;
+  let c = cars[car.id];
+  if (!c || !Array.isArray(c.builds) || !c.builds.length) c = cars[car.id] = { active: 0, builds: [newBuild(car, 'My build')] };
+  // Repaired in place, so the garage can keep editing the same objects.
+  c.builds = c.builds.slice(0, MAX_BUILDS).map((b, i) => {
+    if (!b || typeof b !== 'object') b = {};
+    if (!(typeof b.name === 'string' && b.name.trim())) b.name = `Build ${i + 1}`;
+    b.name = b.name.slice(0, 20);
+    if (!b.parts || typeof b.parts !== 'object') b.parts = {};
+    b.look = Object.assign(b.look && typeof b.look === 'object' ? b.look : {}, checkLook(b.look, car));
+    return b;
+  });
+  if (!(c.active >= 0 && c.active < c.builds.length)) c.active = 0;
+  return c;
+}
+
+export function newBuild(car, name) {
+  return { name, parts: {}, look: defaultLook(car) };
+}
+
+export function activeBuild(save, car) {
+  const c = garageCar(save, car);
+  return c.builds[c.active];
 }
 
 export function writeSave(save) {

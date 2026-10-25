@@ -48,13 +48,13 @@ way they are, HANDOFF.md for how the last session ended. BRIEF.md is the origina
 - `src/core/` fixed-step loop, graphics presets, effect list and URL switches
 - `src/input/` the shared control state, keyboard (rebindable), touch (joystick, buttons, layout editor), gamepad
 - `src/physics/` car physics (`vehicle.js`), gearbox, wall collisions, weather grip table
-- `src/vehicles/` car list with specs (`cars.js`), parts (`parts.js`), the final-numbers pipeline (`tuning.js`), ratings (`stats.js`), car bodies from profile curves (`body.js`), each car's shape and details (`car-model.js`)
+- `src/vehicles/` car list with specs (`cars.js`), parts (`parts.js`), looks: paint, finish, decals, wheels, ride height (`looks.js`), the final-numbers pipeline (`tuning.js`), ratings (`stats.js`), car bodies from profile curves (`body.js`), each car's shape and details (`car-model.js`)
 - `src/world/` track centre-line maths, the track list and points, shared scenery pieces (`scene-kit.js`), the harbour scenery (`track-scene.js`), the Underground (`underground.js`, `underground-scene.js`), the garage scene (`garage.js`), weather visuals
 - `src/graphics/` low-res renderer with colour grade and dither, painted textures, effects (particles, skid marks), paint reflections (`reflections.js`)
 - `src/cameras/` chase and cockpit cameras, camera shake
 - `src/audio/` engine, tyres, wind, impacts, exhaust pops, rain and night ambience (all synthesised)
-- `src/ui/` screens (menus, garage, pause), settings tabs, HUD rev counter, debug panel (F3), Feel panel (F4)
-- `src/save/` versioned localStorage save (version 2; migrates version 1)
+- `src/ui/` screens (menus, pause), the garage screen (`garage.js`), the ratings display (`stats-view.js`), settings tabs, HUD rev counter, debug panel (F3), Feel panel (F4)
+- `src/save/` versioned localStorage save (version 3: up to 3 named builds per car; migrates 1 and 2)
 - `tools/` smoke test, driving bench, headless screenshots (`shot.mjs`)
 
 ## Out of scope (unless David asks)

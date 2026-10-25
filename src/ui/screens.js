@@ -8,6 +8,8 @@ import { carStats } from '../vehicles/stats.js';
 import { TRACKS, trackWeathers } from '../world/tracks.js';
 import { WEATHER } from '../physics/weather.js';
 import { Settings } from './settings.js';
+import { fillStats } from './stats-view.js';
+import { Garage } from './garage.js';
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -31,14 +33,7 @@ export class Screens {
     $('#race-go').addEventListener('click', () => game.startRace(this.pick));
     $('#tracks-go').addEventListener('click', () => this.open('setup'));
 
-    // The car picker in the garage (the race setup has a list).
-    const step = (d) => {
-      const i = CARS.findIndex((c) => c.id === this.pick.car);
-      this.pickCar(CARS[(i + d + CARS.length) % CARS.length].id);
-      this.fillGarage();
-    };
-    $('#garage-prev').addEventListener('click', () => step(-1));
-    $('#garage-next').addEventListener('click', () => step(1));
+    this.garage = new Garage(game, this);
 
     // Keyboard: Escape goes back; arrows move between buttons.
     window.addEventListener('keydown', (e) => {
@@ -95,8 +90,9 @@ export class Screens {
   showEl(name) {
     const el = this.el(name);
     if (name === 'tracks') this.fillTracks();
-    if (name === 'setup') this.fillSetup();
-    if (name === 'garage') this.fillGarage();
+    if (name === 'setup') { this.buildCars(); this.fillSetup(); }
+    if (name === 'garage') this.garage.open();
+    else this.game.garageTab = null;
     if (name === 'settings') this.settings.open();
     if (name === 'pause') el.style.zIndex = 8;
     el.hidden = false;
@@ -209,55 +205,6 @@ export class Screens {
     fillStats($('#setup-stats'), this.game.specFor(car.id), this.game.save.settings.units);
   }
 
-  // --- Garage ---
-  fillGarage() {
-    const car = getCar(this.pick.car);
-    $('#garage-car-year').textContent = `${car.year} · ${car.code}`;
-    $('#garage-car-name').textContent = `${car.make} ${car.model}`;
-    $('#garage-blurb').textContent = car.blurb;
-    fillStats($('#garage-stats'), this.game.specFor(car.id), this.game.save.settings.units);
-    const box = $('#garage-paints');
-    box.innerHTML = '';
-    const saved = this.game.save.garage.cars[car.id] || (this.game.save.garage.cars[car.id] = { paint: null, upgrades: {} });
-    const current = saved.paint ?? car.paint;
-    car.paints.forEach((p, i) => {
-      const b = document.createElement('button');
-      b.className = 'swatch' + (p === current ? ' on' : '');
-      b.style.background = '#' + p.toString(16).padStart(6, '0');
-      b.title = car.paintNames[i];
-      b.addEventListener('click', () => {
-        saved.paint = p;
-        this.game.saveNow();
-        this.game.setPaint(p);
-        this.fillGarage();
-      });
-      box.appendChild(b);
-    });
-    $('#garage-paint-name').textContent = car.paintNames[car.paints.indexOf(current)] || '';
-    $('#garage-prev').disabled = CARS.length < 2; $('#garage-next').disabled = CARS.length < 2;
-  }
-}
-
-const DRIVES = { rwd: 'Rear-wheel drive', awd: 'Four-wheel drive', fwd: 'Front-wheel drive' };
-
-// The car's class badge, its four 1-10 stats as pixel meters, and the real
-// figures behind them.
-function fillStats(el, spec, units) {
-  const s = carStats(spec);
-  const mph = units === 'mph';
-  const meter = (v) => {
-    const n = Math.round(v * 2); // 20 pips for 1..10, half steps
-    return Array.from({ length: 20 }, (_, i) => `<i class="${i < n ? (i >= 16 ? 'on hot' : 'on') : ''}" style="--p:${i}"></i>`).join('');
-  };
-  const rows = [
-    ['Speed', s.stats.speed, mph ? `${Math.round(s.top / 1.609)} MPH` : `${Math.round(s.top)} KM/H`],
-    ['Accel', s.stats.accel, `${(mph ? s.to60 : s.to100).toFixed(1)} S ${mph ? '0-60' : '0-100'}`],
-    ['Handling', s.stats.handling, `${s.grip.toFixed(2)} G`],
-    ['Braking', s.stats.braking, `${s.brake.toFixed(0)} M`],
-  ];
-  el.innerHTML = `<div class="rating"><span class="cls cls-${s.cls}">${s.cls}</span><span class="pi">${s.pi}</span>`
-    + `<span class="muted">${s.hp} HP · ${s.mass} KG · ${DRIVES[spec.drivetrain] || ''}</span></div>`
-    + rows.map(([k, v, real]) => `<div class="stat"><span class="k">${k}</span><span class="meter">${meter(v)}</span><span class="v">${v.toFixed(1)}</span><span class="real">${real}</span></div>`).join('');
 }
 
 // Track outline for the card, drawn small and scaled up with square pixels.

@@ -110,23 +110,27 @@
     </div>
   </section>
 
-  <!-- Garage: view cars and their stats; mods come later -->
-  <section id="scr-garage" class="screen garage" hidden>
-    <header class="bar"><button class="btn back" data-back>Back</button><h2>Garage<span class="jp">ガレージ</span></h2></header>
-    <div class="garage-side pnl box">
-      <div class="ttl"><span>Your car</span><i class="win"></i></div>
-      <div class="car-pick">
+  <!-- Garage: tabs and choices on the left, the car on the turntable, the
+       build's ratings (and a dyno on the Engine tab) on the right. -->
+  <section id="scr-garage" class="screen select garage" hidden>
+    <header class="bar"><button class="btn back" data-back>Back</button><h2>Garage<span class="jp">ガレージ</span></h2>
+      <div class="car-switch">
         <button class="btn sq" id="garage-prev" aria-label="Previous car">&lt;</button>
         <div class="car-name"><span id="garage-car-year" class="sub"></span><span id="garage-car-name" class="name"></span></div>
         <button class="btn sq" id="garage-next" aria-label="Next car">&gt;</button>
       </div>
-      <p id="garage-blurb" class="muted small"></p>
-      <div id="garage-stats" class="stats"></div>
-      <p class="label">Paint</p>
-      <div id="garage-paints" class="swatches"></div>
-      <p id="garage-paint-name" class="muted small"></p>
-      <div class="soon">Mods: engine, tyres, suspension, body kits. Coming soon.</div>
+    </header>
+    <div class="side-list pnl">
+      <div class="ttl"><span>Tune</span><span class="jp">チューン</span><i class="win"></i></div>
+      <nav id="garage-tabs" class="gtabs"></nav>
+      <div id="garage-list" class="list"></div>
     </div>
+    <aside class="info pnl">
+      <div class="ttl"><span>Build</span><span id="garage-build-name" class="jp"></span><i class="win"></i></div>
+      <div id="garage-stats" class="stats"></div>
+      <p class="muted small">Green: better than stock. Red: worse.</p>
+      <div id="garage-dyno" class="dyno" hidden><p class="label">Dyno</p><canvas width="300" height="150"></canvas></div>
+    </aside>
   </section>
 
   <!-- Settings, four tabs -->
