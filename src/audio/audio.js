@@ -7,7 +7,9 @@
 //  - a pulse at crank speed that makes the note lumpy like a real engine;
 //  - a sub-bass body that swells under load;
 //  - intake roar (filtered noise) on throttle;
-//  - crackles and a turbo blow-off when you lift off at high rpm.
+//  - a turbo blow-off when you lift off at high rpm, and exhaust pops
+//    (timed by graphics/effects.js so they line up with the flames).
+// Ambience: rain on the road and roof, and a low night hum with crickets.
 // The car's update() feeds rpm, throttle and load. To switch to real engine
 // recordings later, replace EngineVoice with a sample player that takes the
 // same update() call.
@@ -140,13 +142,8 @@ class EngineVoice {
     this.intakeGain.gain.setTargetAtTime(throttle * (0.05 + 0.22 * r), t, k);
     this.out.gain.setTargetAtTime(limiter ? 0.6 : 0.9, t, 0.01);
 
-    // Lift off at high rpm: blow-off valve and a few exhaust crackles.
-    this.popCooldown -= dt;
+    // Lift off at high rpm: blow-off valve.
     if (this.lastThrottle > 0.7 && throttle < 0.3 && rpm > 4000) this.blowOff(r);
-    if (throttle < 0.1 && rpm > 3800 && this.lastRpm > rpm && this.popCooldown <= 0 && Math.random() < 0.08) {
-      this.crackle(0.25 + Math.random() * 0.3);
-      this.popCooldown = 0.05 + Math.random() * 0.12;
-    }
     this.lastThrottle = throttle;
     this.lastRpm = rpm;
   }
@@ -166,7 +163,10 @@ class EngineVoice {
     src.start(t, Math.random()); src.stop(t + duration + 0.05);
   }
 
-  crackle(v) { this.burst(0.05, 'bandpass', 500 + Math.random() * 500, 1.5, v * 0.7); }
+  crackle(v) {
+    this.burst(0.05, 'bandpass', 500 + Math.random() * 500, 1.5, v * 0.7);
+    this.burst(0.09, 'lowpass', 260 + Math.random() * 120, 0.8, v * 0.5); // the thump under the crack
+  }
   blowOff(r) { this.burst(0.45, 'bandpass', 2600, 2.5, 0.12 + r * 0.1, 900); }
 
   // A short drop in level as the clutch goes in.
@@ -183,7 +183,7 @@ export class GameAudio {
   constructor() {
     this.ctx = null;
     this.muted = false;
-    this.volumes = { master: 0.8, engine: 1, effects: 0.8 };
+    this.volumes = { master: 0.8, engine: 1, effects: 0.8, ambience: 0.7 };
   }
 
   // Must be called from a tap or key press.
@@ -198,10 +198,14 @@ export class GameAudio {
     this.master.connect(comp).connect(ctx.destination);
     this.engineBus = ctx.createGain();
     this.fxBus = ctx.createGain();
+    this.ambBus = ctx.createGain();
     this.engineBus.connect(this.master);
     this.fxBus.connect(this.master);
+    this.ambBus.connect(this.master);
+    this.engineLevel = ctx.createGain(); // lowered behind the menus
+    this.engineLevel.connect(this.engineBus);
     this.noise = noiseBuffer(ctx);
-    this.engine = new EngineVoice(ctx, this.engineBus, this.noise);
+    this.engine = new EngineVoice(ctx, this.engineLevel, this.noise);
 
     // Tyre squeal: two resonant noise bands.
     const sq = ctx.createBufferSource(); sq.buffer = this.noise; sq.loop = true;
@@ -221,6 +225,27 @@ export class GameAudio {
     wn.connect(this.windFilter).connect(this.windGain).connect(this.fxBus);
     wn.start();
 
+    // Wet tyres hiss instead of squealing.
+    const hs = ctx.createBufferSource(); hs.buffer = this.noise; hs.loop = true;
+    this.hissFilter = ctx.createBiquadFilter(); this.hissFilter.type = 'highpass'; this.hissFilter.frequency.value = 2500;
+    this.hissGain = ctx.createGain(); this.hissGain.gain.value = 0;
+    hs.connect(this.hissFilter).connect(this.hissGain).connect(this.fxBus);
+    hs.start(0, 0.5);
+
+    // Rain: a wash of filtered noise plus a patter of drops.
+    const rn = ctx.createBufferSource(); rn.buffer = this.noise; rn.loop = true;
+    const rf = ctx.createBiquadFilter(); rf.type = 'bandpass'; rf.frequency.value = 1800; rf.Q.value = 0.4;
+    this.rainGain = ctx.createGain(); this.rainGain.gain.value = 0;
+    rn.connect(rf).connect(this.rainGain).connect(this.ambBus);
+    rn.start(0, 1);
+
+    // Night hum: a faint low drone and, now and then, crickets.
+    this.hum = ctx.createOscillator(); this.hum.type = 'sine'; this.hum.frequency.value = 55;
+    this.humGain = ctx.createGain(); this.humGain.gain.value = 0;
+    this.hum.connect(this.humGain).connect(this.ambBus);
+    this.hum.start();
+    this.cricketTimer = 1;
+
     this.applyVolumes();
   }
 
@@ -232,14 +257,18 @@ export class GameAudio {
     this.master.gain.value = this.muted ? 0 : this.volumes.master;
     this.engineBus.gain.value = this.volumes.engine;
     this.fxBus.gain.value = this.volumes.effects;
+    this.ambBus.gain.value = this.volumes.ambience;
   }
 
   suspend() { this.ctx?.suspend(); }
   resume() { this.ctx?.resume(); }
 
-  update(dt, v) {
+  // level: 1 when driving, lower behind the menus. weather: 'clear' | 'rain' | 'fog'.
+  update(dt, v, weather = 'clear', level = 1) {
     if (!this.ctx || this.ctx.state !== 'running') return;
     const t = this.ctx.currentTime;
+    this.engineLevel.gain.setTargetAtTime(level, t, 0.3);
+    const wet = weather === 'rain';
     this.engine.update(dt, {
       rpm: v.rpm, throttle: v.throttle, load: v.load,
       redline: v.spec.redline, limiter: v.limiter,
@@ -250,18 +279,61 @@ export class GameAudio {
     }
     const slide = Math.max(v.rearSlide, v.frontSlide * 0.7);
     const squeal = v.speed > 4 ? Math.min(1, slide) * Math.min(1, v.speed / 15) : 0;
-    this.squealGain.gain.setTargetAtTime(squeal * 0.22, t, 0.05);
+    this.squealGain.gain.setTargetAtTime(squeal * (wet ? 0.07 : 0.22) * level, t, 0.05);
+    this.hissGain.gain.setTargetAtTime(wet ? Math.min(1, v.speed / 30) * 0.12 * level : 0, t, 0.1);
+    this.rainGain.gain.setTargetAtTime(wet ? 0.16 : 0, t, 0.5);
+    this.humGain.gain.setTargetAtTime(0.025, t, 0.5);
+    // Crickets on dry nights: a short trill now and then.
+    this.cricketTimer -= dt;
+    if (!wet && this.cricketTimer <= 0) {
+      this.cricketTimer = 2 + Math.random() * 5;
+      this.cricket();
+    }
+    if (wet && Math.random() < dt * 9) this.drop();
     const wobble = 1 + Math.sin(t * 13) * 0.03;
     this.squealFilters[0].frequency.setTargetAtTime(900 * wobble + slide * 150, t, 0.05);
     this.squealFilters[1].frequency.setTargetAtTime(1450 * wobble + slide * 200, t, 0.05);
     const sp = Math.min(1, v.speed / 70);
-    this.windGain.gain.setTargetAtTime(sp * sp * 0.25 + sp * 0.03, t, 0.1);
+    this.windGain.gain.setTargetAtTime((sp * sp * 0.25 + sp * 0.03) * level, t, 0.1);
     this.windFilter.frequency.setTargetAtTime(300 + sp * 900, t, 0.1);
+  }
+
+  // One exhaust pop (strength 0..1), timed by the flames effect.
+  pop(strength) {
+    if (!this.engine || this.ctx.state !== 'running') return;
+    this.engine.crackle(0.3 + strength * 0.4);
+  }
+
+  cricket() {
+    const ctx = this.ctx, t = ctx.currentTime;
+    const o = ctx.createOscillator(); o.type = 'square'; o.frequency.value = 4300 + Math.random() * 400;
+    const g = ctx.createGain(); g.gain.value = 0;
+    for (let i = 0; i < 6; i++) {
+      g.gain.setValueAtTime(0.012, t + i * 0.045);
+      g.gain.setValueAtTime(0, t + i * 0.045 + 0.022);
+    }
+    const f = ctx.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = 4500; f.Q.value = 6;
+    o.connect(f).connect(g).connect(this.ambBus);
+    o.start(t); o.stop(t + 0.3);
+  }
+
+  drop() {
+    const ctx = this.ctx, t = ctx.currentTime;
+    const src = ctx.createBufferSource(); src.buffer = this.noise;
+    const f = ctx.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = 2500 + Math.random() * 3000; f.Q.value = 3;
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0.05 + Math.random() * 0.05, t);
+    g.gain.exponentialRampToValueAtTime(0.001, t + 0.03);
+    src.connect(f).connect(g).connect(this.ambBus);
+    src.start(t, Math.random()); src.stop(t + 0.05);
   }
 
   impact(speed) {
     if (!this.ctx || speed < 1.5) return;
     const ctx = this.ctx, t = ctx.currentTime;
+    // Scraping along a wall touches it every physics step: one sound at a time.
+    if (t - (this.lastImpact || 0) < 0.12 && speed < (this.lastImpactSpeed || 0) * 1.5) return;
+    this.lastImpact = t; this.lastImpactSpeed = speed;
     const v = Math.min(1, speed / 15);
     const src = ctx.createBufferSource(); src.buffer = this.noise;
     const f = ctx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 350 + v * 900;

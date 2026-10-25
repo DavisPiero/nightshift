@@ -1,9 +1,9 @@
-// The night test road: one closed loop through an industrial estate.
+// The Starter Track: one closed loop through a harbour industrial estate.
 // A long straight, a fast sweeper, an S-bend, a kink and one tight corner.
 // Points are in metres, in driving order; the start line is on the straight.
 
-export const TEST_ROAD = {
-  name: 'Harbour Loop',
+export const STARTER_TRACK = {
+  name: 'Starter Track',
   halfWidth: 6,     // 12 m of tarmac
   wall: 9.5,        // barriers 3.5 m beyond the road edge
   start: 30,        // sample index of the start line

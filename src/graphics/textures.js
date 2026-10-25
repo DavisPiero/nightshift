@@ -193,4 +193,116 @@ export const Tex = {
       g.fillStyle = 'rgba(255,255,255,0.05)'; g.fillRect(0, y + 2, w, 1);
     }
   })),
+
+  // Worn chequers for the start line.
+  chequer: () => cached('chequer', () => canvasTexture([16, 16], (g, w, h) => {
+    for (let y = 0; y < h; y += 4) for (let x = 0; x < w; x += 4) {
+      g.fillStyle = ((x + y) / 4) % 2 ? '#1c1c1c' : '#b8b4a8';
+      g.fillRect(x, y, 4, 4);
+    }
+    const r = rng(21);
+    g.fillStyle = 'rgba(60,60,60,0.5)';
+    for (let i = 0; i < 20; i++) g.fillRect(r() * w | 0, r() * h | 0, 1, 1);
+  })),
+
+  // Black and white corner chevrons pointing left (dir 1) or right (-1).
+  chevron: (dir = 1) => cached('chev' + dir, () => canvasTexture([32, 20], (g, w, h) => {
+    g.fillStyle = '#141414'; g.fillRect(0, 0, w, h);
+    g.fillStyle = '#d8d4c8';
+    for (let k = 0; k < 3; k++) {
+      const x0 = 4 + k * 9;
+      for (let y = 0; y < h - 4; y++) {
+        const t = Math.abs(y - (h - 4) / 2);
+        const x = dir > 0 ? x0 + t * 0.6 : w - (x0 + t * 0.6) - 3;
+        g.fillRect(x | 0, y + 2, 3, 1);
+      }
+    }
+  })),
+
+  // A lit board with a word on it, in a chunky pixel font.
+  sign: (text, fg, bg) => cached('sign' + text + fg, () => canvasTexture([96, 20], (g, w, h) => {
+    g.fillStyle = bg; g.fillRect(0, 0, w, h);
+    g.fillStyle = fg; g.fillRect(0, 0, w, 1); g.fillRect(0, h - 1, w, 1);
+    g.font = '18px "Jersey 10", monospace';
+    g.textAlign = 'center'; g.textBaseline = 'middle';
+    g.fillText(text, w / 2, h / 2 + 1);
+  })),
+
+  // Fluorescent tubes under the petrol station canopy.
+  tubes: () => cached('tubes', () => canvasTexture([32, 16], (g, w, h) => {
+    g.fillStyle = '#3a423c'; g.fillRect(0, 0, w, h);
+    g.fillStyle = '#f2fff4';
+    for (let x = 3; x < w; x += 8) g.fillRect(x, 2, 2, h - 4);
+  })),
+
+  // Shop window: shelves, a bright counter, a figure.
+  shopWindow: () => cached('shopwin', () => canvasTexture([48, 16], (g, w, h) => {
+    g.fillStyle = '#d8dcc0'; g.fillRect(0, 0, w, h);
+    const r = rng(31);
+    for (let y = 3; y < h - 2; y += 4) for (let x = 1; x < w - 1; x++) {
+      if (r() < 0.7) { g.fillStyle = ['#6a5a3a', '#8a3a2a', '#3a5a6a', '#9a8a4a'][(r() * 4) | 0]; g.fillRect(x, y, 1, 2); }
+    }
+    g.fillStyle = '#2a2a2a'; g.fillRect(0, 0, w, 1); g.fillRect(16, 0, 1, h); g.fillRect(32, 0, 1, h);
+  })),
+
+  // Tall price sign: three rows of amber digits on black (no brand).
+  priceSign: () => cached('price', () => canvasTexture([16, 20], (g, w, h) => {
+    g.fillStyle = '#0d0d0d'; g.fillRect(0, 0, w, h);
+    g.fillStyle = '#1f6f7a'; g.fillRect(0, 0, w, 4);
+    g.fillStyle = '#ffb04a';
+    for (const y of [7, 11, 15]) for (const x of [2, 5, 8, 11]) g.fillRect(x, y, 2, 3);
+  })),
+
+  // Shipping container: corrugated steel, painted per instance.
+  container: () => cached('container', () => canvasTexture([32, 32], (g, w, h) => {
+    noise(g, w, h, [200, 200, 196], 22, 41);
+    for (let x = 0; x < w; x += 3) {
+      g.fillStyle = 'rgba(0,0,0,0.3)'; g.fillRect(x, 0, 1, h);
+    }
+    g.fillStyle = 'rgba(0,0,0,0.45)'; g.fillRect(0, 0, w, 2); g.fillRect(0, h - 2, w, 2);
+    g.fillStyle = 'rgba(80,40,20,0.4)';
+    const r = rng(43);
+    for (let i = 0; i < 6; i++) g.fillRect(r() * w | 0, h - 8 + r() * 6 | 0, 1, 4);
+  })),
+
+  // Traffic cone: orange with a white band.
+  cone: () => cached('cone', () => canvasTexture([8, 8], (g, w, h) => {
+    g.fillStyle = '#c4501a'; g.fillRect(0, 0, w, h);
+    g.fillStyle = '#d8d4c8'; g.fillRect(0, 3, w, 2);
+  })),
+
+  // The night sky: black overhead, a low amber city glow at the horizon.
+  skyGlow: () => cached('skyglow', () => canvasTexture([4, 64], (g, w, h) => {
+    const grad = g.createLinearGradient(0, 0, 0, h);
+    grad.addColorStop(0, '#05080a');
+    grad.addColorStop(0.55, '#0a0f12');
+    grad.addColorStop(0.82, '#2a2016');
+    grad.addColorStop(0.9, '#3a2a18');
+    grad.addColorStop(1, '#1a1612');
+    g.fillStyle = grad; g.fillRect(0, 0, w, h);
+  }, { nearest: false })),
+
+  // Far city blocks: dark with a scatter of lit windows.
+  skyline: () => cached('skyline', () => canvasTexture([32, 64], (g, w, h) => {
+    g.fillStyle = '#0d1114'; g.fillRect(0, 0, w, h);
+    const r = rng(51);
+    for (let y = 2; y < h; y += 3) for (let x = 1; x < w; x += 3) {
+      if (r() < 0.16) { g.fillStyle = r() < 0.8 ? '#8a6a3a' : '#7a8a8a'; g.fillRect(x, y, 1, 1); }
+    }
+  }, { repeat: [2, 2] })),
+
+  // A streak of lamp light reflected in a wet road: bright at the lamp,
+  // fading toward the viewer, soft at the sides.
+  reflection: () => cached('reflection', () => canvasTexture([16, 64], (g, w, h) => {
+    const img = g.createImageData(w, h);
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+      const along = 1 - y / h; // 1 at the lamp end (top of the texture)
+      const side = 1 - Math.abs(x - w / 2 + 0.5) / (w / 2);
+      const shimmer = 0.7 + 0.3 * Math.sin(y * 1.7) * Math.sin(y * 0.6);
+      const a = Math.pow(along, 1.4) * side * side * shimmer;
+      const i = (y * w + x) * 4;
+      img.data[i] = 255; img.data[i + 1] = 255; img.data[i + 2] = 255; img.data[i + 3] = a * 200;
+    }
+    g.putImageData(img, 0, 0);
+  }, { nearest: false })),
 };

@@ -1,35 +1,51 @@
 // Keyboard source. Keys are on/off, so steering is eased in and out to feel
-// like a thumbstick instead of snapping to full lock.
+// like a thumbstick instead of snapping to full lock. Keys can be rebound in
+// Settings > Controls; Escape always pauses and F3 always opens the debug panel.
 
 export const DEFAULT_KEYS = {
   throttle: ['KeyW', 'ArrowUp'],
   brake: ['KeyS', 'ArrowDown'],
   left: ['KeyA', 'ArrowLeft'],
   right: ['KeyD', 'ArrowRight'],
-  handbrake: ['Space'],
-  gearUp: ['KeyE'],
-  gearDown: ['KeyQ'],
-  camera: ['KeyC'],
-  reset: ['KeyR'],
-  pause: ['Escape', 'KeyP'],
-  debug: ['F3'],
+  handbrake: ['Space', ''],
+  gearUp: ['KeyE', ''],
+  gearDown: ['KeyQ', ''],
+  camera: ['KeyC', ''],
+  pause: ['KeyP', ''],
 };
 
-const ACTIONS = ['camera', 'reset', 'pause', 'debug'];
+// Shown in Settings, in this order.
+export const KEY_LABELS = {
+  throttle: 'Accelerate', brake: 'Brake / reverse', left: 'Steer left', right: 'Steer right',
+  handbrake: 'Handbrake', gearUp: 'Gear up (manual)', gearDown: 'Gear down (manual)',
+  camera: 'Change camera', pause: 'Pause',
+};
+
+const FIXED = { Escape: 'pause', F3: 'debug' };
+const ACTIONS = ['camera', 'pause', 'debug'];
+
+// "KeyW" -> "W", "ArrowUp" -> "Up", "Space" -> "Space".
+export function keyName(code) {
+  if (!code) return '-';
+  if (code.startsWith('Key')) return code.slice(3);
+  if (code.startsWith('Digit')) return code.slice(5);
+  if (code.startsWith('Arrow')) return code.slice(5);
+  return code.replace('Left', ' L').replace('Right', ' R');
+}
 
 export class KeyboardSource {
   constructor(keys = DEFAULT_KEYS) {
-    this.keys = keys;
     this.enabled = true;
     this.down = new Set();
     this.pressed = new Set(); // gear presses waiting to be read
     this.steer = 0;
     this.onAction = null;
-    this.byCode = new Map();
-    for (const [name, codes] of Object.entries(keys)) for (const c of codes) this.byCode.set(c, name);
+    this.capture = null;      // set while Settings is waiting for a new key
+    this.setKeys(keys);
 
     window.addEventListener('keydown', (e) => {
-      const name = this.byCode.get(e.code);
+      if (this.capture) { e.preventDefault(); e.nsCaptured = true; const cb = this.capture; this.capture = null; cb(e.code); return; }
+      const name = FIXED[e.code] || this.byCode.get(e.code);
       if (!name) return;
       e.preventDefault();
       if (e.repeat) return;
@@ -38,10 +54,20 @@ export class KeyboardSource {
       if (ACTIONS.includes(name)) this.onAction?.(name);
     });
     window.addEventListener('keyup', (e) => {
-      const name = this.byCode.get(e.code);
+      const name = FIXED[e.code] || this.byCode.get(e.code);
       if (name) this.down.delete(name);
     });
   }
+
+  setKeys(keys) {
+    this.keys = keys;
+    this.byCode = new Map();
+    for (const [name, codes] of Object.entries(keys)) for (const c of codes) if (c) this.byCode.set(c, name);
+    this.down.clear();
+  }
+
+  // Wait for the next key press and hand its code to cb (Settings rebinding).
+  listen(cb) { this.capture = cb; }
 
   read(dt) {
     const d = this.down;

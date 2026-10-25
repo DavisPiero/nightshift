@@ -45,6 +45,7 @@ export class RetroRenderer {
     this.canvas = canvas;
     this.gl = new THREE.WebGLRenderer({ canvas, antialias: false, powerPreference: 'high-performance' });
     this.gl.setPixelRatio(1);
+    this.gl.info.autoReset = false; // count the whole frame (scene + post), for the debug panel
     this.gl.shadowMap.enabled = false;
     this.gl.shadowMap.type = THREE.BasicShadowMap;
     this.target = new THREE.WebGLRenderTarget(4, 4, { depthBuffer: true });
@@ -82,6 +83,7 @@ export class RetroRenderer {
   }
 
   render(scene, camera) {
+    this.gl.info.reset();
     camera.aspect = this.width / this.height;
     camera.updateProjectionMatrix();
     this.gl.setRenderTarget(this.target);

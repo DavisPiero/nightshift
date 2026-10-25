@@ -5,10 +5,11 @@
 // can't be finished, and so on).
 
 import { Vehicle, DEFAULT_ASSISTS } from '../src/physics/vehicle.js';
-import { KAIDO_R } from '../src/vehicles/coupe-spec.js';
+import { SKYLINER_R34 as CAR } from "../src/vehicles/cars.js";
 import { TrackPath } from '../src/world/track-path.js';
-import { TEST_ROAD } from '../src/world/test-road.js';
+import { STARTER_TRACK as TEST_ROAD } from '../src/world/starter-track.js';
 import { keepOnTrack } from '../src/physics/walls.js';
+import { applyWeather } from '../src/physics/weather.js';
 
 const DT = 1 / 120;
 const NO_ASSISTS = { steering: false, stability: false, drift: false };
@@ -19,7 +20,7 @@ let failed = 0;
 const check = (ok, label) => { if (!ok) { failed++; console.log('  FAIL: ' + label); } };
 
 function launch(target, assists = DEFAULT_ASSISTS) {
-  const v = new Vehicle(KAIDO_R, assists);
+  const v = new Vehicle(CAR, assists);
   let t = 0;
   while (kmh(v) < target && t < 40) { v.step(DT, controls({ throttle: 1 })); t += DT; }
   return { v, t };
@@ -47,7 +48,7 @@ const to100 = launch(100);
 console.log(`  0-100 km/h: ${to100.t.toFixed(2)} s`);
 check(to100.t > 4.5 && to100.t < 7.5, '0-100 should be 4.5-7.5 s');
 {
-  const v = new Vehicle(KAIDO_R);
+  const v = new Vehicle(CAR);
   const gears = [];
   for (let t = 0; t < 60; t += DT) { v.step(DT, controls({ throttle: 1 })); if (gears[gears.length - 1] !== v.gearbox.gear) gears.push(v.gearbox.gear); }
   console.log(`  top speed after 60 s: ${kmh(v).toFixed(0)} km/h, gears used: ${gears.join(' ')}`);
@@ -68,6 +69,32 @@ check(to100.t > 4.5 && to100.t < 7.5, '0-100 should be 4.5-7.5 s');
   check(v.gearbox.gear === -1 && rev < -3, 'holding brake should reverse');
 }
 
+{
+  // Lift off completely: the car must slow down noticeably, not freewheel.
+  const { v } = launch(100);
+  for (let t = 0; t < 8; t += DT) v.step(DT, controls());
+  console.log(`  coast from 100 km/h, nothing pressed, 8 s: ${kmh(v).toFixed(0)} km/h`);
+  check(kmh(v) > 50 && kmh(v) < 70, 'coasting from 100 should be at 50-70 km/h after 8 s');
+}
+{
+  // Body lean in a hard corner, for looks: small, never enough to touch the road.
+  const { v } = launch(100);
+  let roll = 0, pitch = 0;
+  for (let t = 0; t < 5; t += DT) { v.step(DT, controls({ steer: 0.6, throttle: 1 })); roll = Math.max(roll, Math.abs(v.roll)); }
+  for (let t = 0; t < 2; t += DT) { v.step(DT, controls({ brake: 1 })); pitch = Math.max(pitch, Math.abs(v.pitch)); }
+  console.log(`  body lean: roll ${(roll * 180 / Math.PI).toFixed(1)}° in a hard corner, pitch ${(pitch * 180 / Math.PI).toFixed(1)}° braking`);
+  check(roll < 0.065 && pitch < 0.05, 'roll under ~3.5° and pitch under ~3°');
+}
+
+{
+  // Pulling away at full lock (a U-turn, or off a wall) must not bog down.
+  const v = new Vehicle(CAR);
+  for (let t = 0; t < 1.5; t += DT) v.step(DT, controls({ throttle: 1, steer: 1 }));
+  const straight = launch(0).v; for (let t = 0; t < 1.5; t += DT) straight.step(DT, controls({ throttle: 1 }));
+  console.log(`  1.5 s from a standstill: ${kmh(v).toFixed(0)} km/h at full lock, ${kmh(straight).toFixed(0)} km/h straight`);
+  check(kmh(v) > kmh(straight) * 0.6, 'full lock should pull away nearly as well as straight');
+}
+
 console.log('Handling (assists on / off)');
 const tests = [
   ['handbrake turn at 70', 70, (t) => ({ steer: 1, handbrake: t < 0.6, throttle: t > 0.6 ? 0.7 : 0 }), 4],
@@ -86,9 +113,10 @@ for (const [name, speed, script, secs] of tests) {
 }
 
 console.log('Lap of ' + TEST_ROAD.name);
-function botLap(assists) {
+function botLap(assists, weather = 'clear') {
   const track = new TrackPath(TEST_ROAD);
-  const v = new Vehicle(KAIDO_R, assists);
+  const v = new Vehicle(CAR, assists);
+  const grip = applyWeather(v, weather).grip;
   const s0 = TEST_ROAD.start;
   v.reset(track.x[s0], track.z[s0], track.headingAt(s0));
   let hint = s0, t = 0, hits = 0, travelled = 0, maxBeta = 0, worstHit = 0;
@@ -100,7 +128,7 @@ function botLap(assists) {
     const ang = Math.atan2(dx * fz - dz * fx, dx * fx + dz * fz);
     let kmax = 0;
     for (let k = 0; k < 20 + v.speed * v.speed / 14; k += 2) kmax = Math.max(kmax, Math.abs(track.curvature[track.wrap(hint + k)]));
-    const vmax = Math.sqrt(KAIDO_R.tireGrip * 9.81 * 0.85 / Math.max(kmax, 1e-4));
+    const vmax = Math.sqrt(CAR.tireGrip * grip * 9.81 * 0.85 / Math.max(kmax, 1e-4));
     const c = controls({
       steer: Math.max(-1, Math.min(1, -ang * 2.2)),
       throttle: v.speed < vmax - 1 ? 1 : 0,
@@ -123,6 +151,63 @@ for (const [label, assists] of [['assists on', DEFAULT_ASSISTS], ['assists off',
   const lap = botLap(assists);
   console.log(`  bot, ${label}: ${lap.done ? lap.t.toFixed(1) + ' s' : 'did not finish'}, wall hits ${lap.hits} (worst ${(lap.worstHit * 3.6).toFixed(0)} km/h), max slide ${deg(lap.maxBeta)}°`);
   if (label === 'assists on') check(lap.done && lap.hits === 0, 'bot should lap cleanly with assists on');
+}
+
+console.log('Weather');
+{
+  // Rain: longer braking, and the bot (driving to the lower grip) still laps
+  // cleanly with assists on.
+  for (const id of ['rain', 'fog']) {
+    const v = new Vehicle(CAR);
+    applyWeather(v, id);
+    while (kmh(v) < 100) v.step(DT, controls({ throttle: 1 }));
+    const x0 = v.x, z0 = v.z;
+    let t = 0;
+    while (v.speed > 0.1 && t < 10) { v.step(DT, controls({ brake: 1 })); t += DT; }
+    const d = Math.hypot(v.x - x0, v.z - z0);
+    const lap = botLap(DEFAULT_ASSISTS, id);
+    console.log(`  ${id}: 100-0 braking ${d.toFixed(1)} m, bot lap ${lap.done ? lap.t.toFixed(1) + ' s' : 'did not finish'}, wall hits ${lap.hits}, max slide ${deg(lap.maxBeta)}°`);
+    if (id === 'rain') check(d > 45, 'braking in the rain should take longer than in the dry');
+    check(lap.done && lap.hits === 0, `bot should lap cleanly in ${id} with assists on`);
+  }
+}
+
+console.log('Walls');
+{
+  // Drive into the barrier at an angle: no part of the body may end up
+  // through it, and the car must come off it still moving.
+  const track = new TrackPath(TEST_ROAD);
+  for (const [angle, speed] of [[0.35, 60], [0.8, 90], [1.4, 50]]) {
+    const v = new Vehicle(CAR);
+    const s0 = TEST_ROAD.start;
+    v.reset(track.x[s0], track.z[s0], track.headingAt(s0) + angle);
+    const fx = Math.sin(v.heading), fz = Math.cos(v.heading);
+    v.vx = fx * speed / 3.6; v.vz = fz * speed / 3.6;
+    let hint = s0, worst = 0, hit = 0;
+    let grazeKmh = 0, awayKmh = 0;
+    // Two seconds pressing into the wall, then get away: steer off it, or
+    // for a head-on hit hold brake to reverse first, as a player would.
+    const headOn = angle > 1;
+    for (let t = 0; t < (headOn ? 6.5 : 5); t += DT) {
+      const away = headOn && t < 3.5 ? { brake: 1, steer: -1 } : { throttle: 1, steer: 1 };
+      v.step(DT, controls(t < 2 ? { throttle: 0.5 } : away));
+      if (t < 2 && t + DT >= 2) grazeKmh = kmh(v);
+      if (t > 2) awayKmh = Math.max(awayKmh, kmh(v));
+      const r = keepOnTrack(v, track, hint);
+      hint = r.index;
+      hit = Math.max(hit, r.impact);
+      const hx = Math.sin(v.heading), hz = Math.cos(v.heading);
+      for (const [a, b] of [[1, 1], [-1, 1], [1, -1], [-1, -1]]) {
+        const p = track.nearest(v.x + hz * a * CAR.halfWidth * 0.92 + hx * b * CAR.halfLength * 0.97, v.z - hx * a * CAR.halfWidth * 0.92 + hz * b * CAR.halfLength * 0.97, hint);
+        worst = Math.max(worst, Math.abs(p.offset) - track.wall);
+      }
+    }
+    console.log(`  into the wall at ${deg(angle)}°, ${speed} km/h: hit ${(hit * 3.6).toFixed(0)} km/h, deepest ${(worst * 100).toFixed(1)} cm through, ${grazeKmh.toFixed(0)} km/h after 2 s, up to ${awayKmh.toFixed(0)} km/h getting away`);
+    check(hit > 0, 'the wall test should actually hit the wall');
+    check(worst < 0.05, 'no corner of the car should end up through the wall');
+    if (angle < 0.5) check(grazeKmh > 30, 'a glancing hit should keep most of the speed');
+    check(awayKmh > 15, 'the car should drive away from the wall');
+  }
 }
 
 console.log(failed ? `BENCH FAIL (${failed})` : 'BENCH PASS');
