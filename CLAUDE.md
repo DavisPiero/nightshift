@@ -3,7 +3,7 @@
 A casual night-time street racing game in the browser (Three.js), made for Arlo. David
 directs and makes the look, sound and feel calls. See SPEC.md for what makes it fun and
 what we are not building, STATE.md for where we are, DECISIONS.md for why things are the
-way they are. BRIEF.md is the original long brief, kept for reference.
+way they are, HANDOFF.md for how the last session ended. BRIEF.md is the original long brief.
 
 ## Hard rules
 - No build step. Plain ES modules, Three.js vendored in `vendor/` (pinned r170). The game

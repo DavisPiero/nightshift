@@ -15,7 +15,7 @@
 
 ## Milestones (from the brief)
 1. Foundation: loop, platform screen. **Done.**
-2. Desktop driving: coupe, physics, keyboard, two cameras, debug, test road. **Done.**
+2. Desktop driving: coupe, physics, keyboard, two cameras, debug, test road. **Done, signed off 2026-10-25.**
 3. iPad controls: left joystick, right throttle/brake/handbrake, multitouch. **Next.**
 4. Transmission and audio: manual mode option, better engine audio, tyre effects.
 5. Night circuit: full track, scenery, lighting.

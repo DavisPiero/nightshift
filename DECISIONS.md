@@ -14,3 +14,6 @@ One line each, newest last.
 - 2026-10-25: Holding brake at a standstill selects reverse; holding throttle at a standstill selects first. Same in auto and manual.
 - 2026-10-25: STATE.md replaces the brief's PROJECT_STATUS.md (David's usual state file).
 - 2026-10-25: Repo DavisPiero/nightshift, public, GitHub Pages from main.
+- 2026-10-25: The smoke test runs its loop on a timer and at Low graphics, because headless Chrome never fires animation frames.
+- 2026-10-25: Assists must keep a held handbrake at full lock under ~70° of slide; checked by the bench.
+- 2026-10-25: First drive signed off and merged; GitHub Pages serves main.

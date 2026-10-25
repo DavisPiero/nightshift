@@ -70,6 +70,7 @@ export class RetroRenderer {
 
   resize() {
     const w = window.innerWidth, h = window.innerHeight;
+    if (!w || !h) return; // hidden or not laid out yet; the next resize fixes it
     // Never render above the screen's real pixel count.
     const rh = Math.min(this.renderHeight, Math.round(h * Math.min(window.devicePixelRatio || 1, 2)));
     const rw = Math.round(rh * w / h);
