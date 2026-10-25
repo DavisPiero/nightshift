@@ -3,8 +3,7 @@
 _Last updated 2026-10-26, end of session 4 (look pass from David's third notes)._
 
 ## Where we are
-On branch `neon-underground`, not merged. `main` (live) is still Milestone 4 part 1.
-This session built:
+Signed off 2026-10-26, merged to `main` and live. This session built:
 - neon Japan menus (turquoise frames, pink buttons, Japanese subtitles)
 - new track pick and car pick layouts (list left, preview right, Continue / Race bottom right)
 - the Underground, a Tokyo tunnel track with turquoise lights
@@ -16,7 +15,6 @@ This session built:
 Bench and smoke test pass (now with the R35 and the Underground).
 
 ## Next
-- David plays the branch and signs off (or sends notes).
 - Then Milestone 4 part 2, the garage mods (see SPEC.md). The garage room now exists.
 - Then part 3, the world (time of day goes in the new Time box on the car pick).
 

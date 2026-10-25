@@ -1,7 +1,7 @@
 # Hand-off: end of session 4 (2026-10-26)
 
 ## Repo state
-- Branch `neon-underground`, committed, not merged. `main` is untouched and live.
+- Signed off and merged to `main` (live). No other branches.
 - Bench passes. Baseline unchanged for the R34 (0-100 5.61 s, top 277 km/h, braking 38.0 m,
   coast 61 km/h, lap 78.3 s). New: R35 lap 74.3 s (S 862); Underground laps R34 93.5 s,
   R35 88.8 s, Challenjer 93.8 s, all clean.
@@ -29,4 +29,4 @@
   `garage.views` can be set from `--js` to shoot a car from fixed angles.
 
 ## Next
-David's sign-off on this branch, then Milestone 4 part 2 (garage mods).
+Milestone 4 part 2 (garage mods).

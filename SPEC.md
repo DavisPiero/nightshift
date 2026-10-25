@@ -30,7 +30,7 @@
    time of day, snow, weather patches, a Monza-inspired street track.
    Look pass (David's third notes, 2026-10-26): neon Japan menus, new track and car pick
    layouts, the Underground track, rebuilt car bodies and a third car (R35), paint
-   reflections, the garage room. **Built, waiting for sign-off.**
+   reflections, the garage room. **Done, signed off 2026-10-26.**
 5. Night circuit: a second, full track.
 6. Racing: checkpoints, countdown, lap timing, results. Restart already exists.
 7. Garage extras: in-game currency and prices for parts (later).
