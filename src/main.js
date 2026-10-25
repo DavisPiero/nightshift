@@ -366,10 +366,10 @@ class Game {
   // Slow orbits round the parked car behind the menus; closer in the garage.
   menuCamera(dt) {
     const v = this.vehicle;
-    this.attractAngle += dt * (this.menuView === 'garage' ? 0.22 : 0.12);
+    this.attractAngle += dt * 0.12;
     let a, dist, h, lookY, fov, side = 0;
     if (this.menuView === 'garage') {
-      a = v.heading + this.attractAngle * 2.2;
+      a = v.heading + this.attractAngle; // a slow turn, about one lap a minute
       dist = 7.4; h = 1.9; lookY = 0.55; fov = 44;
       side = -1.6; // car sits left of the stats panel
     } else {

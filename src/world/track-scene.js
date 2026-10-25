@@ -317,7 +317,7 @@ export function buildTrackScene(track, def) {
     slab.rotation.x = -Math.PI / 2;
     slab.position.set(0, 0.015, -3);
     st.add(slab);
-    lamps.push(new THREE.Vector3(c1.x, 4.6, c1.z)); // moths gather under the canopy too
+    lamps.push(new THREE.Vector3(c1.x, 4.6, c1.z)); // a real light under the canopy when close
   }
 
   // Container yard by the harbour, outside the long sweeper.
