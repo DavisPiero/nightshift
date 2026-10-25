@@ -31,3 +31,13 @@ One line each, newest last.
 - 2026-10-25: Lamps, buildings, parked cars and props are instanced or merged; parked cars are baked into one set of meshes.
 - 2026-10-25: Touch controls save positions as screen fractions and are placed by dragging in Settings, not by hand-tuned numbers.
 - 2026-10-25: Exhaust pops are timed by the flames effect and played by audio, so sound and flame always match.
+- 2026-10-25: Moths and floating dust removed (David: "weird multi-coloured dots" round the lamps).
+- 2026-10-25: Ratings are measured from the physics, not hand-picked: Speed (top speed), Acceleration (0-100 and 80-160), Braking (100-0), Handling (grip with downforce x agility), 1-10 each; weighted into a 1-1000 score.
+- 2026-10-25: Classes: D <400, C 400-549, B 550-699, A 700-799, S 800-899, X 900+. Stock: R34 A 756, Challenjer B 635.
+- 2026-10-25: Parts are upgrade levels per slot (no tuning sliders, per the spec's "no setup sheets"). A part is a function that changes a copy of the car's numbers.
+- 2026-10-25: The car's final numbers = stock car, then parts, then Feel panel values (src/vehicles/tuning.js). Physics only sees the result.
+- 2026-10-25: Feel panel (F4) lets David tune handling and camera by feel; values save per car on his device and "Copy values" hands them over to make permanent. Fix to the cause of repeated feel notes.
+- 2026-10-25: Turbo cars have boost with lag; a big turbo really lags. The rev limiter follows the wheels, so wheelspin never cuts power (more power used to launch slower).
+- 2026-10-25: Second car: "2009 Dodga Challenjer SRT8", built from the real car's figures, left-hand drive, its own V8 sound profile.
+- 2026-10-25: Gear changes now dip the engine note for real (the old dip was overwritten every frame) and clunk; turbo cars whistle and flutter.
+- 2026-10-25: Controllers through the Gamepad API (standard layout), including menu navigation.

@@ -161,10 +161,20 @@ h1, h2, p { margin: 0; }
 .car-name .sub { color: var(--cyan); font-size: 18px; letter-spacing: 0.1em; }
 
 .stats { display: grid; gap: 7px; }
-.stat { display: grid; grid-template-columns: 96px 1fr 70px; align-items: center; gap: 10px; font-size: 19px; }
+.stat { display: grid; grid-template-columns: 78px 1fr 34px 96px; align-items: center; gap: 8px; font-size: 19px; }
+.stat .real { color: var(--muted); font-size: 16px; text-align: right; white-space: nowrap; }
+.rating { display: flex; align-items: center; gap: 10px; margin-bottom: 4px; }
+.rating .pi { font-size: 30px; line-height: 1; }
+.rating .muted { margin-left: auto; font-size: 16px; }
+/* Class badges, D (dull) to X (hot). */
+.cls { display: inline-block; min-width: 34px; padding: 2px 8px 4px; text-align: center; font-size: 26px; line-height: 1; clip-path: var(--notch-s); font-weight: 400; }
+.cls-D { background: #4a5a60; color: #e8f0f2; } .cls-C { background: #2f7a5a; color: #eafff4; }
+.cls-B { background: #1a7f8e; color: #e8fdff; } .cls-A { background: #3fd6e6; color: var(--cyan-ink); }
+.cls-S { background: #ff8b2b; color: var(--orange-ink); } .cls-X { background: #ff4a36; color: #fff; }
+.hud-tag .cls { font-size: 18px; min-width: 0; padding: 1px 6px 3px; margin-right: 6px; }
 .stat .k { color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; font-size: 17px; }
 .stat .v { text-align: right; }
-.meter { height: 12px; background: #050a0d; box-shadow: inset 0 0 0 2px var(--edge); display: flex; gap: 2px; padding: 2px; }
+.meter { height: 12px; background: #050a0d; box-shadow: inset 0 0 0 2px var(--edge); display: flex; gap: 1px; padding: 2px; }
 .meter i { flex: 1; background: #13232c; }
 .meter i.on { background: var(--cyan); }
 .meter i.hot { background: var(--orange); }
@@ -298,3 +308,15 @@ input[type=range]::-moz-range-thumb { width: 18px; height: 26px; border: 0; bord
   .card canvas { height: 120px; }
   .row { padding: 4px 8px; }
 }
+
+/* Feel panel (F4) */
+#feel {
+  position: fixed; z-index: 7; left: max(12px, var(--sl)); top: 54px; bottom: 12px; width: 360px;
+  padding: 12px 14px 14px; display: flex; flex-direction: column; gap: 8px; font-size: 17px;
+}
+#feel h3 { margin: 0; font-weight: 400; font-size: 26px; color: var(--cyan); }
+#feel h3 .muted { font-size: 18px; }
+.feel-list { overflow-y: auto; display: grid; gap: 2px; flex: 1; touch-action: pan-y; }
+.feel-row { display: grid; grid-template-columns: 1fr 120px 52px; align-items: center; gap: 6px; }
+.feel-row span.on { color: var(--orange); }
+.feel-row output { text-align: right; color: var(--cyan); }

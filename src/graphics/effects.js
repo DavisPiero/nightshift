@@ -232,7 +232,7 @@ export class Effects {
 
     // Exhaust pops: lifting off at high revs, and on fast upshifts.
     this.popTimer -= dt; this.popGap -= dt;
-    if (this.lastThrottle > 0.6 && v.throttle < 0.25 && v.rpm > 4500) this.popTimer = 0.35 + Math.random() * 0.4;
+    if (this.lastThrottle > 0.6 && v.throttle < 0.25 && v.rpm > 4500) this.popTimer = (0.35 + Math.random() * 0.4) * (v.spec.pops ?? 1);
     if (v.gearbox.shiftCount !== this.lastShift) {
       if (v.gearbox.lastShift > 0 && v.rpm > 5200 && this.lastThrottle > 0.8) this.popTimer = Math.max(this.popTimer, 0.12);
       this.lastShift = v.gearbox.shiftCount;
@@ -242,8 +242,8 @@ export class Effects {
       this.popGap = 0.05 + Math.random() * 0.12;
       const strength = 0.5 + Math.random() * 0.5;
       this.onPop?.(strength);
-      if (this.on.flames) {
-        _v.copy(model.exhaust);
+      if (this.on.flames) for (const pipe of model.exhausts) {
+        _v.copy(pipe);
         model.body.localToWorld(_v);
         _w.set(Math.sin(v.heading), 0, Math.cos(v.heading));
         for (let i = 0; i < 9; i++) {

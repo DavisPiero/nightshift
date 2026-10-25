@@ -65,7 +65,7 @@ export class Hud {
     g.fillStyle = 'rgba(134, 163, 173, 0.9)';
     g.font = `12px ${FONT}`;
     g.textAlign = 'center'; g.textBaseline = 'middle';
-    for (let k = 1; k <= 7; k++) {
+    for (let k = 1; k * 1000 <= s.limiterRpm; k++) {
       const a = a0 + (a1 - a0) * (k * 1000 / s.limiterRpm);
       g.fillText(String(k), Math.round(cx + Math.cos(a) * (R - 21)), Math.round(cy + Math.sin(a) * (R - 21)));
     }

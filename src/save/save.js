@@ -25,6 +25,7 @@ export function defaultSave() {
       graphics: null,            // 'low' | 'medium' | 'high', null = Low
       effects: { ...DEFAULT_EFFECTS },
       fov: 62,
+      feel: {},                  // Feel panel values per car id, plus 'camera'
       // Audio
       audio: { master: 0.8, engine: 1, effects: 0.8, ambience: 0.7 },
       // Controls

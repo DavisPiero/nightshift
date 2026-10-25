@@ -20,10 +20,13 @@
 3. iPad controls, plus David's first-drive notes: touch controls, physics fixes (lean,
    lift-off, collisions), pixel menus, settings in four tabs, weather, effects, a fuller
    track, the R34 and a proper cockpit. **In progress.** (This pulled in parts of 5, 7 and 8.)
-4. Transmission and audio: better engine audio, recordings if we get them.
+4. Feel, garage and world (David's second notes), in three parts: (1) feel pass, Feel
+   panel, ratings, parts, controllers, the Challenjer. **Built, awaiting sign-off.** (2) The
+   garage: workshop, visual and performance mods, dyno, named builds. (3) Asset library,
+   time of day, snow, weather patches, a Monza-inspired street track.
 5. Night circuit: a second, full track.
 6. Racing: checkpoints, countdown, lap timing, results. Restart already exists.
-7. Garage: workshop scene, engine/tyre/suspension upgrades, one visual mod. Paint already exists.
+7. Garage extras: in-game currency and prices for parts (later).
 8. Saving and settings: the rest (most of it is done in 3).
 9. Polish and release.
 

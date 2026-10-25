@@ -13,6 +13,11 @@ import { Vehicle } from './physics/vehicle.js';
 import { keepOnTrack } from './physics/walls.js';
 import { applyWeather, WEATHER } from './physics/weather.js';
 import { getCar, carTitle } from './vehicles/cars.js';
+import { buildSpec } from './vehicles/tuning.js';
+import { carStats } from './vehicles/stats.js';
+import { CAMERA_FEEL } from './cameras/cameras.js';
+import { FeelPanel } from './ui/feel-panel.js';
+import { GamepadSource } from './input/gamepad.js';
 import { buildCar } from './vehicles/car-model.js';
 import { getTrack } from './world/tracks.js';
 import { buildTrackScene, placeBackdrop } from './world/track-scene.js';
@@ -61,7 +66,7 @@ class Game {
 
     // The car
     this.carSpec = getCar(this.save.garage.selected);
-    this.vehicle = new Vehicle(this.carSpec, this.save.settings.assists);
+    this.vehicle = new Vehicle(this.currentSpec(), this.save.settings.assists);
     this.buildCarModel();
     this.trackIndex = this.trackInfo.def.start;
     this.lastOffset = 0;
@@ -73,12 +78,16 @@ class Game {
     // Systems
     this.effects = new Effects(this.scene);
     this.audio = new GameAudio();
+    this.audio.setEngine(this.carSpec);
     this.audio.setMuted(URL_FLAGS.mute);
     this.effects.onPop = (s) => this.audio.pop(s);
     this.controls = new Controls();
     this.keyboard = this.controls.add(new KeyboardSource(this.save.settings.keys));
     this.touch = this.controls.add(new TouchSource(document.querySelector('#touch'), this.save.settings.touch));
     this.touch.onLayoutChange = () => this.saveNow();
+    this.gamepad = this.controls.add(new GamepadSource());
+    this.feel = new FeelPanel(this);
+    Object.assign(CAMERA_FEEL, FeelPanel.cameraFeel(this.save));
     this.hud = new Hud(document.querySelector('#hud'));
     this.screens = new Screens(this);
     if (URL_FLAGS.debug) this.hud.toggleDebug();
@@ -114,11 +123,36 @@ class Game {
 
   carRef() { return { vehicle: this.vehicle, model: this.model }; }
 
+  // The numbers the car drives with: stock, plus fitted parts, plus Feel.
+  currentSpec() {
+    const id = this.carSpec.id;
+    const car = this.save.garage.cars[id] || (this.save.garage.cars[id] = { paint: null, upgrades: {} });
+    return buildSpec(this.carSpec, { parts: car.upgrades }, this.save.settings.feel[id]);
+  }
+
+  // Any car with its saved parts fitted (no Feel settings): for menus and ratings.
+  specFor(id) {
+    const car = getCar(id);
+    return buildSpec(car, { parts: this.save.garage.cars[id]?.upgrades || {} });
+  }
+
+  // Rating of the car as currently built.
+  currentRating() { return carStats(this.specFor(this.carSpec.id)); }
+
+  // Feel panel moved a slider: apply it now, save it shortly after.
+  applyFeel() {
+    this.vehicle.setSpec(this.currentSpec());
+    Object.assign(CAMERA_FEEL, FeelPanel.cameraFeel(this.save));
+    clearTimeout(this.feelSave);
+    this.feelSave = setTimeout(() => this.saveNow(), 400);
+  }
+
   buildCarModel() {
     if (this.model) { this.scene.remove(this.model.root); this.model.dispose?.(); }
     const paint = this.save.garage.cars[this.carSpec.id]?.paint ?? this.carSpec.paint;
     this.model = buildCar(this.carSpec, paint);
     this.scene.add(this.model.root);
+    this.audio?.setEngine(this.carSpec);
   }
 
   get graphicsName() {
@@ -204,7 +238,7 @@ class Game {
   showCar(id) {
     if (id === this.carSpec.id) return;
     this.carSpec = getCar(id);
-    this.vehicle = new Vehicle(this.carSpec, this.save.settings.assists);
+    this.vehicle = new Vehicle(this.currentSpec(), this.save.settings.assists);
     this.buildCarModel();
     this.resetCar(this.trackInfo.def.start);
     this.applySettings();
@@ -232,7 +266,8 @@ class Game {
     this.state = 'driving';
     this.hud.show(true);
     this.hud.setTouch(this.save.platform === 'touch');
-    this.hud.setCar(`${carTitle(this.carSpec)} · <b>${WEATHER[weather].name}</b>`);
+    const r = this.currentRating();
+    this.hud.setCar(`<b class="cls cls-${r.cls}">${r.cls} ${r.pi}</b> ${carTitle(this.carSpec)} · <b>${WEATHER[weather].name}</b>`);
     this.touch.show(this.save.platform === 'touch');
     this.restartCar();
     this.audio.resume();
@@ -296,6 +331,7 @@ class Game {
   update(dt) {
     const c = this.controls;
     if (c.takeAction('debug')) this.hud.toggleDebug();
+    if (c.takeAction('feel')) this.feel.toggle();
     if (this.state === 'driving') {
       if (c.takeAction('pause')) { this.pauseGame(); return; }
       if (c.takeAction('camera')) this.nextCamera();

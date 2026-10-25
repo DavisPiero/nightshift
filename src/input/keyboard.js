@@ -1,6 +1,6 @@
 // Keyboard source. Keys are on/off, so steering is eased in and out to feel
 // like a thumbstick instead of snapping to full lock. Keys can be rebound in
-// Settings > Controls; Escape always pauses and F3 always opens the debug panel.
+// Settings > Controls; Escape always pauses, F3 opens the debug panel and F4 the Feel panel.
 
 export const DEFAULT_KEYS = {
   throttle: ['KeyW', 'ArrowUp'],
@@ -21,8 +21,8 @@ export const KEY_LABELS = {
   camera: 'Change camera', pause: 'Pause',
 };
 
-const FIXED = { Escape: 'pause', F3: 'debug' };
-const ACTIONS = ['camera', 'pause', 'debug'];
+const FIXED = { Escape: 'pause', F3: 'debug', F4: 'feel' };
+const ACTIONS = ['camera', 'pause', 'debug', 'feel'];
 
 // "KeyW" -> "W", "ArrowUp" -> "Up", "Space" -> "Space".
 export function keyName(code) {

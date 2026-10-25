@@ -1,27 +1,24 @@
-# Hand-off: end of session 2 (2026-10-25)
+# Hand-off: end of session 3 (2026-10-25)
 
 ## Repo state
-- Milestone 3 work was built on `m3-ipad-and-polish`, then merged to `main` and pushed
-  (David asked for it to be merged and pushed without a further sign-off). The branch is deleted.
-- `node tools/drive-bench.mjs` passes. `./tools/smoke.sh` now loads the game twice
-  (computer/clear, iPad/rain). See STATE.md for how long it takes.
+- Work is on branch `m4-feel-and-ratings`, committed, not merged. `main` is Milestone 3 (live).
+- The bench and smoke test pass.
+- Bench baseline from before this session (R34): 0-100 5.58 s, top speed 272 km/h,
+  braking 38.0 m, coast 61 km/h, bot lap 78.3 s. Now: 0-100 5.61 s (turbo lag), top speed
+  277 km/h, braking 38.0 m, coast 61 km/h, bot lap 78.2 s; rain lap 88.2 s; Challenjer lap 78.6 s.
 
 ## Read first
-1. `CLAUDE.md`: hard rules (car-name and UI rules changed this session), code map.
-2. `STATE.md`: where we are and the questions for David.
-3. `SPEC.md` (milestones were rewritten) and `DECISIONS.md` (15 new lines this session).
+`CLAUDE.md`, `STATE.md`, then `DECISIONS.md` (12 new lines this session).
 
-## What changed, briefly
-- Physics: lean capped at ~3° around a roll centre; lift-off slowing; eight-point body
-  collisions with a contact impulse; low-speed wall pivot; front tyre force fades at walking pace.
-- New: `src/input/touch.js`, `src/ui/screens.js`, `src/ui/settings.js`, `src/graphics/effects.js`,
-  `src/world/weather.js`, `src/physics/weather.js`, `src/vehicles/cars.js` (was coupe-spec),
-  `src/vehicles/car-model.js` (was coupe-model), `src/vehicles/stats.js`, `src/world/tracks.js`,
-  `src/world/starter-track.js` (was test-road).
-- The save is now version 2; version 1 saves migrate (the car id kaido-r becomes skyliner-r34).
+## How the new pieces fit
+- `src/vehicles/parts.js`: slots and options; each option's `apply` edits a copy of the spec.
+  `tab` says which garage tab it belongs in (engine, chassis, drivetrain, body).
+- `src/vehicles/tuning.js`: `buildSpec(car, build, feel)` is the only place final numbers are made.
+- `src/vehicles/stats.js`: `carStats(spec)` runs the physics and returns the class, score and stats (cached).
+- Saved parts live in `save.garage.cars[id].upgrades` for now. Part 2 turns that into named builds (save version 3).
+- `src/vehicles/car-model.js`: a shared builder plus `SHAPES[carId]` (profile, cabin, wheels,
+  lamps, a `details()` function). Add a car by adding a spec in `cars.js` and a shape here.
+- Visual flags set by parts and not drawn yet: `wing`, `kit`, `rideDrop`, `bigBrakes`, `stripped`. Part 2 draws them.
 
 ## Next
-Get David's notes from a real iPad first. Then Milestone 6 (racing).
-
-## Open questions for David
-See STATE.md, "Open with David".
+Milestone 4 part 2: the garage (see STATE.md).

@@ -157,7 +157,7 @@ export class Screens {
     const car = getCar(this.pick.car);
     $('#setup-car-year').textContent = `${car.year} · ${car.code}`;
     $('#setup-car-name').textContent = `${car.make} ${car.model}`;
-    fillStats($('#setup-stats'), car, this.game.save.settings.units);
+    fillStats($('#setup-stats'), this.game.specFor(car.id), this.game.save.settings.units);
     const one = CARS.length < 2;
     $('#car-prev').disabled = one; $('#car-next').disabled = one;
   }
@@ -168,7 +168,7 @@ export class Screens {
     $('#garage-car-year').textContent = `${car.year} · ${car.code}`;
     $('#garage-car-name').textContent = `${car.make} ${car.model}`;
     $('#garage-blurb').textContent = car.blurb;
-    fillStats($('#garage-stats'), car, this.game.save.settings.units);
+    fillStats($('#garage-stats'), this.game.specFor(car.id), this.game.save.settings.units);
     const box = $('#garage-paints');
     box.innerHTML = '';
     const saved = this.game.save.garage.cars[car.id] || (this.game.save.garage.cars[car.id] = { paint: null, upgrades: {} });
@@ -193,24 +193,24 @@ export class Screens {
 
 const DRIVES = { rwd: 'Rear-wheel drive', awd: 'Four-wheel drive', fwd: 'Front-wheel drive' };
 
-// A row of stats with a pixel meter each.
-function fillStats(el, car, units) {
-  const s = carStats(car);
+// The car's class badge, its four 1-10 stats as pixel meters, and the real
+// figures behind them.
+function fillStats(el, spec, units) {
+  const s = carStats(spec);
   const mph = units === 'mph';
+  const meter = (v) => {
+    const n = Math.round(v * 2); // 20 pips for 1..10, half steps
+    return Array.from({ length: 20 }, (_, i) => `<i class="${i < n ? (i >= 16 ? 'on hot' : 'on') : ''}" style="--p:${i}"></i>`).join('');
+  };
   const rows = [
-    ['Power', `${s.hp} HP`, s.hp / 500],
-    ['Weight', `${car.mass} KG`, car.mass / 2000],
-    [mph ? '0-60' : '0-100', `${(mph ? s.to60 : s.to100).toFixed(1)} S`, 1 - (s.to100 - 3) / 6],
-    ['Top', mph ? `${Math.round(s.top / 1.609)} MPH` : `${Math.round(s.top)} KM/H`, (s.top - 150) / 200],
-    ['Grip', s.grip.toFixed(2), (s.grip - 0.7) / 0.6],
-    ['Drive', car.drivetrain.toUpperCase(), null],
+    ['Speed', s.stats.speed, mph ? `${Math.round(s.top / 1.609)} MPH` : `${Math.round(s.top)} KM/H`],
+    ['Accel', s.stats.accel, `${(mph ? s.to60 : s.to100).toFixed(1)} S ${mph ? '0-60' : '0-100'}`],
+    ['Handling', s.stats.handling, `${s.grip.toFixed(2)} G`],
+    ['Braking', s.stats.braking, `${s.brake.toFixed(0)} M`],
   ];
-  el.innerHTML = rows.map(([k, v, f]) => {
-    if (f === null) return `<div class="stat"><span class="k">${k}</span><span class="muted">${DRIVES[car.drivetrain] || ''}</span><span class="v">${v}</span></div>`;
-    const n = Math.round(Math.max(0.05, Math.min(1, f)) * 12);
-    const pips = Array.from({ length: 12 }, (_, i) => `<i class="${i < n ? (i >= 10 ? 'on hot' : 'on') : ''}" style="--p:${i}"></i>`).join('');
-    return `<div class="stat"><span class="k">${k}</span><span class="meter">${pips}</span><span class="v">${v}</span></div>`;
-  }).join('');
+  el.innerHTML = `<div class="rating"><span class="cls cls-${s.cls}">${s.cls}</span><span class="pi">${s.pi}</span>`
+    + `<span class="muted">${s.hp} HP · ${s.mass} KG · ${DRIVES[spec.drivetrain] || ''}</span></div>`
+    + rows.map(([k, v, real]) => `<div class="stat"><span class="k">${k}</span><span class="meter">${meter(v)}</span><span class="v">${v.toFixed(1)}</span><span class="real">${real}</span></div>`).join('');
 }
 
 // Track outline for the card, drawn small and scaled up with square pixels.
