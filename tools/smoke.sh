@@ -1,6 +1,6 @@
 #!/bin/sh
-# Loads the game in headless Chrome (muted) twice: once as a computer in clear
-# weather, once as an iPad in the rain. Each time a bot drives for 20 seconds
+# Loads the game in headless Chrome (muted) three times: as a computer in clear
+# weather, as an iPad in the rain, and in the R35 on the Underground. Each time a bot drives for 20 seconds
 # of game time through both cameras, and the check fails if the car did not
 # get up to speed, did not travel along the road, or (on iPad) the touch
 # controls were not on screen. Then runs the physics bench.
@@ -18,7 +18,7 @@ run() {
     --dump-dom "http://127.0.0.1:$PORT/index.html?smoke$1" 2>/dev/null | sed -n '/<pre id="smoke">/,/<\/pre>/p' | sed 's/<[^>]*>//g'
 }
 FAIL=0
-for ARGS in "" "&device=touch&weather=rain"; do
+for ARGS in "" "&device=touch&weather=rain" "&track=underground&car=gtar-r35"; do
   OUT=$(run "$ARGS")
   if [ -z "$OUT" ]; then echo "SMOKE FAIL ($ARGS): the game did not load or did not finish"; FAIL=1; continue; fi
   echo "$OUT"

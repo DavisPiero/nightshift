@@ -8,13 +8,14 @@
   <title>NIGHTSHIFT</title>
   <link rel="stylesheet" href="styles/main.css">
   <script>
-    // The pixel font (Jersey 10, SIL Open Font License) from Google Fonts.
+    // The pixel fonts from Google Fonts (both SIL Open Font License): Jersey 10
+    // for big titles, DotGothic16 (a finer pixel font with Japanese) for text.
     // Added from a script so the headless smoke test, which has no network,
     // is never held up waiting for it.
     if (!location.search.includes('smoke')) {
       const l = document.createElement('link');
       l.rel = 'stylesheet';
-      l.href = 'https://fonts.googleapis.com/css2?family=Jersey+10&display=swap';
+      l.href = 'https://fonts.googleapis.com/css2?family=DotGothic16&family=Jersey+10&display=swap';
       document.head.appendChild(l);
     }
   </script>
@@ -27,7 +28,6 @@
 
   <!-- Driving HUD -->
   <div id="hud" hidden>
-    <div id="hud-car" class="hud-tag"></div>
     <canvas id="tach" width="132" height="132"></canvas>
     <div id="hud-buttons">
       <button id="pause-button" class="btn sq" aria-label="Pause"><i class="ico-pause"></i></button>
@@ -44,10 +44,12 @@
   <!-- First visit: how are you playing? -->
   <section id="scr-platform" class="screen" hidden>
     <div class="brand-block">
+      <p class="jp-kicker">ナイトシフト // 夜勤</p>
       <h1 class="brand">NIGHT<em>SHIFT</em></h1>
       <p class="tag">street racing after dark</p>
     </div>
     <div class="pnl box">
+      <div class="ttl"><span>Setup</span><i class="win"></i></div>
       <p class="label">How are you playing?</p>
       <nav class="stack">
         <button class="btn big pri" data-platform="computer"><span class="name">Computer</span><span class="sub">Keyboard</span></button>
@@ -60,48 +62,59 @@
   <!-- Main menu -->
   <section id="scr-main" class="screen left" hidden>
     <div class="menu-l">
+      <p class="jp-kicker">ナイトシフト // 夜勤</p>
       <h1 class="brand">NIGHT<em>SHIFT</em></h1>
       <p class="tag">street racing after dark</p>
+      <div class="pips" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></div>
       <nav class="stack">
-        <button class="btn huge pri" data-go="tracks">Drive</button>
-        <button class="btn" data-go="garage">Garage</button>
-        <button class="btn" data-go="settings">Settings</button>
+        <button class="btn huge pri" data-go="tracks">Drive<span class="jp">走る</span></button>
+        <button class="btn" data-go="garage">Garage<span class="jp">ガレージ</span></button>
+        <button class="btn" data-go="settings">Settings<span class="jp">設定</span></button>
       </nav>
     </div>
   </section>
 
-  <!-- Drive: pick a track -->
-  <section id="scr-tracks" class="screen" hidden>
-    <header class="bar"><button class="btn back" data-back>Back</button><h2>Choose a track</h2></header>
-    <div id="track-list" class="cards"></div>
+  <!-- Drive: pick a track. List on the left, the track flies by behind, its
+       details on the right, Continue bottom right. -->
+  <section id="scr-tracks" class="screen select" hidden>
+    <header class="bar"><button class="btn back" data-back>Back</button><h2>Choose a track<span class="jp">コース選択</span></h2></header>
+    <div class="side-list pnl">
+      <div class="ttl"><span>Tracks</span><i class="win"></i></div>
+      <div id="track-list" class="list"></div>
+    </div>
+    <aside id="track-info" class="info pnl"></aside>
+    <footer class="foot"><button id="tracks-go" class="btn huge pri">Continue</button></footer>
   </section>
 
-  <!-- Drive: weather and car, then race -->
-  <section id="scr-setup" class="screen" hidden>
-    <header class="bar"><button class="btn back" data-back>Back</button><h2 id="setup-title">Starter Track</h2></header>
-    <div class="setup">
-      <div class="pnl box">
-        <p class="label">Weather</p>
-        <div id="weather-list" class="choices"></div>
-        <p id="weather-note" class="muted small"></p>
-      </div>
-      <div class="pnl box">
-        <p class="label">Car</p>
-        <div class="car-pick">
-          <button class="btn sq" id="car-prev" aria-label="Previous car">&lt;</button>
-          <div class="car-name"><span id="setup-car-year" class="sub"></span><span id="setup-car-name" class="name"></span></div>
-          <button class="btn sq" id="car-next" aria-label="Next car">&gt;</button>
-        </div>
-        <div id="setup-stats" class="stats"></div>
-      </div>
+  <!-- Drive: pick a car (left), see it in the garage (right), weather along
+       the bottom right, then race. -->
+  <section id="scr-setup" class="screen select" hidden>
+    <header class="bar"><button class="btn back" data-back>Back</button><h2>Choose a car<span class="jp">車両選択</span></h2><span id="setup-title" class="where"></span></header>
+    <div class="side-list pnl">
+      <div class="ttl"><span>Cars</span><i class="win"></i></div>
+      <div id="car-list" class="list"></div>
     </div>
-    <footer class="foot"><button id="race-go" class="btn huge pri">Race</button></footer>
+    <aside class="info pnl">
+      <div class="ttl"><span>Spec</span><i class="win"></i></div>
+      <div class="car-name"><span id="setup-car-year" class="sub"></span><span id="setup-car-name" class="name"></span></div>
+      <div id="setup-stats" class="stats"></div>
+    </aside>
+    <div class="conditions pnl">
+      <div class="ttl"><span>Conditions</span><span class="jp">天候</span><i class="win"></i></div>
+      <div class="cond-row">
+        <div id="weather-list" class="choices"></div>
+        <div class="time"><span class="k">Time</span><span class="v">02:00</span><span class="muted small">Night</span></div>
+        <button id="race-go" class="btn huge pri">Race</button>
+      </div>
+      <p id="weather-note" class="muted small"></p>
+    </div>
   </section>
 
   <!-- Garage: view cars and their stats; mods come later -->
   <section id="scr-garage" class="screen garage" hidden>
-    <header class="bar"><button class="btn back" data-back>Back</button><h2>Garage</h2></header>
+    <header class="bar"><button class="btn back" data-back>Back</button><h2>Garage<span class="jp">ガレージ</span></h2></header>
     <div class="garage-side pnl box">
+      <div class="ttl"><span>Your car</span><i class="win"></i></div>
       <div class="car-pick">
         <button class="btn sq" id="garage-prev" aria-label="Previous car">&lt;</button>
         <div class="car-name"><span id="garage-car-year" class="sub"></span><span id="garage-car-name" class="name"></span></div>
@@ -118,8 +131,9 @@
 
   <!-- Settings, four tabs -->
   <section id="scr-settings" class="screen" hidden>
-    <header class="bar"><button class="btn back" data-back>Back</button><h2>Settings</h2></header>
+    <header class="bar"><button class="btn back" data-back>Back</button><h2>Settings<span class="jp">設定</span></h2></header>
     <div class="pnl box wide">
+      <div class="ttl"><span>System</span><span class="jp">設定</span><i class="win"></i></div>
       <nav class="tabs" role="tablist">
         <button class="tab" data-tab="gameplay">Gameplay</button>
         <button class="tab" data-tab="graphics">Graphics</button>
@@ -133,7 +147,7 @@
   <!-- Pause -->
   <section id="scr-pause" class="screen dim" hidden>
     <div class="pnl box">
-      <h2>Paused</h2>
+      <div class="ttl"><span>Paused</span><span class="jp">一時停止</span><i class="win"></i></div>
       <nav class="stack">
         <button class="btn pri" id="pause-resume">Resume</button>
         <button class="btn" id="pause-restart">Restart</button>

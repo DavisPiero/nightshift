@@ -1,8 +1,9 @@
 # NIGHTSHIFT
 
-Casual night-time street racing in the browser. Low-poly, foggy, amber-lit, early-2000s
-console style. Drive a 1999 Nissani Skyliner GT-R (R34) round the Starter Track, a
-harbour industrial estate at night, in clear weather, rain or fog. Plays on a computer
+Casual night-time street racing in the browser. Low-poly, foggy, neon-Japan, early-2000s
+console style. Drive a 1999 Nissani Skyliner GT-R (R34), a 2017 Nissani GT-Ar (R35) or a
+2009 Dodga Challenjer SRT8 round the Starter Track (a harbour estate at night) or the
+Underground (Tokyo expressway tunnels), in clear weather, rain or fog. Plays on a computer
 with a keyboard, or on an iPad with touch controls.
 
 Play: https://davispiero.github.io/nightshift/
@@ -15,7 +16,7 @@ Play: https://davispiero.github.io/nightshift/
 
 Then open http://localhost:8793 (it opens by itself). Add `?mute` to the address for no sound,
 `?device=computer` or `?device=touch` to skip the menus and drive, `?weather=rain` or
-`?weather=fog` to pick the weather, `?debug` for the F3 panel.
+`?weather=fog` to pick the weather, `?track=underground` for the tunnels, `?debug` for the F3 panel.
 
 ## Controls
 
@@ -28,8 +29,8 @@ layout can be dragged into place there too.
 ./tools/smoke.sh
 ```
 
-Loads the game headless twice (computer in clear weather, iPad in the rain), lets a bot
-drive, then runs the physics bench (`node tools/drive-bench.mjs`).
+Loads the game headless three times (computer in clear weather, iPad in the rain, the R35
+in the Underground), lets a bot drive, then runs the physics bench (`node tools/drive-bench.mjs`).
 
-Three.js is MIT licensed (`vendor/THREE-LICENSE`). The pixel font is Jersey 10
-(SIL Open Font License), loaded from Google Fonts.
+Three.js is MIT licensed (`vendor/THREE-LICENSE`). The pixel fonts are Jersey 10 and
+DotGothic16 (both SIL Open Font License), loaded from Google Fonts.

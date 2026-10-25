@@ -172,7 +172,87 @@ export const CHALLENJER_SRT8 = {
   paintNames: ['Brilliant Black', 'Hemi Orange', 'Inferno Red', 'Bright Silver', 'Deep Water Blue'],
 };
 
-export const CARS = [SKYLINER_R34, CHALLENJER_SRT8];
+// Based on the 2017 GT-R (R35): 3.8 L twin-turbo V6 (565 PS at 6800 rpm,
+// 633 N·m from 3300 to 5800), 1752 kg, six-speed twin-clutch gearbox
+// (4.06/2.30/1.59/1.25/1.00/0.80, 3.70 final drive), four-wheel drive that
+// sends most of the torque to the rear. Brutal off the line and very
+// stable; it still slides if you ask it to.
+export const GTAR_R35 = {
+  id: 'gtar-r35',
+  make: 'Nissani',
+  model: 'GT-Ar',
+  code: 'R35',
+  year: 2017,
+  blurb: 'Twin-turbo V6 and four-wheel drive. Fast everywhere, calm at the limit.',
+
+  mass: 1752,
+  wheelbase: 2.78,
+  frontWeight: 0.54,
+  cgHeight: 0.46,
+  trackWidth: 1.6,
+  halfWidth: 0.95,
+  halfLength: 2.355,
+  yawInertiaScale: 1.1,
+
+  idleRpm: 950,
+  redline: 7000,
+  limiterRpm: 7100,
+  torqueCurve: [
+    [900, 260], [2000, 450], [3300, 633], [4500, 633],
+    [5800, 633], [6800, 580], [7100, 520],
+  ],
+  throttleResponse: 12,
+  engineBraking: 130,
+  engineInertia: 0.22,
+  turbo: { spoolRpm: 2600, lag: 0.25, share: 0.3 },
+  sound: { cylinders: 6, burble: 0.3, pitch: 1.08, sub: 1.1, rasp: 1.25 },
+
+  gearRatios: [4.06, 2.3, 1.59, 1.25, 1.0, 0.8],
+  reverseRatio: 3.38,
+  finalDrive: 3.7,
+  drivetrainEfficiency: 0.84,
+  drivetrain: 'awd',
+  frontTorqueShare: 0.3,
+  shiftTime: 0.08,            // twin-clutch: barely a pause
+  autoUpshiftRpm: 6800,
+  autoDownshiftRpm: 3200,
+
+  wheelRadius: 0.35,
+  tireGrip: 1.12,
+  rearGripScale: 1.06,
+  slipPeak: 0.15,
+  slideGrip: 0.84,
+
+  maxSteer: 0.56,
+  highSpeedSteer: 0.1,
+  steerSpeed: 3.2,
+
+  brakeForce: 20500,
+  brakeFrontBias: 0.64,
+  handbrakeForce: 4800,
+  handbrakeRearGrip: 0.4,
+
+  dragCoefficient: 0.26,
+  frontalArea: 2.1,
+  downforce: 0.32,
+  rollingResistance: 0.015,
+  liftOffDrag: 0.6,
+
+  suspensionStiffness: 50,
+  suspensionDamping: 8,
+  rollScale: 0.0035,
+  pitchScale: 0.005,
+  squatShare: 0.5,
+  shiftKick: 0.15,
+  maxRoll: 0.05,
+  maxPitch: 0.045,
+
+  paint: 0xe8e6e0,
+  paints: [0xe8e6e0, 0x8e9396, 0x101114, 0x1d3f7a, 0x8a1418, 0xc96a1a],
+  paintNames: ['Pearl White', 'Gun Metal', 'Meteor Black', 'Bayside Blue', 'Vibrant Red', 'Katsura Orange'],
+};
+
+export const CARS = [SKYLINER_R34, GTAR_R35, CHALLENJER_SRT8];
 
 export function getCar(id) {
   return CARS.find((c) => c.id === id) || CARS[0];

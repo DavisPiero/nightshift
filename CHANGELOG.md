@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.4.0 (unreleased): neon Japan, the Underground, better cars
+- New look for every menu: neon Japan pixel style with turquoise frames, hot pink buttons,
+  window title bars, scanlines and Japanese under the English.
+- Track pick: a list on the left, the track flying past behind, its map and details on the
+  right, Continue bottom right. Car pick: a list on the left, the car on a turntable in the
+  garage, weather and time along the bottom right, Race bottom right.
+- New track: Underground, Tokyo-style expressway tunnels with turquoise lights, Japanese
+  road markings, direction boards, jet fans and exit signs.
+- New car: 2017 Nissani GT-Ar (R35), four-wheel drive.
+- All cars rebuilt from smooth curves after reference sheets: proper lamps, grilles, vents,
+  mirrors and wheels with brake discs and callipers.
+- Paint and glass reflect the lights round the car; black paint now shows its shape.
+- The garage is a real room: a lock-up workshop with a turntable, light panels and a neon sign.
+- Removed the car and weather tag from the driving screen.
+
 ## 0.3.0 (unreleased): feel, ratings, parts, a second car
 - Feel panel (F4): drag sliders for power, brakes, grip, drift ease, lean, dive, squat, camera pull and shake while driving.
 - Visible brake dive and launch squat, a nod on each upshift; the chase camera trails under power and closes in under braking.

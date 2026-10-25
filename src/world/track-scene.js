@@ -10,103 +10,11 @@ import * as THREE from 'three';
 import { Tex } from '../graphics/textures.js';
 import { buildCar, bakeStatic } from '../vehicles/car-model.js';
 import { SKYLINER_R34, CHALLENJER_SRT8 } from '../vehicles/cars.js';
-
-function rng(seed) {
-  let s = seed >>> 0;
-  return () => ((s = (s * 1664525 + 1013904223) >>> 0) / 4294967296);
-}
-
-// A flat strip following the track between two offsets from the centre line.
-function strip(track, inner, outer, y, { step = 2, uScale = 1, vScale = 1, from = 0, to = track.count, closed = true } = {}) {
-  const pos = [], uv = [], idx = [];
-  let n = 0;
-  const last = closed && from === 0 && to === track.count ? to : to - 1;
-  for (let k = from; k <= last; k += step) {
-    const i = track.wrap(k);
-    const lx = track.leftX(i), lz = track.leftZ(i);
-    const d = k; // metres travelled (1 sample per metre)
-    pos.push(track.x[i] + lx * inner, y, track.z[i] + lz * inner);
-    pos.push(track.x[i] + lx * outer, y, track.z[i] + lz * outer);
-    uv.push(0, d * vScale, (outer - inner) * uScale, d * vScale);
-    if (n > 0) {
-      const a = (n - 1) * 2, b = n * 2;
-      // Wind so the face points up whichever side of the centre line it is on.
-      if (outer > inner) idx.push(a, b + 1, a + 1, a, b, b + 1);
-      else idx.push(a, a + 1, b + 1, a, b + 1, b);
-    }
-    n++;
-  }
-  const g = new THREE.BufferGeometry();
-  g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
-  g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
-  g.setIndex(idx);
-  g.computeVertexNormals();
-  return g;
-}
-
-// Join several small geometries (same attributes) into one, to save draw calls.
-function merge(geos) {
-  const pos = [], uv = [], idx = [];
-  let base = 0;
-  for (const g of geos) {
-    pos.push(...g.attributes.position.array);
-    uv.push(...g.attributes.uv.array);
-    for (const i of g.index.array) idx.push(i + base);
-    base += g.attributes.position.count;
-    g.dispose();
-  }
-  const m = new THREE.BufferGeometry();
-  m.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
-  m.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
-  m.setIndex(idx);
-  m.computeVertexNormals();
-  return m;
-}
-
-// A vertical band following the track at one offset (barriers, fences).
-function wallStrip(track, offset, y0, y1, step = 4, uScale = 0.5, facingIn = true) {
-  const pos = [], uv = [], idx = [];
-  let n = 0;
-  for (let k = 0; k <= track.count; k += step) {
-    const i = track.wrap(k);
-    const x = track.x[i] + track.leftX(i) * offset, z = track.z[i] + track.leftZ(i) * offset;
-    pos.push(x, y0, z, x, y1, z);
-    uv.push(k * uScale, 0, k * uScale, (y1 - y0) * uScale);
-    if (n > 0) {
-      const a = (n - 1) * 2, b = n * 2;
-      const inward = (offset > 0) === facingIn;
-      if (inward) idx.push(a, b, b + 1, a, b + 1, a + 1); else idx.push(a, b + 1, b, a, a + 1, b + 1);
-    }
-    n++;
-  }
-  const g = new THREE.BufferGeometry();
-  g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
-  g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
-  g.setIndex(idx);
-  g.computeVertexNormals();
-  return g;
-}
-
-// A geometry placed in the world, ready to merge.
-function placed(geo, x, y, z, rotY = 0, rotX = 0) {
-  const m = new THREE.Matrix4().compose(new THREE.Vector3(x, y, z), new THREE.Quaternion().setFromEuler(new THREE.Euler(rotX, rotY, 0, 'YXZ')), new THREE.Vector3(1, 1, 1));
-  return geo.applyMatrix4(m);
-}
-
-// One instanced mesh from a list of [x, y, z, rotY, sx, sy, sz] (and colours).
-function instanced(geo, mat, list, colours) {
-  const mesh = new THREE.InstancedMesh(geo, mat, Math.max(1, list.length));
-  mesh.count = list.length;
-  const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), e = new THREE.Euler(), p = new THREE.Vector3(), sc = new THREE.Vector3();
-  list.forEach(([x, y, z, ry = 0, sx = 1, sy = 1, sz = 1], i) => {
-    e.set(0, ry, 0); q.setFromEuler(e); p.set(x, y, z); sc.set(sx, sy, sz);
-    mesh.setMatrixAt(i, m4.compose(p, q, sc));
-    if (colours) mesh.setColorAt(i, new THREE.Color(colours[i]));
-  });
-  return mesh;
-}
+import { rng, strip, merge, wallStrip, placed, instanced } from './scene-kit.js';
+import { buildUnderground } from './underground-scene.js';
 
 export function buildTrackScene(track, def) {
+  if (def.theme === 'underground') return buildUnderground(track, def);
   const group = new THREE.Group();
   const hw = track.halfWidth;
   const r = rng(42);
@@ -568,7 +476,29 @@ export function buildTrackScene(track, def) {
     backdrop.traverse((o) => { o.frustumCulled = false; });
   }
 
-  return { group, lamps, glows: [glows], roadMat, backdrop };
+  // What the car's paint reflects: the lamp heads, the bright canopy, and
+  // the amber glow of the city low in the sky.
+  const reflect = new THREE.Group();
+  {
+    reflect.add(instanced(new THREE.BoxGeometry(1.4, 0.5, 0.8), new THREE.MeshBasicMaterial({ color: 0xffc070 }), headList));
+    reflect.add(new THREE.Mesh(merge(lamps.map((L) => placed(new THREE.BoxGeometry(1.6, 0.4, 1.6), L.x, L.y + 0.4, L.z))), new THREE.MeshBasicMaterial({ color: 0xffd8a0 })));
+    const sky = new THREE.Mesh(new THREE.CylinderGeometry(150, 150, 120, 16, 1, true), new THREE.MeshBasicMaterial({ map: Tex.skyGlow(), side: THREE.BackSide, fog: false }));
+    sky.position.y = 40;
+    sky.userData.follow = true; // kept centred on the car (see reflections.js)
+    reflect.add(sky);
+  }
+
+  return {
+    group, lamps, glows: [glows], roadMat, backdrop, reflect,
+    look: {
+      fog: { clear: 0x0b1012, rain: 0x0d1418, fog: 0x1a2226 },
+      hemi: [0x3a4a58, 0x141810, 1.0],
+      moon: 0.35,
+      lamp: 0xffa04a, lampPower: 150,
+      reflectBg: 0x0a0f12,
+      ground: 0x101214,
+    },
+  };
 }
 
 // Keep the far backdrop centred on the camera and just inside its far plane.

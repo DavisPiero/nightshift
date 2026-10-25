@@ -3,9 +3,9 @@
 // Plain DOM. Screens stack, so Back (or Escape) always returns to where you
 // came from, e.g. Settings opened from the pause menu goes back to it.
 
-import { CARS, getCar, carTitle } from '../vehicles/cars.js';
+import { CARS, getCar } from '../vehicles/cars.js';
 import { carStats } from '../vehicles/stats.js';
-import { TRACKS } from '../world/tracks.js';
+import { TRACKS, trackWeathers } from '../world/tracks.js';
 import { WEATHER } from '../physics/weather.js';
 import { Settings } from './settings.js';
 
@@ -29,20 +29,16 @@ export class Screens {
     $('#pause-main').addEventListener('click', () => game.toMain());
     $('#pause-button').addEventListener('click', () => game.pauseGame());
     $('#race-go').addEventListener('click', () => game.startRace(this.pick));
+    $('#tracks-go').addEventListener('click', () => this.open('setup'));
 
-    // Car pickers in the race setup and the garage.
-    const step = (d, where) => {
+    // The car picker in the garage (the race setup has a list).
+    const step = (d) => {
       const i = CARS.findIndex((c) => c.id === this.pick.car);
-      this.pick.car = CARS[(i + d + CARS.length) % CARS.length].id;
-      game.save.garage.selected = this.pick.car;
-      game.saveNow();
-      if (where === 'garage') this.fillGarage(); else this.fillSetup();
-      game.showCar(this.pick.car);
+      this.pickCar(CARS[(i + d + CARS.length) % CARS.length].id);
+      this.fillGarage();
     };
-    $('#car-prev').addEventListener('click', () => step(-1, 'setup'));
-    $('#car-next').addEventListener('click', () => step(1, 'setup'));
-    $('#garage-prev').addEventListener('click', () => step(-1, 'garage'));
-    $('#garage-next').addEventListener('click', () => step(1, 'garage'));
+    $('#garage-prev').addEventListener('click', () => step(-1));
+    $('#garage-next').addEventListener('click', () => step(1));
 
     // Keyboard: Escape goes back; arrows move between buttons.
     window.addEventListener('keydown', (e) => {
@@ -65,8 +61,9 @@ export class Screens {
       }
     });
 
-    this.pick = { track: game.save.lastRace.track, weather: game.save.lastRace.weather, car: game.save.garage.selected };
+    this.pick = { track: game.trackInfo.id, weather: game.save.lastRace.weather, car: game.carSpec.id };
     this.buildTracks();
+    this.buildCars();
     this.buildWeather();
   }
 
@@ -97,6 +94,7 @@ export class Screens {
 
   showEl(name) {
     const el = this.el(name);
+    if (name === 'tracks') this.fillTracks();
     if (name === 'setup') this.fillSetup();
     if (name === 'garage') this.fillGarage();
     if (name === 'settings') this.settings.open();
@@ -106,9 +104,9 @@ export class Screens {
     void el.offsetWidth; // restart the entrance animation
     el.classList.add('in');
     // Number the items so they arrive one after another.
-    el.querySelectorAll('.stack, .cards, .choices').forEach((list) => [...list.children].forEach((c, i) => c.style.setProperty('--i', i)));
+    el.querySelectorAll('.stack, .list, .choices').forEach((list) => [...list.children].forEach((c, i) => c.style.setProperty('--i', i)));
     this.game.onScreen(name);
-    const first = el.querySelector('.btn.pri, .btn');
+    const first = el.querySelector('.list .on') || el.querySelector('.btn.pri, .btn');
     if (first && matchMedia('(hover: hover)').matches) first.focus({ preventScroll: true });
   }
 
@@ -120,21 +118,66 @@ export class Screens {
     setTimeout(() => { if (el.classList.contains('out')) { el.hidden = true; el.classList.remove('out'); } }, 150);
   }
 
-  // --- Drive: tracks ---
+  // A car was picked (in the list or the garage): show it and remember it.
+  pickCar(id) {
+    this.pick.car = id;
+    this.game.save.garage.selected = id;
+    this.game.saveNow();
+    this.game.showCar(id);
+  }
+
+  // --- Drive: tracks. A list of long rectangles; picking one loads it so
+  // it flies past behind the menu, with its details on the right. ---
   buildTracks() {
     const list = $('#track-list');
     list.innerHTML = '';
-    for (const t of TRACKS) {
+    TRACKS.forEach((t, n) => {
       const b = document.createElement('button');
-      b.className = 'btn pnl card';
-      b.innerHTML = `<canvas width="150" height="85"></canvas><span class="name">${t.name}</span><span class="sub">${t.blurb}</span><span class="meta"><span>${(t.path.length / 1000).toFixed(2)} KM</span><span>${t.corners} CORNERS</span></span>`;
-      drawMap(b.querySelector('canvas'), t);
-      b.addEventListener('click', () => { this.pick.track = t.id; this.open('setup'); });
+      b.className = 'btn item';
+      b.dataset.track = t.id;
+      b.innerHTML = `<span class="num">${String(n + 1).padStart(2, '0')}</span><canvas width="72" height="40"></canvas>`
+        + `<span class="txt"><span class="name">${t.name}</span><span class="jp">${t.jp || ''}</span></span><span class="meta">${(t.path.length / 1000).toFixed(2)} KM</span>`;
+      drawMap(b.querySelector('canvas'), t, 3);
+      const choose = () => { if (this.pick.track !== t.id) { this.pick.track = t.id; this.game.loadTrack(t.id); this.fillTracks(); } };
+      b.addEventListener('click', choose);
+      b.addEventListener('focus', choose);
+      b.addEventListener('dblclick', () => this.open('setup'));
       list.appendChild(b);
-    }
+    });
   }
 
-  // --- Drive: weather and car ---
+  fillTracks() {
+    const t = TRACKS.find((x) => x.id === this.pick.track) || TRACKS[0];
+    for (const b of document.querySelectorAll('#track-list .item')) b.classList.toggle('on', b.dataset.track === t.id);
+    const ws = trackWeathers(t).map((id) => WEATHER[id].name).join(' · ');
+    const el = $('#track-info');
+    el.innerHTML = `<div class="ttl"><span>Track data</span><span class="jp">コース情報</span><i class="win"></i></div>`
+      + `<canvas width="240" height="150"></canvas>`
+      + `<div class="info-name"><span class="name">${t.name}</span><span class="jp">${t.jp || ''}</span></div>`
+      + `<p class="muted small">${t.blurb}</p>`
+      + `<dl><dt>Length</dt><dd>${(t.path.length / 1000).toFixed(2)} km</dd><dt>Corners</dt><dd>${t.corners}</dd>`
+      + `<dt>Lanes</dt><dd>${t.def.halfWidth > 6.2 ? 3 : 2}</dd><dt>Weather</dt><dd>${ws}</dd></dl>`;
+    drawMap(el.querySelector('canvas'), t, 4);
+  }
+
+  // --- Drive: cars and weather ---
+  buildCars() {
+    const list = $('#car-list');
+    list.innerHTML = '';
+    CARS.forEach((c) => {
+      const b = document.createElement('button');
+      b.className = 'btn item car';
+      b.dataset.car = c.id;
+      const r = carStats(this.game.specFor(c.id));
+      b.innerHTML = `<span class="cls cls-${r.cls}">${r.cls}</span><span class="txt"><span class="name">${c.make} ${c.model}</span>`
+        + `<span class="sub">${c.year} · ${c.code}</span></span><span class="meta">${r.pi}</span>`;
+      const choose = () => { if (this.pick.car !== c.id) { this.pickCar(c.id); this.fillSetup(); } };
+      b.addEventListener('click', choose);
+      b.addEventListener('focus', choose);
+      list.appendChild(b);
+    });
+  }
+
   buildWeather() {
     const list = $('#weather-list');
     list.innerHTML = '';
@@ -152,14 +195,18 @@ export class Screens {
   fillSetup() {
     const t = TRACKS.find((x) => x.id === this.pick.track) || TRACKS[0];
     $('#setup-title').textContent = t.name;
-    for (const b of document.querySelectorAll('#weather-list .btn')) b.classList.toggle('on', b.dataset.weather === this.pick.weather);
+    const allowed = trackWeathers(t);
+    if (!allowed.includes(this.pick.weather)) this.pick.weather = 'clear';
+    for (const b of document.querySelectorAll('#weather-list .btn')) {
+      b.hidden = !allowed.includes(b.dataset.weather);
+      b.classList.toggle('on', b.dataset.weather === this.pick.weather);
+    }
     $('#weather-note').textContent = WEATHER[this.pick.weather].note;
+    for (const b of document.querySelectorAll('#car-list .item')) b.classList.toggle('on', b.dataset.car === this.pick.car);
     const car = getCar(this.pick.car);
     $('#setup-car-year').textContent = `${car.year} · ${car.code}`;
     $('#setup-car-name').textContent = `${car.make} ${car.model}`;
     fillStats($('#setup-stats'), this.game.specFor(car.id), this.game.save.settings.units);
-    const one = CARS.length < 2;
-    $('#car-prev').disabled = one; $('#car-next').disabled = one;
   }
 
   // --- Garage ---
@@ -214,7 +261,7 @@ function fillStats(el, spec, units) {
 }
 
 // Track outline for the card, drawn small and scaled up with square pixels.
-function drawMap(canvas, t) {
+function drawMap(canvas, t, line = 4) {
   const g = canvas.getContext('2d');
   const p = t.path;
   let x0 = Infinity, x1 = -Infinity, z0 = Infinity, z1 = -Infinity;
@@ -223,20 +270,20 @@ function drawMap(canvas, t) {
   const k = Math.min((W - pad * 2) / (x1 - x0), (H - pad * 2) / (z1 - z0));
   const ox = (W - (x1 - x0) * k) / 2, oz = (H - (z1 - z0) * k) / 2;
   const at = (i) => [Math.round(ox + (x1 - p.x[i]) * k), Math.round(oz + (z1 - p.z[i]) * k)];
-  g.fillStyle = '#050a0d'; g.fillRect(0, 0, W, H);
-  g.strokeStyle = '#1a7f8e'; g.lineWidth = 4; g.lineJoin = 'miter';
+  g.clearRect(0, 0, W, H);
+  g.strokeStyle = '#11535a'; g.lineWidth = line + 2; g.lineJoin = 'miter';
   g.beginPath();
   for (let i = 0; i <= p.count; i += 4) { const [x, y] = at(i % p.count); if (i === 0) g.moveTo(x, y); else g.lineTo(x, y); }
   g.closePath(); g.stroke();
-  g.strokeStyle = '#3fd6e6'; g.lineWidth = 2; g.stroke();
+  g.strokeStyle = '#3ff0e8'; g.lineWidth = Math.max(1, line - 2); g.stroke();
   const [sx, sy] = at(t.def.start);
-  g.fillStyle = '#ff8b2b'; g.fillRect(sx - 3, sy - 3, 6, 6);
+  g.fillStyle = '#ff2e88'; g.fillRect(sx - 3, sy - 3, 6, 6);
 }
 
 function drawWeatherIcon(canvas, id) {
   const g = canvas.getContext('2d');
   const px = (x, y, c) => { g.fillStyle = c; g.fillRect(x, y, 1, 1); };
-  const C = '#3fd6e6', O = '#ff8b2b', W = '#c9d8dc';
+  const C = '#3ff0e8', O = '#ff2e88', W = '#c9d8dc';
   if (id === 'clear') {
     // A crescent moon and two stars.
     for (let y = 0; y < 16; y++) for (let x = 0; x < 16; x++) {
