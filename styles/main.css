@@ -445,6 +445,11 @@ input[type=range]::-moz-range-thumb { width: 14px; height: 24px; border: 0; bord
   .item { min-height: 54px; padding: 7px 10px 8px; }
   .item .name { font-size: 22px; }
   .grail, .gpop { top: calc(max(12px, var(--st)) + 54px); }
+  /* Phones: weather in one row, smaller tiles, so the times fit too. */
+  #weather-list { grid-template-columns: repeat(4, 1fr); }
+  .choices .btn { padding: 6px 4px 8px; font-size: 18px; }
+  .choices .btn.time .v { font-size: 22px; }
+  #scr-race .list { gap: 5px; }
   .grail { width: 104px; gap: 3px; padding: 6px; }
   .grail .tab { font-size: 18px; padding: 5px 8px 6px; }
   .gpop { left: calc(max(16px, var(--sl)) + 112px); max-height: calc(100% - max(12px, var(--st)) - max(12px, var(--sb)) - 54px); }

@@ -23,7 +23,7 @@ export const DEFAULT_TOUCH = {
     handbrake: { x: 0.77, y: 0.5 },
     gearUp: { x: 0.91, y: 0.36 },
     gearDown: { x: 0.81, y: 0.3 },
-    camera: { x: 0.12, y: 0.09 },  // top left: the minimap has the top right
+    camera: { x: 0.15, y: 0.09 },  // top left: the minimap has the top right
     pause: { x: 0.04, y: 0.09 },
   },
 };
