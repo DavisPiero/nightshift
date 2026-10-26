@@ -14,8 +14,13 @@
 // recordings later, replace EngineVoice with a sample player that takes the
 // same update() call.
 //
+// Menu sounds are in ui-sounds.js; they go round the world sounds, so the
+// pause menu can hush the car and still click.
+//
 // Browsers only allow sound after a tap or key press, so start() is called
 // from the first one.
+
+import { playUi } from './ui-sounds.js';
 
 // Each car's engine has a profile (spec.sound): cylinders, how lumpy it
 // burbles (a cross-plane V8 lopes, a straight six is smooth), how dark it is,
@@ -246,12 +251,16 @@ export class GameAudio {
     const comp = ctx.createDynamicsCompressor();
     comp.threshold.value = -14; comp.ratio.value = 4;
     this.master.connect(comp).connect(ctx.destination);
+    this.world = ctx.createGain(); // everything but the menu sounds
+    this.world.connect(this.master);
     this.engineBus = ctx.createGain();
     this.fxBus = ctx.createGain();
     this.ambBus = ctx.createGain();
-    this.engineBus.connect(this.master);
-    this.fxBus.connect(this.master);
-    this.ambBus.connect(this.master);
+    this.uiBus = ctx.createGain();
+    this.engineBus.connect(this.world);
+    this.fxBus.connect(this.world);
+    this.ambBus.connect(this.world);
+    this.uiBus.connect(this.master);
     this.engineLevel = ctx.createGain(); // lowered behind the menus
     this.engineLevel.connect(this.engineBus);
     this.noise = noiseBuffer(ctx);
@@ -317,6 +326,19 @@ export class GameAudio {
     this.engineBus.gain.value = this.volumes.engine;
     this.fxBus.gain.value = this.volumes.effects;
     this.ambBus.gain.value = this.volumes.ambience;
+    this.uiBus.gain.value = this.volumes.effects;
+  }
+
+  // A menu sound (see ui-sounds.js for the kinds).
+  ui(kind) {
+    if (!this.ctx || this.ctx.state !== 'running') return;
+    playUi(this.ctx, this.uiBus, this.noise, kind);
+  }
+
+  // Paused: the car and the world go quiet, the menu sounds still play.
+  hush(on) {
+    if (!this.ctx) return;
+    this.world.gain.setTargetAtTime(on ? 0 : 1, this.ctx.currentTime, 0.03);
   }
 
   suspend() { this.ctx?.suspend(); }

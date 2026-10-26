@@ -384,9 +384,18 @@ input[type=range]::-moz-range-thumb { width: 14px; height: 24px; border: 0; bord
   transition: transform 60ms steps(1);
 }
 .tc.pad.held { transform: translate(-50%, -46%); background: var(--cyan); color: var(--cyan-ink); box-shadow: inset 0 0 0 2px #c9fffb; }
-.tc.gas { background: rgba(255, 46, 136, 0.85); color: var(--pink-ink); box-shadow: inset 0 0 0 2px var(--pink-hi), inset 0 -5px 0 0 var(--pink-dk); }
-.tc.gas.held { background: #ff7ab3; color: var(--pink-ink); box-shadow: inset 0 0 0 2px #fff; }
 .tc.small { font-size: calc(19px * var(--s, 1)); }
+/* Pedals and the handbrake: pictures, not boxes. Pressed, a pedal tips away
+   from you and glows (pink for gas, turquoise for brake). */
+.tc.pedal, .tc.lever { background: none; clip-path: none; box-shadow: none; flex-direction: column; transform-origin: 50% 100%; transition: transform 50ms linear, filter 50ms linear; }
+.tc.pedal svg, .tc.lever svg { width: 100%; flex: 1; min-height: 0; filter: drop-shadow(0 3px 0 rgba(0, 0, 0, 0.55)); }
+.tc.lever { background: rgba(6, 18, 24, 0.55); clip-path: var(--cut); box-shadow: inset 0 0 0 2px var(--edge-hi); padding: 6px 8px 2px; }
+.tc .cap { font: calc(13px * var(--s, 1))/1 var(--px); letter-spacing: 0.2em; color: var(--muted); padding-top: 3px; }
+.tc.pedal.held { transform: translate(-50%, -50%) perspective(300px) rotateX(24deg) scale(0.97); background: none; box-shadow: none; }
+.tc.gas.held svg { filter: brightness(0.85) drop-shadow(0 0 10px rgba(255, 46, 136, 0.9)); }
+.tc.brake.held svg { filter: brightness(0.85) drop-shadow(0 0 10px rgba(63, 240, 232, 0.9)); }
+.tc.lever.held { transform: translate(-50%, -46%); background: rgba(14, 40, 48, 0.85); box-shadow: inset 0 0 0 2px var(--cyan); }
+.tc.held .cap { color: var(--text); }
 .stick-base {
   position: absolute; transform: translate(-50%, -50%); border-radius: 50%;
   border: 3px solid rgba(63, 240, 232, 0.55); background: rgba(4, 12, 16, 0.4);

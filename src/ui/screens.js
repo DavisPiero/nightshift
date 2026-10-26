@@ -37,6 +37,7 @@ export class Screens {
     $('#setup-go').addEventListener('click', () => this.open('race'));
 
     this.garage = new Garage(game, this);
+    this.menuSounds();
 
     // Keyboard: Escape goes back; arrows move between buttons.
     window.addEventListener('keydown', (e) => {
@@ -64,6 +65,37 @@ export class Screens {
     this.buildTracks();
     this.buildCars();
     this.buildConditions();
+  }
+
+  // Every button makes a sound that says what kind of thing it did (see
+  // audio/ui-sounds.js); moving between buttons ticks.
+  menuSounds() {
+    const audio = this.game.audio;
+    const kindOf = (b) => {
+      if (b.dataset.sound) return b.dataset.sound;
+      if (b.matches('[data-back], .back')) return 'back';
+      if (b.id === 'race-go') return 'race';
+      if (b.matches('#tracks-go, #setup-go, #scr-main .pri, [data-platform]')) return 'confirm';
+      if (b.id === 'garage-close') return 'close';
+      if (b.matches('.grail .tab')) return b.classList.contains('on') ? 'close' : 'tab';
+      if (b.matches('.swatch')) return 'paint';
+      if (b.matches('#garage-list .item.opt')) return 'fit';
+      if (b.matches('.tabs .tab, .seg .btn, .key, .row .btn')) return 'toggle';
+      return 'select';
+    };
+    document.addEventListener('click', (e) => {
+      const b = e.target.closest('button, .swatch');
+      if (b && !b.closest('#touch') && this.game.state !== 'driving') audio.ui(kindOf(b));
+    }, true);
+    let last = 0;
+    const tick = (e) => {
+      const b = e.target.closest?.('button, .swatch');
+      if (!b || b.disabled || this.game.state === 'driving' || performance.now() - last < 45) return;
+      last = performance.now();
+      audio.ui('move');
+    };
+    document.addEventListener('focusin', (e) => { if (!e.target.matches(':focus-visible')) return; tick(e); });
+    document.addEventListener('pointerover', (e) => { if (e.pointerType === 'mouse' && e.target.closest('button, .swatch') && !e.target.closest('button, .swatch').contains(e.relatedTarget)) tick(e); });
   }
 
   el(name) { return $(`#scr-${name}`); }

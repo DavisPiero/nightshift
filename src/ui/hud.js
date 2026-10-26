@@ -66,7 +66,7 @@ export class Hud {
     const [x, y] = this.toMap(v.x, v.z);
     g.save();
     g.translate(x, y);
-    g.rotate(Math.PI - v.heading);
+    g.rotate(-v.heading);
     g.beginPath(); g.moveTo(0, -6); g.lineTo(4.5, 5); g.lineTo(0, 2.5); g.lineTo(-4.5, 5); g.closePath();
     g.lineWidth = 2; g.strokeStyle = '#1e0010'; g.stroke();
     g.fillStyle = ORANGE; g.fill();

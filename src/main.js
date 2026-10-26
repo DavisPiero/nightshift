@@ -108,7 +108,7 @@ class Game {
     window.addEventListener('blur', () => { this.controls.releaseAll(); if (this.state === 'driving') this.pauseGame(); });
     document.addEventListener('visibilitychange', () => {
       if (document.hidden) { this.controls.releaseAll(); this.audio.suspend(); if (this.state === 'driving') this.pauseGame(); }
-      else if (this.state !== 'paused') this.audio.resume();
+      else this.audio.resume(); // a paused game stays hushed, menus still click
     });
     // Sound needs a tap or key press before the browser allows it.
     const unlock = () => { this.audio.start(); this.applyAudio(); };
@@ -377,7 +377,7 @@ class Game {
     this.controls.releaseAll();
     this.touch.show(false);
     this.screens.reset('pause');
-    this.audio.suspend();
+    this.audio.hush(true);
   }
 
   resume() {
@@ -386,6 +386,7 @@ class Game {
     this.screens.closeAll();
     this.controls.releaseAll();
     this.touch.show(this.save.platform === 'touch');
+    this.audio.hush(false);
     this.audio.resume();
   }
 
@@ -400,6 +401,7 @@ class Game {
     this.touch.show(false);
     this.state = 'menu';
     this.restartCar();
+    this.audio.hush(false);
     this.audio.resume();
   }
 
