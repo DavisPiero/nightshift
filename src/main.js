@@ -203,6 +203,10 @@ class Game {
     if (this.model) { this.model.root.removeFromParent(); this.model.dispose?.(); }
     this.model = buildCar(this.specFor(this.carSpec.id), activeBuild(this.save, this.carSpec).look);
     this.model.bodyY = this.model.body.position.y;
+    // Rebuilt while the bonnet is up (a part was fitted): keep it up, and
+    // drop the new part in.
+    if (this.bonnetUp) this.model.setBonnet(true, true);
+    if (this.fitSlot) { this.model.fitPart(this.fitSlot); this.fitSlot = null; }
     parent.add(this.model.root);
     this.audio?.setEngine(this.currentSpec());
   }
@@ -468,6 +472,8 @@ class Game {
       this.reflections.setWorld(garage ? this.garage : this.world);
     }
     this.model.setLights(!garage);
+    this.bonnetUp = garage && this.menuView === 'garage' && this.garageTab === 'engine';
+    this.model.setBonnet(this.bonnetUp);
     if (garage) {
       // The turntable turns slowly, or swings round to show what a garage tab
       // is about (the wheels, the wing, the side).
@@ -543,7 +549,7 @@ class Game {
     const v = this.garage.views;
     if (this.menuView === 'setup') return v.setup;
     const t = this.garageTab;
-    return t === 'wheels' ? v.wheels : t === 'body' ? v.body : ['engine', 'chassis', 'drive'].includes(t) ? v.side : t ? v.paint : v.garage;
+    return t === 'wheels' ? v.wheels : t === 'body' ? v.body : t === 'engine' ? v.engine : ['chassis', 'drive'].includes(t) ? v.side : t ? v.paint : v.garage;
   }
 
   // The garage camera glides between spots (or follows your dragging); the

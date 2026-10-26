@@ -12,6 +12,7 @@
 import * as THREE from 'three';
 import { Tex } from '../graphics/textures.js';
 import { Body, SLOT, flatShape, roundRect } from './body.js';
+import { bonnetRange, buildEngineBay } from './engine-bay.js';
 import { FINISHES, RIDE, checkLook } from './looks.js';
 
 const ROLL_CENTRE = 0.42; // m above the road
@@ -91,7 +92,8 @@ export function buildCar(spec, look = spec.paint, { simple = false } = {}) {
   // The body shell: one smooth mesh, paint / trim / underside / glass.
   const shellMats = [];
   shellMats[SLOT.paint] = paint; shellMats[SLOT.trim] = trim; shellMats[SLOT.under] = under; shellMats[SLOT.glass] = glass;
-  body.add(new THREE.Mesh(B.geometry(), shellMats));
+  const bonnet = simple ? null : bonnetRange(B, sh.def); // its own panel, so it can open
+  body.add(new THREE.Mesh(B.geometry({ bonnet }), shellMats));
 
   const add = (geo, mat, parent = body) => { const m = new THREE.Mesh(geo, mat); parent.add(m); return m; };
   const box = (w, h, d, mat, x, y, z, parent = body) => {
@@ -107,7 +109,23 @@ export function buildCar(spec, look = spec.paint, { simple = false } = {}) {
   const { exhausts } = sh.details({ B, box, add, body, mats, spec, tip });
   bodyKit({ B, box, spec, mats, sh });
   if (spec.wing === 'gt') gtWing({ B, box, mats });
-  if (look.decal !== 'none') decals({ B, add, look, sh });
+  if (look.decal !== 'none') decals({ B, add, look, sh, bonnet });
+
+  // The bonnet and engine bay. Anything laid on top of the bonnet (vents,
+  // scoops, stripes) moves to the bonnet so it lifts with it.
+  let bay = null;
+  if (bonnet) {
+    bay = buildEngineBay({ B, def: sh.def, spec, mats });
+    body.add(bay.bay, bay.hinge);
+    body.updateMatrixWorld(true);
+    const c = new THREE.Vector3();
+    for (const m of [...body.children]) {
+      if (!m.isMesh) continue;
+      m.geometry.computeBoundingBox();
+      m.geometry.boundingBox.getCenter(c).applyMatrix4(m.matrix);
+      if (c.z > bonnet[0] + 0.02 && c.z < bonnet[1] - 0.02 && Math.abs(c.x) < B.width(c.z) * 0.8 && c.y > B.hood(c.z) - 0.05) bay.hinge.attach(m);
+    }
+  }
 
   // --- Cockpit (does not lean). The driver sits at driverX. ---
   const dx = sh.driverX;
@@ -303,6 +321,8 @@ export function buildCar(spec, look = spec.paint, { simple = false } = {}) {
   for (const b of beams) b.castShadow = false;
 
   let glowOn = true, beamsOn = true, inside = false, lightsOn = true;
+  let bonnetOpen = false, bonnetAngle = 0;
+  const drops = []; // parts dropping into the engine bay
   const tach = needles[0], speedo = needles[1];
   return {
     root, body, sway, cockpit, steeringWheel, wheels, exhausts,
@@ -310,6 +330,16 @@ export function buildCar(spec, look = spec.paint, { simple = false } = {}) {
     cockpitEye: new THREE.Vector3(dx, 1.17 + sh.cockpitOffset[0], -0.08 + sh.cockpitOffset[1]),
     headGlows,
     setPaint(color) { paint.color.set(color); },
+    // Lift the bonnet (the garage's Engine tab). `now`: no animation.
+    setBonnet(open, now = false) {
+      bonnetOpen = open && !!bay;
+      if (now) bonnetAngle = bonnetOpen ? -0.95 : 0;
+    },
+    // A part was just fitted: it drops into the bay.
+    fitPart(slot) {
+      const g = bay?.slots[slot];
+      if (g) drops.push({ g, t: 0 });
+    },
     setGlow(on) { glowOn = on; for (const s of sprites) s.visible = on; this.setInterior(inside); },
     setBeams(on) { beamsOn = on; this.setInterior(inside); },
     // Lights off in the garage (parked, engine off).
@@ -322,7 +352,23 @@ export function buildCar(spec, look = spec.paint, { simple = false } = {}) {
       for (const s of tailGlows) s.visible = glowOn && lightsOn;
       for (const b of beams) b.visible = beamsOn && !on && lightsOn;
     },
-    update(v) {
+    update(v, dt = 0) {
+      if (bay) {
+        // The bonnet swings up on its hinge, easing in and out.
+        bonnetAngle += ((bonnetOpen ? -0.95 : 0) - bonnetAngle) * Math.min(1, dt * 5);
+        bay.hinge.rotation.x = bonnetAngle;
+        bay.bay.visible = bonnetAngle < -0.02;
+        for (let i = drops.length - 1; i >= 0; i--) {
+          const d = drops[i];
+          d.t += dt;
+          const k = Math.min(1, d.t / 0.45);
+          // Drops in from above and settles with a small bounce.
+          const ease = 1 + 2.2 * (k - 1) ** 3 + 1.2 * (k - 1) ** 2;
+          d.g.position.y = (1 - ease) * 0.45;
+          d.g.scale.setScalar(0.7 + 0.3 * Math.min(1, ease));
+          if (k >= 1) { d.g.position.y = 0; d.g.scale.setScalar(1); drops.splice(i, 1); }
+        }
+      }
       for (const w of wheels) {
         if (w.front) w.steer.rotation.y = v.steerAngle;
         w.spin.rotation.x = w.front ? v.frontWheelAngle : v.rearWheelAngle;
@@ -675,13 +721,14 @@ function gtWing({ B, box, mats: m }) {
 
 // Decals laid on the body: twin stripes over the top, a side stripe, a race
 // number roundel on the doors, or a 走り屋 sticker on the rear quarters.
-function decals({ B, add, look, sh }) {
+function decals({ B, add, look, sh, bonnet }) {
   const def = sh.def;
   const colour = new THREE.MeshStandardMaterial({ color: look.decalColour, roughness: 0.35, metalness: 0.1, polygonOffset: true, polygonOffsetFactor: -2 });
   const [wf, wr] = def.wheels.z, r = def.wheels.r;
   if (look.decal === 'stripes') {
     // Over the bonnet, roof and boot, but not over the glass.
-    const cuts = [def.rearGlass, def.screen].map(([a, b]) => [Math.min(a, b), Math.max(a, b)]).sort((a, b) => a[0] - b[0]);
+    // (Split at the bonnet's front edge, so the bonnet's piece lifts with it.)
+    const cuts = [def.rearGlass, def.screen, ...(bonnet ? [[bonnet[1], bonnet[1]]] : [])].map(([a, b]) => [Math.min(a, b), Math.max(a, b)]).sort((a, b) => a[0] - b[0]);
     let from = B.z0 + 0.02;
     for (const [a, b] of [...cuts, [B.z1 - 0.02, B.z1]]) {
       if (a - from > 0.05) add(B.decal(from, a, 10.85, 11.45, { lift: 0.006, nz: Math.ceil((a - from) / 0.08), nt: 1 }), colour);

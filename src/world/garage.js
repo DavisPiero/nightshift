@@ -160,6 +160,8 @@ export function buildGarage() {
       wheels: { pos: [3.3, 0.8, 3.5], look: [0.8, 0.4, 1.25], fov: 46, turn: 0 },
       body: { pos: [3.7, 2.4, 4.8], look: [0, 0.55, 0], fov: 54, turn: 4.1 },
       side: { pos: [2.6, 2.1, 5.1], look: [0, 0.45, 0], fov: 56, turn: 0.8 },
+      // Engine: the nose turned toward you, looking down into the open bay.
+      engine: { pos: [1.9, 2.6, 4.4], look: [0.5, 0.7, 1.4], fov: 48, turn: 0.35 },
     },
   };
 }

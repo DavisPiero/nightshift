@@ -195,7 +195,11 @@ export class Garage {
     for (const o of opts) {
       this.item(list, {
         name: o.name, sub: o.info || 'As it left the factory', on: (b.parts[id] || 'stock') === o.id,
-        onClick: () => { if (o.id === 'stock') delete b.parts[id]; else b.parts[id] = o.id; this.changed(); },
+        onClick: () => {
+          if (o.id === 'stock') delete b.parts[id]; else b.parts[id] = o.id;
+          this.game.fitSlot = id; // an engine part drops into the open bay
+          this.changed();
+        },
       });
     }
   }

@@ -29,6 +29,7 @@ export const FEEL = [
 // base: a car from cars.js. build: { parts: { slot: partId }, look }. feel: { key: value }.
 export function buildSpec(base, build, feel = {}) {
   const s = applyParts(base, build?.parts || {});
+  s.parts = { ...(build?.parts || {}) }; // which parts, so the model can show them
   // A lower car has a lower centre of gravity: a little less weight transfer.
   const drop = RIDE[build?.look?.ride]?.drop || 0;
   s.rideDrop = drop;
