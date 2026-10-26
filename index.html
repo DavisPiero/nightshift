@@ -149,9 +149,10 @@
     <footer class="foot"><button id="race-go" class="btn go pri">Race</button></footer>
   </section>
 
-  <!-- Garage: tabs and choices on the left, the car on the turntable, the
-       build's ratings (and a dyno on the Engine tab) on the right. -->
-  <section id="scr-garage" class="screen select garage" hidden>
+  <!-- Garage: a rail of tabs on the left; each opens a small pop-up with
+       its choices. The car on the turntable fills the rest (drag to turn
+       round it, scroll or pinch to zoom); the build's ratings bottom right. -->
+  <section id="scr-garage" class="screen garage" hidden>
     <header class="bar"><button class="btn back" data-back>Back</button><h2>Garage<span class="jp">ガレージ</span></h2>
       <div class="car-switch">
         <button class="btn sq" id="garage-prev" aria-label="Previous car">&lt;</button>
@@ -159,17 +160,17 @@
         <button class="btn sq" id="garage-next" aria-label="Next car">&gt;</button>
       </div>
     </header>
-    <div class="side-list pnl">
-      <div class="ttl"><span>Tune</span><i class="win"></i></div>
-      <nav id="garage-tabs" class="gtabs"></nav>
+    <nav id="garage-tabs" class="grail pnl"></nav>
+    <div id="garage-pop" class="gpop pnl" hidden>
+      <div class="ttl"><span id="garage-pop-title"></span><button class="x" id="garage-close" aria-label="Close">&times;</button></div>
+      <div id="garage-dyno" class="dyno" hidden><canvas width="300" height="150"></canvas></div>
       <div id="garage-list" class="list"></div>
     </div>
-    <aside class="info pnl">
-      <div class="ttl"><span>Build</span><span id="garage-build-name" class="jp"></span><i class="win"></i></div>
+    <aside class="gstats pnl">
+      <div class="ttl"><span>Build</span><span id="garage-build-name" class="bname"></span><i class="win"></i></div>
       <div id="garage-stats" class="stats"></div>
-      <p class="muted small">Green: better than stock. Red: worse.</p>
-      <div id="garage-dyno" class="dyno" hidden><p class="label">Dyno</p><canvas width="300" height="150"></canvas></div>
     </aside>
+    <p class="ghint muted small">Drag to look round · scroll to zoom</p>
   </section>
 
   <!-- Settings, four tabs -->

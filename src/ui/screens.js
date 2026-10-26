@@ -44,7 +44,8 @@ export class Screens {
       if (!top || game.state === 'driving' || e.nsCaptured) return;
       if (e.code === 'Escape' && top !== 'pause' && top !== 'platform' && top !== 'main') {
         e.preventDefault();
-        this.back();
+        if (top === 'garage' && this.garage.tab) this.garage.close(); // a pop-up closes first
+        else this.back();
         game.controls.actions.delete('pause'); // this Escape only meant Back
         return;
       }

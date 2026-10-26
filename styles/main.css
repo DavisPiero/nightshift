@@ -256,13 +256,28 @@ h1, h2, p { margin: 0; }
 .screen.in .meter i.on { animation: pip 240ms steps(1) both; animation-delay: calc(160ms + var(--p) * 18ms); }
 @keyframes pip { from { background: #0c2328; box-shadow: none; } }
 
-/* Garage */
+/* Garage: a tab rail, a pop-up for the open tab, ratings bottom right. */
+.screen.garage { align-items: stretch; justify-content: flex-start; background: linear-gradient(90deg, rgba(2, 5, 7, 0.7) 0%, rgba(2, 5, 7, 0) 30%), linear-gradient(0deg, rgba(2, 5, 7, 0.6) 0%, rgba(2, 5, 7, 0) 25%); }
 .car-switch { margin-left: auto; display: flex; align-items: center; gap: 10px; }
 .car-switch .car-name { text-align: center; min-width: 260px; }
-.gtabs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; }
-.gtabs .tab { font-size: 19px; padding: 7px 2px 8px; display: flex; flex-direction: column; align-items: center; gap: 2px; }
-.gtabs .tab .jp { font-size: 10px; opacity: 0.7; letter-spacing: 0; }
-.gtabs .tab.on .jp { color: var(--cyan-ink); }
+.grail {
+  position: absolute; left: max(16px, var(--sl)); top: calc(max(16px, var(--st)) + 70px);
+  width: 118px; padding: 8px; display: flex; flex-direction: column; gap: 5px;
+}
+.grail .tab { font-size: 21px; padding: 8px 10px 9px; text-align: left; }
+.gpop {
+  position: absolute; left: calc(max(16px, var(--sl)) + 128px); top: calc(max(16px, var(--st)) + 70px);
+  width: min(330px, 34vw); max-height: calc(100% - max(16px, var(--st)) - max(16px, var(--sb)) - 70px);
+  padding: 10px 10px 12px; display: flex; flex-direction: column; gap: 6px;
+}
+.gpop.pop { animation: pop 160ms steps(4) both; }
+@keyframes pop { from { opacity: 0; transform: translateX(-14px) scale(0.97); } to { opacity: 1; transform: none; } }
+.gpop .ttl .x { margin-left: auto; border: 0; background: none; cursor: pointer; font: 22px/0.6 var(--px); color: var(--cyan-ink); padding: 2px 4px; }
+.gpop .list { flex: 0 1 auto; }
+.list.calm > * { animation: none !important; }
+.gstats { position: absolute; right: max(16px, var(--sr)); bottom: max(16px, var(--sb)); width: min(330px, 34vw); padding: 10px 14px 12px; display: flex; flex-direction: column; gap: 6px; }
+.gstats .bname { color: var(--cyan-ink); opacity: 0.75; font: 13px/1 var(--dot); letter-spacing: 0.06em; text-transform: none; }
+.ghint { position: absolute; left: 50%; bottom: max(14px, var(--sb)); transform: translateX(-50%); pointer-events: none; letter-spacing: 0.12em; }
 .list h3.grp { margin: 8px 0 0; font: 17px/1 var(--px); color: var(--cyan); letter-spacing: 0.2em; text-transform: uppercase; display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; }
 .list h3.grp .muted { font: 12px/1.2 var(--dot); letter-spacing: 0.04em; text-transform: none; }
 .item.opt { min-height: 52px; padding: 8px 12px 9px; }
@@ -277,7 +292,6 @@ h1, h2, p { margin: 0; }
 .swatch.on { box-shadow: inset 0 0 0 3px var(--cyan), inset 0 0 0 5px #000; }
 .swatch.stock { background: repeating-linear-gradient(-45deg, #1a2a2e 0 5px, #0c1416 5px 10px); }
 .swatch:focus-visible { outline: none; box-shadow: inset 0 0 0 3px var(--pink), inset 0 0 0 5px #000; }
-#scr-garage .info { width: min(340px, 34vw); }
 .dyno canvas { width: 100%; height: auto; aspect-ratio: 2; background: rgba(0, 0, 0, 0.35); box-shadow: inset 0 0 0 1px var(--edge); }
 .delta { font: 22px/1 var(--px); } .delta.up { color: #7ef08a; } .delta.down { color: var(--red); }
 .meter i.up { background: #7ef08a; box-shadow: 0 0 4px rgba(126, 240, 138, 0.6); }
@@ -408,6 +422,13 @@ input[type=range]::-moz-range-thumb { width: 14px; height: 24px; border: 0; bord
   .side-list, .info { top: calc(max(12px, var(--st)) + 54px); }
   .item { min-height: 54px; padding: 7px 10px 8px; }
   .item .name { font-size: 22px; }
+  .grail, .gpop { top: calc(max(12px, var(--st)) + 54px); }
+  .grail { width: 104px; gap: 3px; padding: 6px; }
+  .grail .tab { font-size: 18px; padding: 5px 8px 6px; }
+  .gpop { left: calc(max(16px, var(--sl)) + 112px); max-height: calc(100% - max(12px, var(--st)) - max(12px, var(--sb)) - 54px); }
+  .gstats { width: min(290px, 34vw); padding: 6px 10px 8px; }
+  .gstats .stats { gap: 2px; }
+  .ghint { display: none; }
   .choices .btn .ico { width: 24px; height: 24px; }
   .info canvas { display: none; }
 }

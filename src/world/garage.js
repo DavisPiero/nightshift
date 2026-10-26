@@ -150,16 +150,16 @@ export function buildGarage() {
   return {
     scene, group, reflect,
     look: { reflectBg: 0x1a2222, ground: 0x24342c },
-    // Camera spots: car left of the right-hand panel (Garage), or right of
-    // the left-hand list (car pick).
+    // Camera spots, all looking at the car: the Garage screen shifts its lens
+    // to keep the car clear of the tabs; the car pick sits it right of the list.
     views: {
-      garage: { pos: [4.2, 1.65, 5.1], look: [1.35, 0.45, 0.1], fov: 44 },
-      setup: { pos: [-3.1, 2.3, 6.9], look: [-1.15, 0.35, 0.0], fov: 46 },
+      garage: { pos: [4.3, 1.75, 4.9], look: [0, 0.5, 0], fov: 50 },
+      setup: { pos: [-2.9, 2.2, 5.1], look: [-1.2, 0.35, 0.0], fov: 54 },
       // Garage tabs: turn is the turntable angle to hold (none = keep turning).
-      paint: { pos: [0.6, 2.2, 5.3], look: [0.25, 0.4, 0], fov: 46 },
-      wheels: { pos: [3.1, 0.75, 3.1], look: [0.7, 0.4, 1.25], fov: 44, turn: 0 },
-      body: { pos: [2.9, 2.3, 4.6], look: [0.25, 0.55, 0], fov: 46, turn: 4.1 },
-      side: { pos: [0.6, 1.9, 5.3], look: [0.2, 0.45, 0], fov: 46, turn: 0.8 },
+      paint: { pos: [2.3, 2.5, 5.1], look: [0, 0.45, 0], fov: 56 },
+      wheels: { pos: [3.3, 0.8, 3.5], look: [0.8, 0.4, 1.25], fov: 46, turn: 0 },
+      body: { pos: [3.7, 2.4, 4.8], look: [0, 0.55, 0], fov: 54, turn: 4.1 },
+      side: { pos: [2.6, 2.1, 5.1], look: [0, 0.45, 0], fov: 56, turn: 0.8 },
     },
   };
 }
