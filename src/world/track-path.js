@@ -103,3 +103,36 @@ export class TrackPath {
     };
   }
 }
+
+// Draw a closed road like a turtle: from [x, z] facing `heading`, follow a
+// list of pieces: ['S', metres] straight on, ['R', degrees, radius] turn
+// right, ['L', degrees, radius] turn left. Returns points every few metres
+// for TrackPath. Any small gap left between the end and the start is spread
+// along the whole loop, so the pieces need only add up roughly.
+export function turtle([x0, z0], heading, pieces, step = 10) {
+  let x = x0, z = z0, h = heading;
+  const pts = [[x, z]];
+  const dist = [0];
+  let s = 0;
+  const go = (len, turn) => {
+    const n = Math.max(1, Math.ceil(len / step));
+    for (let i = 0; i < n; i++) {
+      const d = len / n;
+      h += turn / n / 2;
+      x += Math.sin(h) * d; z += Math.cos(h) * d;
+      h += turn / n / 2;
+      s += d;
+      pts.push([x, z]); dist.push(s);
+    }
+  };
+  for (const [kind, a, r] of pieces) {
+    if (kind === 'S') go(a, 0);
+    else {
+      const rad = (a * Math.PI) / 180;
+      go(rad * r, kind === 'R' ? -rad : rad); // right turns lower the heading
+    }
+  }
+  const ex = x - x0, ez = z - z0;
+  pts.pop(); dist.pop(); // the last point is the first one again
+  return pts.map(([px, pz], i) => [px - ex * (dist[i] / s), pz - ez * (dist[i] / s)]);
+}
