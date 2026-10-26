@@ -182,18 +182,35 @@ export const Tex = {
   })),
 
   // Gauge face for the dashboard.
-  gauges: () => cached('gauges', () => canvasTexture([64, 32], (g, w, h) => {
-    g.fillStyle = '#060606'; g.fillRect(0, 0, w, h);
-    for (const cx of [18, 46]) {
-      g.strokeStyle = '#c87a2a'; g.lineWidth = 1;
-      g.beginPath(); g.arc(cx, 17, 12, Math.PI * 0.75, Math.PI * 2.25); g.stroke();
-      g.fillStyle = '#e89a3a';
-      for (let i = 0; i <= 8; i++) {
-        const a = Math.PI * 0.75 + i / 8 * Math.PI * 1.5;
-        g.fillRect(cx + Math.cos(a) * 10 | 0, 17 + Math.sin(a) * 10 | 0, 1, 1);
+  // The driver's two dials, backlit like a real car's at night: white ticks
+  // and numbers on black, a red zone on the rev counter (left).
+  gauges: () => cached('gauges2', () => canvasTexture([128, 64], (g, w, h) => {
+    g.fillStyle = '#050607'; g.fillRect(0, 0, w, h);
+    for (const [cx, n, redFrom] of [[36, 8, 7], [92, 7, 99]]) {
+      g.strokeStyle = '#2a3034'; g.lineWidth = 2;
+      g.beginPath(); g.arc(cx, 34, 26, 0, Math.PI * 2); g.stroke();
+      for (let i = 0; i <= n * 2; i++) {
+        const a = Math.PI * 0.75 + (i / (n * 2)) * Math.PI * 1.5;
+        const major = i % 2 === 0, r0 = major ? 18 : 21;
+        g.strokeStyle = i / 2 >= redFrom ? '#ff3a2a' : '#e8eef0'; g.lineWidth = major ? 2 : 1;
+        g.beginPath(); g.moveTo(cx + Math.cos(a) * r0, 34 + Math.sin(a) * r0); g.lineTo(cx + Math.cos(a) * 24, 34 + Math.sin(a) * 24); g.stroke();
+        if (major) {
+          g.fillStyle = i / 2 >= redFrom ? '#ff3a2a' : '#dfe6e8';
+          g.font = '7px monospace'; g.textAlign = 'center'; g.textBaseline = 'middle';
+          g.fillText(String(n === 8 ? i / 2 : (i / 2) * 40), cx + Math.cos(a) * 13, 34 + Math.sin(a) * 13);
+        }
       }
     }
-  })),
+    g.fillStyle = '#7a8a90'; g.font = '5px monospace'; g.textAlign = 'center';
+    g.fillText('x1000r/min', 36, 50); g.fillText('km/h', 92, 50);
+  }, { nearest: false })),
+
+  // The radio's little amber display.
+  radio: () => cached('radio', () => canvasTexture([64, 24], (g, w, h) => {
+    g.fillStyle = '#0a0806'; g.fillRect(0, 0, w, h);
+    g.fillStyle = '#ffb347'; g.font = '11px monospace'; g.textAlign = 'center'; g.textBaseline = 'middle';
+    g.fillText('FM 88.1', w / 2, h / 2 + 1);
+  }, { nearest: false })),
 
   // Garage door slats.
   shutter: () => cached('shutter', () => canvasTexture([32, 32], (g, w, h) => {

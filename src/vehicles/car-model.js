@@ -84,10 +84,12 @@ export function buildCar(spec, look = spec.paint, { simple = false } = {}) {
   const tailRing = new THREE.MeshBasicMaterial({ color: 0x3a0503 });
   const reverseLight = new THREE.MeshBasicMaterial({ color: 0x777777 });
   const amber = new THREE.MeshBasicMaterial({ color: 0xc86a10 });
-  const interior = new THREE.MeshLambertMaterial({ color: spec.stripped ? 0x4a5054 : 0x2a2b2d }); // bare metal when stripped
-  const dashMat = new THREE.MeshLambertMaterial({ color: 0x0f1012, flatShading: true });
-  const seatMat = new THREE.MeshLambertMaterial({ color: 0x232426 });
-  const seatInsert = new THREE.MeshLambertMaterial({ color: 0x2c3036 });
+  // Cabin plastics: grey, faintly lit by the dials and the street (after
+  // David's cockpit references), so the shapes still read at night.
+  const interior = new THREE.MeshLambertMaterial({ color: spec.stripped ? 0x4a5054 : 0x3a3c3d, emissive: 0x070908 }); // bare metal when stripped
+  const dashMat = new THREE.MeshLambertMaterial({ color: 0x1e2022, emissive: 0x050706, flatShading: true });
+  const seatMat = new THREE.MeshLambertMaterial({ color: 0x2a2b2d, emissive: 0x040505 });
+  const seatInsert = new THREE.MeshLambertMaterial({ color: 0x34383e, emissive: 0x040505 });
 
   // The body shell: one smooth mesh, paint / trim / underside / glass.
   const shellMats = [];
@@ -141,23 +143,31 @@ export function buildCar(spec, look = spec.paint, { simple = false } = {}) {
     const hood = box(0.48, 0.035, 0.18, dashMat, dx, 0.965, 0.64, cockpit);
     hood.rotation.x = -0.15;
     for (const s of [1, -1]) box(0.03, 0.08, 0.16, dashMat, dx + s * 0.23, 0.925, 0.65, cockpit);
-    const face = new THREE.Mesh(new THREE.PlaneGeometry(0.44, 0.15), new THREE.MeshBasicMaterial({ map: Tex.gauges(), color: 0xb8b8b8 }));
+    const face = new THREE.Mesh(new THREE.PlaneGeometry(0.44, 0.22), new THREE.MeshBasicMaterial({ map: Tex.gauges(), color: 0xd8dcdc }));
     face.position.set(dx, 0.86, 0.585);
     face.rotation.set(0.15, Math.PI, 0);
     cockpit.add(face);
-    const needleMat = new THREE.MeshBasicMaterial({ color: 0xff7a2a });
-    for (const gx of [0.1, -0.1]) {
+    const needleMat = new THREE.MeshBasicMaterial({ color: 0xff4a2a });
+    for (const gx of [0.124, -0.096]) {
       const pivot = new THREE.Group();
       pivot.position.set(dx + gx, 0.86, 0.58);
       pivot.rotation.set(0.15, Math.PI, 0);
-      const needle = new THREE.Mesh(new THREE.PlaneGeometry(0.006, 0.05), needleMat);
-      needle.position.y = 0.022;
+      const needle = new THREE.Mesh(new THREE.PlaneGeometry(0.006, 0.07), needleMat);
+      needle.position.y = 0.03;
       pivot.add(needle);
       cockpit.add(pivot);
       needles.push(pivot);
     }
-    const mfd = box(0.2, 0.09, 0.02, new THREE.MeshBasicMaterial({ color: 0x9a5a14 }), 0.02, 0.82, 0.585, cockpit);
+    const mfd = box(0.2, 0.075, 0.02, new THREE.MeshBasicMaterial({ map: Tex.radio(), color: 0xc8c8c8 }), 0.02, 0.8, 0.585, cockpit);
     mfd.rotation.x = -0.15;
+    // A-pillars: the posts either side of the windscreen.
+    for (const s of [1, -1]) {
+      const a = new THREE.Vector3(s * 0.75, 0.95, 0.84), b = new THREE.Vector3(s * 0.65, 1.3, 0.32);
+      const pillar = new THREE.Mesh(new THREE.BoxGeometry(0.045, 0.035, a.distanceTo(b)), interior);
+      pillar.position.copy(a).add(b).multiplyScalar(0.5);
+      pillar.lookAt(b); // not yet parented, so this is in cockpit space
+      cockpit.add(pillar);
+    }
     for (const gx of [-0.06, 0.02, 0.1]) {
       const g = new THREE.Mesh(new THREE.CircleGeometry(0.022, 10), new THREE.MeshBasicMaterial({ color: 0x2a2018 }));
       g.position.set(gx, 0.95, 0.66); g.rotation.set(1.2, Math.PI, 0);
@@ -198,7 +208,7 @@ export function buildCar(spec, look = spec.paint, { simple = false } = {}) {
     steeringWheel = new THREE.Group();
     steeringWheel.position.z = -0.08;
     column.add(steeringWheel);
-    steeringWheel.add(new THREE.Mesh(new THREE.TorusGeometry(0.18, 0.022, 5, 16), new THREE.MeshPhongMaterial({ color: 0x3a3c40, specular: 0x333333, shininess: 30, flatShading: true })));
+    steeringWheel.add(new THREE.Mesh(new THREE.TorusGeometry(0.18, 0.026, 6, 20), new THREE.MeshPhongMaterial({ color: 0x2a2c30, emissive: 0x050606, specular: 0x333333, shininess: 30, flatShading: true })));
     for (const a of [0, Math.PI, Math.PI * 1.5]) {
       const sp = new THREE.Mesh(new THREE.BoxGeometry(0.17, 0.03, 0.015), trim);
       sp.position.set(Math.cos(a) * 0.09, Math.sin(a) * 0.09, 0);
