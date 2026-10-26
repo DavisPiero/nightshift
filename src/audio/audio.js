@@ -7,8 +7,14 @@
 //  - a pulse at crank speed that makes the note lumpy like a real engine;
 //  - a sub-bass body that swells under load;
 //  - intake roar (filtered noise) on throttle;
-//  - a turbo blow-off when you lift off at high rpm, and exhaust pops
-//    (timed by graphics/effects.js so they line up with the flames).
+//  - exhaust rasp: noise chopped at firing speed, for the grit of a real
+//    exhaust under load;
+//  - a turbo blow-off when you lift off at high rpm, and backfires (a crack,
+//    a low bang and an echo, timed by graphics/effects.js so they line up
+//    with the flames);
+//  - gear changes: a mechanical clack, the note cutting and coming back
+//    with a bark on the way up, a throttle blip on the way down;
+//  - a rev limiter that bounces (the sound chops) rather than just quietens.
 // Ambience: rain on the road and roof, and a low night hum.
 // The car's update() feeds rpm, throttle and load. To switch to real engine
 // recordings later, replace EngineVoice with a sample player that takes the
@@ -51,7 +57,7 @@ function exhaustWave(ctx, amps) {
   return ctx.createPeriodicWave(real, imag);
 }
 
-class EngineVoice {
+export class EngineVoice {
   constructor(ctx, out, noise, sound = DEFAULT_SOUND) {
     this.ctx = ctx;
     this.sound = { ...DEFAULT_SOUND, ...sound };
@@ -124,6 +130,18 @@ class EngineVoice {
     this.intake.connect(this.intakeFilter).connect(this.intakeGain).connect(this.out);
     this.intake.start(t);
 
+    // Exhaust rasp: noise through a band, its level chopped by a square wave
+    // at firing speed.
+    const rasp = ctx.createBufferSource(); rasp.buffer = noise; rasp.loop = true;
+    this.raspFilter = ctx.createBiquadFilter(); this.raspFilter.type = 'bandpass'; this.raspFilter.Q.value = 1.4;
+    this.raspGain = ctx.createGain(); this.raspGain.gain.value = 0;
+    this.raspChop = ctx.createGain(); this.raspChop.gain.value = 0.5;
+    this.raspOsc = ctx.createOscillator(); this.raspOsc.type = 'square';
+    const chopDepth = ctx.createGain(); chopDepth.gain.value = 0.5;
+    this.raspOsc.connect(chopDepth).connect(this.raspChop.gain);
+    rasp.connect(this.raspFilter).connect(this.raspChop).connect(this.raspGain).connect(drive);
+    rasp.start(t, 0.3); this.raspOsc.start(t);
+
     // Turbo whistle (rises with boost) and supercharger whine.
     this.whistle = ctx.createOscillator();
     this.whistle.type = 'sine';
@@ -135,6 +153,9 @@ class EngineVoice {
     this.lastThrottle = 0;
     this.lastRpm = 0;
     this.dip = 0;          // > 0 just after a gear change
+    this.bark = 0;         // > 0 as the power comes back after an upshift
+    this.blip = 0;         // > 0 during a downshift's throttle blip
+    this.chop = 0;         // the rev limiter's bounce
   }
 
   update(dt, { rpm, throttle, load, redline, limiter, boost = 0, turbo = false, whine = false, loud = 1 }) {
@@ -148,7 +169,12 @@ class EngineVoice {
     // Cross-fade low and high voices with rpm.
     const [lo, hi] = this.layers;
     const loMix = Math.cos(r * Math.PI / 2), hiMix = Math.sin(r * Math.PI / 2);
-    const level = 0.22 + 0.5 * throttle + 0.15 * r;
+    // A downshift blips the throttle; the power comes back with a bark after
+    // an upshift.
+    this.blip = Math.max(0, this.blip - dt / 0.18);
+    this.bark = Math.max(0, this.bark - dt / 0.25);
+    throttle = Math.max(throttle, this.blip * 0.8);
+    const level = 0.22 + 0.5 * throttle + 0.15 * r + this.bark * 0.2;
     for (const [L, mix0, open0] of [[lo, loMix, 5], [hi, hiMix, 7]]) {
       const mix = L === hi ? mix0 * S.rasp : mix0;
       const open = open0 * S.pitch;
@@ -166,10 +192,16 @@ class EngineVoice {
     this.subGain.gain.setTargetAtTime((0.18 + 0.32 * on) * S.sub, t, k);
     this.intakeFilter.frequency.setTargetAtTime(firing * 3.2 + 300, t, k);
     this.intakeGain.gain.setTargetAtTime(throttle * (0.05 + 0.22 * r), t, k);
+    this.raspOsc.frequency.setTargetAtTime(firing, t, 0.012);
+    this.raspFilter.frequency.setTargetAtTime(900 + firing * 4, t, k);
+    this.raspGain.gain.setTargetAtTime((0.04 + 0.16 * on * throttle) * S.rasp, t, k);
     // A gear change dips the note for a moment; this is applied here
     // (rather than scheduled once) so the steady level cannot override it.
     this.dip = Math.max(0, this.dip - dt / 0.2);
-    this.out.gain.setTargetAtTime((limiter ? 0.6 : 0.9) * loud * (1 - 0.65 * this.dip), t, 0.01);
+    // On the limiter the ignition cuts in and out: the sound chops.
+    this.chop = limiter ? (this.chop + dt * 17) % 1 : 0;
+    const bounce = limiter ? (this.chop < 0.45 ? 0.35 : 1) : 1;
+    this.out.gain.setTargetAtTime(0.9 * bounce * loud * (1 - 0.7 * this.dip) * (1 + this.bark * 0.25), t, 0.006);
 
     // Turbo: a whistle that rises with boost; a supercharger whines with revs.
     if (turbo) {
@@ -204,9 +236,37 @@ class EngineVoice {
     src.start(t, Math.random()); src.stop(t + duration + 0.05);
   }
 
+  // A backfire: a sharp crack, a low bang that drops in pitch, and a quiet
+  // echo off the buildings a moment later. Sometimes a double "pa-pap".
   crackle(v) {
-    this.burst(0.05, 'bandpass', 500 + Math.random() * 500, 1.5, v * 0.7);
-    this.burst(0.09, 'lowpass', 260 + Math.random() * 120, 0.8, v * 0.5); // the thump under the crack
+    const ctx = this.ctx, t = ctx.currentTime;
+    const bang = (at, s) => {
+      this.burstAt(at, 0.018, 'highpass', 1800 + Math.random() * 1500, 0.7, s * 0.9);
+      this.burstAt(at, 0.06, 'bandpass', 420 + Math.random() * 380, 1.2, s * 0.7);
+      const o = ctx.createOscillator(); o.type = 'sine';
+      o.frequency.setValueAtTime(95 + Math.random() * 30, at);
+      o.frequency.exponentialRampToValueAtTime(38, at + 0.12);
+      const g = ctx.createGain();
+      g.gain.setValueAtTime(s * 0.9, at);
+      g.gain.exponentialRampToValueAtTime(0.001, at + 0.14);
+      o.connect(g).connect(this.out);
+      o.start(at); o.stop(at + 0.16);
+      this.burstAt(at + 0.07 + Math.random() * 0.04, 0.12, 'lowpass', 700, 0.6, s * 0.18); // the echo
+    };
+    bang(t, v);
+    if (Math.random() < 0.3) bang(t + 0.045 + Math.random() * 0.03, v * 0.6);
+  }
+
+  burstAt(at, duration, filterType, freq, q, gain) {
+    const ctx = this.ctx;
+    const src = ctx.createBufferSource(); src.buffer = this.noise;
+    src.playbackRate.value = 0.8 + Math.random() * 0.4;
+    const f = ctx.createBiquadFilter(); f.type = filterType; f.frequency.value = freq; f.Q.value = q;
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(gain, at);
+    g.gain.exponentialRampToValueAtTime(0.001, at + duration);
+    src.connect(f).connect(g).connect(this.out);
+    src.start(at, Math.random()); src.stop(at + duration + 0.05);
   }
   blowOff(r) { this.burst(0.45, 'bandpass', 2600, 2.5, 0.12 + r * 0.1, 900); }
 
@@ -227,10 +287,19 @@ class EngineVoice {
     src.start(t, Math.random()); src.stop(t + len + 0.05);
   }
 
-  // A gear change: the note dips and the gearbox clunks.
-  shift(up) {
+  // A gear change: the gearbox clacks (two quick metal clicks and a thud),
+  // the note cuts; going up, the power comes back with a bark (and a turbo
+  // car chuffs a little air); going down, the throttle blips.
+  shift(up, turbo = false) {
+    const t = this.ctx.currentTime;
     this.dip = 1;
-    this.burst(0.07, 'lowpass', 180, 0.7, up ? 0.35 : 0.25);
+    this.burstAt(t, 0.025, 'bandpass', 2300, 3, 0.16);
+    this.burstAt(t + 0.03, 0.03, 'bandpass', 1300, 3, 0.12);
+    this.burstAt(t, 0.09, 'lowpass', 170, 0.7, up ? 0.4 : 0.3);
+    if (up) {
+      setTimeout(() => { this.bark = 1; }, 140);
+      if (turbo) this.burst(0.18, 'bandpass', 3200, 2, 0.06, 1400);
+    } else this.blip = 1;
   }
 }
 
@@ -358,7 +427,7 @@ export class GameAudio {
       boost: v.boost, turbo: !!v.spec.turbo, whine: !!v.spec.whine, loud: v.spec.exhaustVolume ?? 1,
     });
     if (v.gearbox.shiftCount !== this._shifts) {
-      if (this._shifts !== undefined) this.engine.shift(v.gearbox.lastShift > 0);
+      if (this._shifts !== undefined && v.gearbox.gear > 0) this.engine.shift(v.gearbox.lastShift > 0, !!v.spec.turbo);
       this._shifts = v.gearbox.shiftCount;
     }
     const slide = Math.max(v.rearSlide, v.frontSlide * 0.7);
