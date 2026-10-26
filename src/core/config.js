@@ -4,7 +4,9 @@
 export const GRAPHICS = {
   low:    { renderHeight: 360, shadows: false, lampLights: 4, drawDistance: 170, dither: true },
   medium: { renderHeight: 480, shadows: false, lampLights: 6, drawDistance: 220, dither: true },
-  high:   { renderHeight: 720, shadows: true,  lampLights: 8, drawDistance: 280, dither: true },
+  // High also gets finer clouds, glow round bright lights (bloom) and more
+  // real lamp lights.
+  high:   { renderHeight: 720, shadows: true,  lampLights: 10, drawDistance: 280, dither: true, skyDetail: true, bloom: true },
 };
 
 // Low by default on every device: it is the look, not just the fast option.

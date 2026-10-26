@@ -280,6 +280,7 @@ export function buildParabolica(track, def) {
       hemi: [0x4a4268, 0x141018, 1.0],
       moon: 0.3,
       lamp: 0xdfe6ff, lampPower: 125,
+      skyGlow: 0xa8407a, // the neon's pink, low in the sky
       reflectBg: 0x140c1a,
       ground: 0x0e0e12,
     },

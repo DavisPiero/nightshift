@@ -75,6 +75,7 @@ export class WeatherView {
     this.fogFar = w.fogFar ? Math.min(preset.drawDistance, w.fogFar) : preset.drawDistance;
     this.patchFar = w.patch ? Math.min(this.fogFar, w.patch.fogFar) : this.fogFar;
     fog.far = this.fogFar + (this.patchFar - this.fogFar) * this.k;
+    this.world.backdrop?.userData.sky?.set(this.world.look, this.id, !!preset.skyDetail, fog.color.getHex());
     // Overhead is the top of the sky, unless fog hides the sky altogether.
     const top = this.world.look?.skyTop;
     this.scene.background = top !== undefined && this.id !== 'fog' ? new THREE.Color(top) : fog.color;

@@ -62,7 +62,7 @@ class Game {
 
     // World
     this.lampLights = [];
-    for (let i = 0; i < 8; i++) {
+    for (let i = 0; i < 10; i++) {
       const l = new THREE.PointLight(0xffa04a, 150, 30, 1.6);
       this.scene.add(l);
       this.lampLights.push(l);
@@ -521,6 +521,7 @@ class Game {
       this.effects.update(live, v, this.model, this.camera, near, this.weatherId);
       this.weather.update(live, this.camera, v, this.state === 'menu' ? 0 : this.patch || 0);
       placeBackdrop(this.world.backdrop, this.camera);
+      this.world.backdrop?.userData.sky?.update(live);
     }
     this.renderer.render(scene, this.camera);
 

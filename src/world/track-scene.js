@@ -7,6 +7,7 @@
 // keeps draw calls low enough for an iPad.
 
 import * as THREE from 'three';
+import { buildSky } from '../graphics/sky.js';
 import { Tex } from '../graphics/textures.js';
 import { rng, strip, merge, wallStrip, placed } from './scene-kit.js';
 import { Placer, roofMat } from './assets.js';
@@ -283,25 +284,24 @@ export function buildTrackScene(track, def) {
       hemi: [0x3a4a58, 0x141810, 1.0],
       moon: 0.35,
       lamp: 0xffa04a, lampPower: 150,
+      skyGlow: 0xa86a30, // the harbour's amber, low in the sky
       reflectBg: 0x0a0f12,
       ground: 0x101214,
     },
   };
 }
 
-// Far away: a ring of city blocks with a few lit windows and a low glow in
-// the sky, so the horizon is not an empty black. It is a backdrop: drawn
-// first, behind everything, and moved with the camera (see placeBackdrop)
-// so it always sits just inside the view distance. Its sky material joins
-// `skies` (repainted for the time of day).
+// Far away: the sky dome (graphics/sky.js) and a ring of city blocks with
+// lit windows, so the horizon is never an empty black. It is a backdrop:
+// drawn first, behind everything, and moved with the camera (see
+// placeBackdrop) so it always sits just inside the view distance. The sky is
+// repainted for the time and weather through backdrop.userData.sky.
 export function cityBackdrop(r, skies, { count = 70, minH = 20, maxH = 80, windows = Tex.skyline() } = {}) {
   const backdrop = new THREE.Group();
   const bg = { fog: false, depthWrite: false, depthTest: false };
-  const sky = new THREE.Mesh(new THREE.CylinderGeometry(900, 900, 260, 24, 1, true), new THREE.MeshBasicMaterial({ map: Tex.skyGlow(), side: THREE.BackSide, ...bg }));
-  skies.push(sky.material);
-  sky.position.y = 80;
-  sky.renderOrder = -11;
-  backdrop.add(sky);
+  const sky = buildSky();
+  backdrop.add(sky.mesh);
+  backdrop.userData.sky = sky;
   const blocks = [];
   for (let i = 0; i < count; i++) {
     const a = (i / count) * Math.PI * 2 + r() * 0.05;
