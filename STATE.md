@@ -18,14 +18,9 @@ Bench and smoke test pass (four runs, now including Parabolica in snow at dawn).
 - Then Milestone 5 (a second full night circuit) or 6 (racing), David to choose.
 
 ## Open with David
-- New guesses: snow grip (0.68, between rain and a sheet of ice); patches only in rain, fog
-  and snow, never in Clear; street lamps on at sunset and dawn; Parabolica's walls 3.5 m out.
-- Parabolica Street's shape (review/parabolica-layout.png): right as a Monza at 60%?
-- Is "Parabolica Street" OK as the name? Pink neon with white lamps as its light?
-- Older, still open: the R35's name ("2017 Nissani GT-Ar"); the Challenjer's newer face with
-  2009 figures; pink main buttons; no rain in the Underground; garage headlights lit, beams
-  off; parts free and fitted at once; 3 builds per car; slammed needs coilovers; race number
-  08; Feel panel values; the classes (R34 A 756, Challenjer B 635, R35 S 862).
+- Sign off `m4-world` (not merged yet), or send notes after playing it.
+- Which next: Milestone 5 (a second full night circuit) or 6 (racing)?
+- Nothing else open: every earlier guess was confirmed on 2026-10-26 (see DECISIONS.md).
 
 ## Known rough edges
 - Touch and controllers are untested on real devices.
