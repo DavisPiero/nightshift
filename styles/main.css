@@ -466,3 +466,36 @@ input[type=range]::-moz-range-thumb { width: 14px; height: 24px; border: 0; bord
 .feel-row { display: grid; grid-template-columns: 1fr 120px 52px; align-items: center; gap: 6px; }
 .feel-row span.on { color: var(--pink); }
 .feel-row output { text-align: right; color: var(--cyan); }
+
+/* ---------- loading screens */
+.loader { position: fixed; inset: 0; z-index: 30; background: #020406; overflow: hidden; transition: opacity 400ms ease; }
+.loader.done { opacity: 0; pointer-events: none; }
+.wheel-art .spin { transform-box: fill-box; transform-origin: center; animation: spin 0.5s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.load-word { font: 22px/1 var(--px); letter-spacing: 0.4em; text-transform: uppercase; color: var(--muted); display: inline-block; transform: var(--skew); }
+.load-word .dots { display: inline-flex; gap: 5px; margin-left: 4px; }
+.load-word .dots i { width: 5px; height: 5px; background: var(--pink); animation: blink 0.9s steps(1) infinite; }
+.load-word .dots i:nth-child(2) { animation-delay: 0.3s; } .load-word .dots i:nth-child(3) { animation-delay: 0.6s; }
+/* Start-up: the wheel in the middle, over a dark vignette. */
+#boot { display: flex; align-items: center; justify-content: center; background: radial-gradient(ellipse at center, #0b1418 0%, #020406 70%); }
+.boot-mid { display: flex; flex-direction: column; align-items: center; gap: 22px; }
+#boot .wheel-art { width: min(220px, 36vmin); height: auto; filter: drop-shadow(0 0 24px rgba(63, 240, 232, 0.18)); }
+/* Into a race: the track still slowly drifting closer, the wheel bottom
+   left, a tip bottom right. */
+.rl-still { position: absolute; inset: -4%; background: center / cover no-repeat; animation: drift 7s ease-out both; }
+.rl-still::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(2, 4, 6, 0.75) 0%, rgba(2, 4, 6, 0.1) 35%, rgba(2, 4, 6, 0.2) 60%, rgba(2, 4, 6, 0.9) 100%), radial-gradient(ellipse at center, transparent 50%, rgba(0, 0, 0, 0.6) 100%); }
+@keyframes drift { from { opacity: 0; transform: scale(1); } 18% { opacity: 1; } to { opacity: 1; transform: scale(1.07); } }
+.rl-top { position: absolute; left: max(32px, var(--sl)); top: max(28px, var(--st)); }
+.rl-k { font: 18px/1 var(--px); letter-spacing: 0.4em; text-transform: uppercase; color: var(--pink); }
+.rl-name { font: clamp(48px, 8vw, 92px)/1 var(--px); margin: 6px 0 8px; transform: var(--skew); text-shadow: 0 3px 0 #000, 0 0 24px rgba(0, 0, 0, 0.8); }
+.rl-sub { color: var(--text); letter-spacing: 0.2em; text-transform: uppercase; font-size: 15px; text-shadow: 0 1px 0 #000; }
+.rl-wheel { position: absolute; left: max(28px, var(--sl)); bottom: max(24px, var(--sb)); display: flex; align-items: center; gap: 16px; }
+.rl-wheel .wheel-art { width: 92px; height: 92px; }
+.rl-tip { position: absolute; right: max(28px, var(--sr)); bottom: max(28px, var(--sb)); width: min(440px, 50vw); padding: 12px 16px 14px; }
+.rl-tk { font: 16px/1 var(--px); letter-spacing: 0.3em; text-transform: uppercase; color: var(--cyan); margin-bottom: 6px; }
+.rl-tt { font-size: 16px; line-height: 1.4; }
+@media (max-height: 560px) {
+  .rl-wheel .wheel-art { width: 64px; height: 64px; }
+  .rl-tip { width: min(360px, 50vw); padding: 8px 12px 10px; }
+  .rl-tt { font-size: 14px; }
+}

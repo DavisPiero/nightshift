@@ -341,7 +341,9 @@ class Game {
   }
 
   // --- driving ---
-  startRace({ track, weather, car, time = this.timeId }) {
+  // held: a loading screen is up, so set everything up but hold the car
+  // still until go().
+  startRace({ track, weather, car, time = this.timeId }, held = false) {
     this.save.lastRace = { track, weather, time };
     this.save.garage.selected = car;
     this.saveNow();
@@ -355,7 +357,7 @@ class Game {
     this.audio.start();
     this.applyAudio();
     this.screens.closeAll();
-    this.state = 'driving';
+    this.state = held ? 'loading' : 'driving';
     this.hud.show(true);
     this.hud.setTouch(this.save.platform === 'touch');
     this.hud.setTrack(this.track, this.trackInfo.def.start);
@@ -363,6 +365,8 @@ class Game {
     this.restartCar();
     this.audio.resume();
   }
+
+  go() { if (this.state === 'loading') { this.controls.releaseAll(); this.state = 'driving'; } }
 
   restartCar() {
     this.controls.releaseAll();
@@ -503,7 +507,7 @@ class Game {
       this.model.setInterior(false);
       this.audio.update(dt, v, this.weatherId, garage ? 0 : 0.25);
     } else {
-      if (this.state === 'driving') this.cameras.update(this.carRef(), dt);
+      if (this.state === 'driving' || this.state === 'loading') this.cameras.update(this.carRef(), dt);
       this.model.setInterior(this.cameras.mode === 'cockpit');
       this.audio.update(dt, v, this.weatherId, 1, this.weather.k);
       this.hud.draw(v, dt);
@@ -664,4 +668,9 @@ fontReady.catch(() => {}).finally(() => {
   const game = new Game();
   if (URL_FLAGS.smoke) game.smoke = new SmokeTest();
   window.nightshift = game; // handy from the browser console
+  // The world is built: fade the start-up screen once a frame is drawn.
+  const boot = document.querySelector('#boot');
+  const hide = () => { boot.classList.add('done'); setTimeout(() => boot.remove(), 450); };
+  if (URL_FLAGS.smoke || URL_FLAGS.shot) boot.remove();
+  else requestAnimationFrame(() => requestAnimationFrame(hide));
 });

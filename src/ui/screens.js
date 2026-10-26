@@ -12,6 +12,7 @@ import { TIMES, trackTimes } from '../world/time-of-day.js';
 import { Settings } from './settings.js';
 import { fillStats } from './stats-view.js';
 import { Garage } from './garage.js';
+import { TIPS } from './tips.js';
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -32,12 +33,20 @@ export class Screens {
     $('#pause-settings').addEventListener('click', () => this.open('settings'));
     $('#pause-main').addEventListener('click', () => game.toMain());
     $('#pause-button').addEventListener('click', () => game.pauseGame());
-    $('#race-go').addEventListener('click', () => game.startRace(this.pick));
+    $('#race-go').addEventListener('click', () => this.raceLoad());
     $('#tracks-go').addEventListener('click', () => this.open('setup'));
     $('#setup-go').addEventListener('click', () => this.open('race'));
 
     this.garage = new Garage(game, this);
     this.menuSounds();
+    // The race loading screen borrows the start-up screen's wheel (copied now,
+    // before the start-up screen is thrown away).
+    const wheel = $('#boot .wheel-art');
+    if (wheel) {
+      // Its own ids, so its gradients still work once the start-up screen is gone.
+      const html = wheel.outerHTML.replaceAll('id="', 'id="rl-').replaceAll('url(#', 'url(#rl-').replaceAll('href="#', 'href="#rl-');
+      $('#race-load .rl-wheel').insertAdjacentHTML('afterbegin', html);
+    }
 
     // Keyboard: Escape goes back; arrows move between buttons.
     window.addEventListener('keydown', (e) => {
@@ -157,6 +166,32 @@ export class Screens {
     this.game.save.garage.selected = id;
     this.game.saveNow();
     this.game.showCar(id);
+  }
+
+  // Loading into a race: a still of the track, the wheel bottom left, a tip.
+  // The race is set up behind it, and it stays at least long enough to read.
+  raceLoad() {
+    const pick = { ...this.pick };
+    const t = TRACKS.find((x) => x.id === pick.track) || TRACKS[0];
+    const el = $('#race-load');
+    el.querySelector('.rl-still').style.backgroundImage = `url(assets/loading/${t.id}.jpg)`;
+    el.querySelector('.rl-name').textContent = t.name;
+    el.querySelector('.rl-sub').textContent = `${(t.path.length / 1000).toFixed(2)} km · ${TIMES[pick.time].clock} ${TIMES[pick.time].name} · ${WEATHER[pick.weather].name}`;
+    this.tip = ((this.tip ?? Math.floor(Math.random() * TIPS.length)) + 1) % TIPS.length;
+    el.querySelector('.rl-tt').textContent = TIPS[this.tip];
+    el.classList.remove('done');
+    el.hidden = false;
+    const shown = performance.now();
+    // Two frames so the screen is up before the heavy work starts.
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      this.game.startRace(pick, true);
+      const wait = Math.max(0, 2600 - (performance.now() - shown));
+      setTimeout(() => {
+        this.game.go();
+        el.classList.add('done');
+        setTimeout(() => { el.hidden = true; }, 420);
+      }, wait);
+    }));
   }
 
   // --- Drive: tracks. A list of long rectangles; picking one loads it so
