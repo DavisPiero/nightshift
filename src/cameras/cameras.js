@@ -7,6 +7,7 @@ import * as THREE from 'three';
 const damp = (k, dt) => 1 - Math.exp(-k * dt);
 const _v = new THREE.Vector3();
 const _t = new THREE.Vector3();
+const _up = new THREE.Vector3();
 
 // Shared options from Settings (distance, fov, shake) and the Feel panel
 // (speedFov: extra degrees at speed, gLag: how much the camera trails the car
@@ -99,10 +100,12 @@ class CockpitCamera {
     const v = car.vehicle;
     const model = car.model;
     const cam = car.camera;
-    model.root.updateWorldMatrix(true, false);
-    _v.copy(model.cockpitEye).applyMatrix4(model.root.matrixWorld);
-    // A sliver of the body's pitch, for a sense of weight; no roll at all.
-    _v.y += v.pitch * 0.4;
+    // The eye rides in the body, so the cabin round it never shifts; the
+    // view takes most of the body's roll back out so the horizon stays
+    // nearly level.
+    model.body.updateWorldMatrix(true, false);
+    _v.copy(model.cockpitEye).applyMatrix4(model.body.matrixWorld);
+    _up.set(0, 1, 0).transformDirection(model.body.matrixWorld);
     // A gear change pushes you back into the seat for a moment.
     const back = this.shake.jolt * 0.55;
     _v.x -= Math.sin(v.heading) * back; _v.z -= Math.cos(v.heading) * back;
@@ -114,7 +117,7 @@ class CockpitCamera {
     this.look += (target - this.look) * damp(4, dt);
     const yaw = v.heading + this.look;
     _t.set(_v.x + Math.sin(yaw) * 10 + sx, _v.y - 0.75 + v.pitch * -1.5 + this.shake.jolt * 3, _v.z + Math.cos(yaw) * 10);
-    cam.up.set(0, 1, 0);
+    cam.up.set(0, 1, 0).lerp(_up, 0.6).normalize();
     cam.lookAt(_t);
     const fov = OPTIONS.fov + 4 + Math.min(1, v.speed / 60) * 6;
     this.fov += (fov - this.fov) * damp(2, dt);

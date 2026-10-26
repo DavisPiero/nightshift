@@ -39,14 +39,8 @@ export class Screens {
 
     this.garage = new Garage(game, this);
     this.menuSounds();
-    // The race loading screen borrows the start-up screen's wheel (copied now,
-    // before the start-up screen is thrown away).
-    const wheel = $('#boot .wheel-art');
-    if (wheel) {
-      // Its own ids, so its gradients still work once the start-up screen is gone.
-      const html = wheel.outerHTML.replaceAll('id="', 'id="rl-').replaceAll('url(#', 'url(#rl-').replaceAll('href="#', 'href="#rl-');
-      $('#race-load .rl-wheel').insertAdjacentHTML('afterbegin', html);
-    }
+    // The race loading screen has the same pixel wheel as the start-up screen.
+    window.PixelWheel?.mount($('#race-load .rl-wheel'));
 
     // Keyboard: Escape goes back; arrows move between buttons.
     window.addEventListener('keydown', (e) => {
@@ -181,11 +175,12 @@ export class Screens {
     el.querySelector('.rl-tt').textContent = TIPS[this.tip];
     el.classList.remove('done');
     el.hidden = false;
+    window.PixelWheel?.wake();
     const shown = performance.now();
     // Two frames so the screen is up before the heavy work starts.
     requestAnimationFrame(() => requestAnimationFrame(() => {
       this.game.startRace(pick, true);
-      const wait = Math.max(0, 2600 - (performance.now() - shown));
+      const wait = Math.max(0, 5500 - (performance.now() - shown));
       setTimeout(() => {
         this.game.go();
         el.classList.add('done');

@@ -10,9 +10,10 @@
 import * as THREE from 'three';
 
 // Where the bonnet runs: from just in front of the windscreen to just behind
-// the nose.
+// the nose. A mid-engined car has its engine lid behind the cabin instead
+// (def.engineLid), hinged at the cabin end.
 export function bonnetRange(B, def) {
-  return [Math.max(...def.screen) + 0.04, B.z1 - 0.2];
+  return def.engineLid || [Math.max(...def.screen) + 0.04, B.z1 - 0.2];
 }
 
 // Each car's engine: layout, cam cover colour, plenum colour.
@@ -20,6 +21,8 @@ const ENGINES = {
   'skyliner-r34': { layout: 'inline', covers: 0xa01818, plenum: 0x2a2c2e }, // the famous red cam cover
   'gtar-r35': { layout: 'v', covers: 0x1c1d20, plenum: 0x8c949a },
   'challenjer-srt8': { layout: 'v', covers: 0xd2561a, plenum: 0x1c1d20 },  // orange cam covers
+  'aventadoro-sv': { layout: 'v', covers: 0x1c1d20, plenum: 0x2a2c2e },
+  'mustank-gt500': { layout: 'v', covers: 0x1c1d20, plenum: 0x2a3a8a },     // the blue supercharger lid
 };
 
 export function buildEngineBay({ B, def, spec, mats }) {
@@ -172,13 +175,15 @@ export function buildEngineBay({ B, def, spec, mats }) {
     }
   }
 
-  // The bonnet itself, hinged at its back edge.
+  // The bonnet itself, hinged at its back edge (an engine lid at its front
+  // edge, by the cabin: `dir` turns the opening angle round).
+  const rear = !!def.engineLid, hz = rear ? z1 : z0;
   const hinge = new THREE.Group();
-  hinge.position.set(0, B.hood(z0), z0);
+  hinge.position.set(0, B.hood(hz), hz);
   const geo = B.bonnetGeometry(z0, z1);
-  geo.translate(0, -B.hood(z0), -z0);
+  geo.translate(0, -B.hood(hz), -hz);
   hinge.add(new THREE.Mesh(geo, mats.paint));
   hinge.add(new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ color: 0x1a1c1e, roughness: 0.8, side: THREE.BackSide })));
 
-  return { bay, hinge, slots, range: [z0, z1] };
+  return { bay, hinge, slots, range: [z0, z1], dir: rear ? -1 : 1 };
 }

@@ -98,3 +98,16 @@ export function instanced(geo, mat, list, colours) {
   });
   return mesh;
 }
+
+// The frame of a chain-link fence along the track: a post every `every`
+// metres and a rail along the top, merged into one geometry (the mesh of
+// the fence itself is a wallStrip with the fence texture).
+export function fenceFrame(track, offset, y0, y1, every = 4) {
+  const geos = [wallStrip(track, offset, y1 - 0.05, y1 + 0.04, every, 0.5), wallStrip(track, offset, y1 - 0.05, y1 + 0.04, every, 0.5, false)];
+  for (let k = 0; k < track.count; k += every) {
+    const i = track.wrap(k);
+    const x = track.x[i] + track.leftX(i) * offset, z = track.z[i] + track.leftZ(i) * offset;
+    geos.push(placed(new THREE.BoxGeometry(0.08, y1 - y0 + 0.1, 0.08), x, (y0 + y1) / 2, z, track.headingAt(i)));
+  }
+  return merge(geos);
+}

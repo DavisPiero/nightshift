@@ -31,6 +31,8 @@ import { Hud } from './ui/hud.js';
 import { Screens } from './ui/screens.js';
 import { loadSave, writeSave, activeBuild } from './save/save.js';
 
+const _sun = new THREE.Vector3(), _dir = new THREE.Vector3();
+
 class Game {
   constructor() {
     this.save = loadSave();
@@ -467,6 +469,7 @@ class Game {
     const root = this.model.root;
     const garage = this.inGarage;
     const scene = garage ? this.garage.scene : this.scene;
+    if (garage) this.garage.update(dt);
     if (root.parent !== scene) {
       scene.add(root);
       this.reflections.setWorld(garage ? this.garage : this.world);
@@ -479,7 +482,8 @@ class Game {
       // is about (the wheels, the wing, the side).
       const view = this.garageView();
       this.turntable += dt * (this.menuView === 'garage' ? 0.1 : 0.05);
-      const target = view.turn ?? ((this.menuView === 'garage' ? 2.4 : -0.65) + Math.sin(this.turntable) * (this.menuView === 'garage' ? 3.2 : 0.35));
+      // A mid-engined car turns its tail to you for the Engine tab.
+      const target = view.turn !== undefined ? view.turn + (this.garageTab === 'engine' && this.model.engineRear ? Math.PI : 0) : ((this.menuView === 'garage' ? 2.4 : -0.65) + Math.sin(this.turntable) * (this.menuView === 'garage' ? 3.2 : 0.35));
       this.turnNow ??= target;
       const d = Math.atan2(Math.sin(target - this.turnNow), Math.cos(target - this.turnNow));
       this.turnNow += d * Math.min(1, dt * 3);
@@ -529,6 +533,7 @@ class Game {
       placeBackdrop(this.world.backdrop, this.camera);
       this.world.backdrop?.userData.sky?.update(live);
     }
+    this.placeGlare(garage);
     this.renderer.render(scene, this.camera);
 
     if (this.hud.debugOn) {
@@ -555,6 +560,26 @@ class Game {
   // The garage camera glides between spots (or follows your dragging); the
   // turntable does the rest. On the Garage screen the lens shifts so the car
   // sits in the space right of the tabs and pop-up.
+  // Sunset and dawn: where the low sun is on screen, for its glare. Faded
+  // out as it leaves the edge of the screen, and mostly hidden by rain,
+  // snow and fog.
+  placeGlare(garage) {
+    const L = this.world.look;
+    let k = garage ? 0 : L.glare || 0;
+    if (k > 0) {
+      _sun.set(...L.sun.dir).normalize();
+      this.camera.getWorldDirection(_dir);
+      if (_sun.dot(_dir) <= 0.05) k = 0;
+      else {
+        _sun.multiplyScalar(500).add(this.camera.position).project(this.camera);
+        const out = Math.max(Math.abs(_sun.x), Math.abs(_sun.y));
+        k *= 1 - Math.min(1, Math.max(0, out - 1) / 0.5);
+        k *= { rain: 0.15, snow: 0.15, fog: 0.3 }[this.weatherId] ?? 1;
+      }
+    }
+    this.renderer.setGlare((_sun.x + 1) / 2, (_sun.y + 1) / 2, k, L.sun.colour);
+  }
+
   garageCamera(dt = 0) {
     const view = this.garageView();
     const k = this.camLook && dt ? Math.min(1, dt * (this.orbit ? 10 : 4)) : 1;
@@ -671,7 +696,7 @@ window.addEventListener('error', (e) => {
 const fontReady = URL_FLAGS.smoke ? Promise.resolve()
   : Promise.race([document.fonts?.load('20px "Jersey 10"') ?? Promise.resolve(), new Promise((r) => setTimeout(r, 1500))]);
 fontReady.catch(() => {}).finally(() => {
-  if (URL_FLAGS.library) { import('./ui/library.js').then((m) => m.startLibrary(URL_FLAGS)); return; }
+  if (URL_FLAGS.library) { document.querySelector('#boot')?.remove(); import('./ui/library.js').then((m) => m.startLibrary(URL_FLAGS)); return; }
   const game = new Game();
   if (URL_FLAGS.smoke) game.smoke = new SmokeTest();
   window.nightshift = game; // handy from the browser console

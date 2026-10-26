@@ -1,5 +1,5 @@
 // Draws the scene at a low internal resolution, then one full-screen pass
-// adds the colour grade, ordered dithering and a slight vignette before the
+// adds the colour grade, a faint dither pattern and a slight vignette before the
 // image is stretched to the window with chunky (nearest) pixels. On High a
 // glow (bloom) is added first: the brightest parts of the image, blurred at
 // a quarter size, laid back over it, so lamps, neon and tail lights bleed
@@ -15,7 +15,23 @@ const POST_FRAG = /* glsl */`
 uniform sampler2D tScene, tBloom;
 uniform vec2 resolution;
 uniform float dither, bloom;
+uniform vec2 sunUv;
+uniform float glare;
+uniform vec3 glareCol;
 varying vec2 vUv;
+
+// How much of the sun is open sky (bright) rather than behind a building
+// or the car's roof (dark): a few taps round where it is on screen.
+float sunOpen() {
+  vec2 px = 3.0 / resolution;
+  float s = 0.0;
+  for (int i = 0; i < 5; i++) {
+    vec2 o = i == 0 ? vec2(0.0) : vec2(i == 1 ? 1.0 : i == 2 ? -1.0 : 0.0, i == 3 ? 1.0 : i == 4 ? -1.0 : 0.0);
+    vec3 c = texture2D(tScene, clamp(sunUv + o * px, 0.001, 0.999)).rgb;
+    s += max(c.r, max(c.g, c.b));
+  }
+  return smoothstep(0.42, 0.8, s / 5.0);
+}
 
 float bayer4(vec2 p) {
   int x = int(mod(p.x, 4.0)), y = int(mod(p.y, 4.0));
@@ -28,6 +44,24 @@ float bayer4(vec2 p) {
 void main() {
   vec3 c = texture2D(tScene, vUv).rgb;
   c += texture2D(tBloom, vUv).rgb * bloom;
+  // Driving into a low sun: a hot core, a wide warm veil over everything,
+  // a thin horizontal streak and a few faint lens ghosts across the screen.
+  if (glare > 0.0) {
+    float k = glare * sunOpen();
+    vec2 asp = vec2(resolution.x / resolution.y, 1.0);
+    vec2 d = (vUv - sunUv) * asp;
+    float r = length(d);
+    float g = exp(-r * 10.0) * 0.7 + exp(-r * 2.4) * 0.22 + exp(-abs(d.y) * 70.0) * exp(-abs(d.x) * 2.2) * 0.14;
+    for (int i = 0; i < 3; i++) {
+      float f = float(i) * 0.55 + 0.45;
+      vec2 gp = 0.5 + (0.5 - sunUv) * f;
+      float gr = length((vUv - gp) * asp);
+      float size = 0.035 + float(i) * 0.02;
+      g += (1.0 - smoothstep(size * 0.6, size, gr)) * 0.035;
+    }
+    c = mix(c, c * glareCol * 1.35, 0.12 * k);
+    c += glareCol * g * k;
+  }
   // Linear to display.
   c = pow(max(c, 0.0), vec3(1.0 / 2.2));
   // Grade: green-teal shadows, warm highlights, a touch of extra contrast.
@@ -38,9 +72,10 @@ void main() {
   // Vignette.
   vec2 d = vUv - 0.5;
   c *= 1.0 - dot(d, d) * 0.55;
-  // Ordered dither, then reduce to 6 bits per channel like old hardware.
-  c += bayer4(gl_FragCoord.xy) * dither / 64.0;
-  c = floor(c * 63.0 + 0.5) / 63.0;
+  // A faint ordered pattern, the same on all three channels. No rounding to
+  // fewer bits: rounding each channel on its own broke soft glows (lamp
+  // halos, tail-light spill) into pink and blue dots (David, twice).
+  c += bayer4(gl_FragCoord.xy) * dither / 110.0;
   gl_FragColor = vec4(clamp(c, 0.0, 1.0), 1.0);
 }`;
 
@@ -79,7 +114,10 @@ export class RetroRenderer {
     this.postScene = new THREE.Scene();
     this.postCam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
     this.post = new THREE.ShaderMaterial({
-      uniforms: { tScene: { value: this.target.texture }, resolution: { value: new THREE.Vector2() }, dither: { value: 1 } },
+      uniforms: {
+        tScene: { value: this.target.texture }, resolution: { value: new THREE.Vector2() }, dither: { value: 1 },
+        sunUv: { value: new THREE.Vector2() }, glare: { value: 0 }, glareCol: { value: new THREE.Color() },
+      },
       vertexShader: POST_VERT, fragmentShader: POST_FRAG, depthTest: false, depthWrite: false,
     });
     this.postScene.add(new THREE.Mesh(new THREE.PlaneGeometry(2, 2), this.post));
@@ -121,6 +159,14 @@ export class RetroRenderer {
     const bw = Math.max(1, Math.round(rw / 4)), bh = Math.max(1, Math.round(rh / 4));
     this.bloomA.setSize(bw, bh); this.bloomB.setSize(bw, bh);
     this.blurStep = [1 / bw, 1 / bh];
+  }
+
+  // The low sun's glare: where it is on screen (0..1), how strong, its colour.
+  setGlare(x, y, amount, colour) {
+    const u = this.post.uniforms;
+    u.sunUv.value.set(x, y);
+    u.glare.value = amount;
+    if (colour !== undefined) u.glareCol.value.setHex(colour).convertSRGBToLinear();
   }
 
   render(scene, camera) {

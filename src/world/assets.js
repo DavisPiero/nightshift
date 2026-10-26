@@ -45,6 +45,8 @@ export const GLOW = {
   white: [0.86, 0.92, 1],
   pink: [1, 0.25, 0.6],
   teal: [0.31, 0.94, 0.88],
+  gold: [1, 0.78, 0.38],
+  violet: [0.63, 0.45, 1],
 };
 
 export const ASSETS = {
@@ -98,6 +100,37 @@ export const ASSETS = {
       };
     },
   },
+  'gold-streetlight': {
+    name: 'Gold streetlight', jp: '金色の街灯', group: 'Street',
+    note: 'The LED lamp with a warm gold head and a gold pool. Parabolica Street.',
+    kit: () => {
+      const pole = lambert(0x2e2a36);
+      return {
+        parts: [
+          part(new THREE.CylinderGeometry(0.1, 0.14, 9, 6), pole, { y: 4.5 }),
+          part(new THREE.BoxGeometry(3.4, 0.12, 0.12), pole, { x: 1.6, y: 8.95 }),
+          part(new THREE.BoxGeometry(0.9, 0.1, 0.35), basic(0xffe2a0), { x: 3.2, y: 8.88 }),
+          part(new THREE.CylinderGeometry(0.2, 0.24, 0.5, 6), pole, { y: 0.25 }),
+        ],
+        glows: [[3.2, 8.7, 0, 'gold']],
+        pools: [[3.2, 0, 18, 18, 'gold']],
+        lamps: [[3.2, 8.5, 0]],
+        reflect: [[new THREE.BoxGeometry(1.6, 0.3, 0.8), 0xffd890, 3.2, 8.9, 0]],
+      };
+    },
+  },
+  lantern: {
+    name: 'Paper lantern', jp: '提灯', group: 'Street',
+    note: 'A glowing paper lantern on a short cord, hung in rows along shopfronts. Takes a colour.',
+    kit: () => ({
+      parts: [
+        part(new THREE.CylinderGeometry(0.2, 0.2, 0.5, 8).scale(1, 1, 1), mat('lantern', () => new THREE.MeshBasicMaterial({ color: 0xffffff })), { y: 0.25, tint: true }),
+        part(new THREE.CylinderGeometry(0.21, 0.21, 0.05, 8), basic(0x141014), { y: 0.52 }),
+        part(new THREE.CylinderGeometry(0.21, 0.21, 0.05, 8), basic(0x141014), { y: -0.02 }),
+      ],
+    }),
+    tint: 0xffb040,
+  },
   'park-lamp': {
     name: 'Park lamp', jp: '公園灯', group: 'Street',
     note: 'A short post with a round globe, along the park paths.',
@@ -149,28 +182,45 @@ export const ASSETS = {
   // --- Nature ---
   tree: {
     name: 'Tree', jp: '木', group: 'Nature',
-    note: 'A dark, round broadleaf. Scale it 0.8 to 1.5.',
-    kit: () => ({
-      parts: [
-        part(new THREE.IcosahedronGeometry(2.6, 0).scale(1, 1.35, 1), lambert(0x1f3320, { flatShading: true }), { y: 5.2, shadow: true }),
-        part(new THREE.CylinderGeometry(0.2, 0.28, 3, 5), lambert(0x2a2018), { y: 1.5 }),
-      ],
-    }),
+    note: 'A dark broadleaf: a trunk that forks, a crown of three clumps (a lighter one on top). Scale it 0.8 to 1.5.',
+    kit: () => {
+      const leaf = lambert(0x1f3320, { flatShading: true }), top = lambert(0x2a4228, { flatShading: true }), bark = lambert(0x2a2018);
+      return {
+        parts: [
+          part(new THREE.IcosahedronGeometry(2.3, 1).scale(1, 1.15, 1), leaf, { y: 5.0, shadow: true }),
+          part(new THREE.IcosahedronGeometry(1.6, 0).scale(1, 0.9, 1), leaf, { x: 1.5, y: 4.2, z: 0.4, ry: 0.7, shadow: true }),
+          part(new THREE.IcosahedronGeometry(1.5, 0), top, { x: -0.5, y: 6.7, z: -0.3, ry: 1.9 }),
+          part(new THREE.CylinderGeometry(0.17, 0.3, 3.4, 6), bark, { y: 1.7 }),
+          part(new THREE.CylinderGeometry(0.07, 0.12, 1.8, 5).translate(0, 0.9, 0), bark, { x: 0.15, y: 2.9, rx: 0.8, ry: 1.3 }),
+        ],
+      };
+    },
   },
   sakura: {
     name: 'Cherry tree', jp: '桜', group: 'Nature',
-    note: 'In blossom: a wide pink crown that catches the lamp light. In the parks.',
-    kit: () => ({
-      parts: [
-        part(new THREE.IcosahedronGeometry(2.8, 0).scale(1.25, 0.8, 1.25), lambert(0xd88aa8, { flatShading: true }), { y: 4.3, shadow: true }),
-        part(new THREE.CylinderGeometry(0.18, 0.3, 3.2, 5), lambert(0x3a2a24), { y: 1.6 }),
-      ],
-    }),
+    note: 'In blossom: a wide, layered pink crown on a crooked trunk that catches the lamp light. In the parks.',
+    kit: () => {
+      const pinkA = lambert(0xd88aa8, { flatShading: true }), pinkB = lambert(0xeaa6c0, { flatShading: true }), bark = lambert(0x3a2a24);
+      return {
+        parts: [
+          part(new THREE.IcosahedronGeometry(2.5, 1).scale(1.3, 0.7, 1.3), pinkA, { y: 4.1, shadow: true }),
+          part(new THREE.IcosahedronGeometry(1.7, 0).scale(1.2, 0.7, 1.2), pinkB, { x: 0.8, y: 5.2, z: -0.5, ry: 0.5 }),
+          part(new THREE.IcosahedronGeometry(1.4, 0).scale(1.2, 0.75, 1.2), pinkA, { x: -1.9, y: 3.7, z: 0.9, ry: 1.2 }),
+          part(new THREE.CylinderGeometry(0.16, 0.3, 3.2, 6), bark, { y: 1.6 }),
+          part(new THREE.CylinderGeometry(0.07, 0.13, 2.0, 5).translate(0, 1.0, 0), bark, { x: -0.1, y: 2.6, rx: 0.9, ry: -2.0 }),
+        ],
+      };
+    },
   },
   bush: {
     name: 'Bush', jp: '茂み', group: 'Nature',
-    note: 'Usually placed squashed: 1.3 wide, 0.8 tall.',
-    kit: () => ({ parts: [part(new THREE.IcosahedronGeometry(1.1, 0), lambert(0x2c4426, { flatShading: true }), { y: 0.625 })] }),
+    note: 'Two clumps. Usually placed squashed: 1.3 wide, 0.8 tall.',
+    kit: () => ({
+      parts: [
+        part(new THREE.IcosahedronGeometry(1.1, 0), lambert(0x2c4426, { flatShading: true }), { y: 0.625 }),
+        part(new THREE.IcosahedronGeometry(0.75, 0), lambert(0x34502c, { flatShading: true }), { x: 0.8, y: 0.5, z: 0.3, ry: 0.8 }),
+      ],
+    }),
   },
 
   // --- Buildings ---
@@ -334,7 +384,8 @@ export const ASSETS = {
 // the x-y plane, so it faces up and down the road; the wall is at -x).
 const NEON = { pink: '#ff3a8a', teal: '#3ff0e8', amber: '#ffb02a', violet: '#a07aff', green: '#3aff8a' };
 const NEON_GLOW = { pink: 'pink', teal: 'teal', amber: 'amber', violet: [0.63, 0.48, 1], green: [0.23, 1, 0.54] };
-[['ramen', 'ラーメン', 'pink'], ['karaoke', 'カラオケ', 'teal'], ['izakaya', '居酒屋', 'amber'], ['hotel', 'ホテル', 'pink'], ['kissa', '喫茶', 'violet'], ['pharmacy', '薬', 'green'], ['bar', 'バー', 'pink']].forEach(([id, text, c]) => {
+[['ramen', 'ラーメン', 'pink'], ['karaoke', 'カラオケ', 'teal'], ['izakaya', '居酒屋', 'amber'], ['hotel', 'ホテル', 'pink'], ['kissa', '喫茶', 'violet'], ['pharmacy', '薬', 'green'], ['bar', 'バー', 'pink'],
+  ['pachinko', 'パチンコ', 'amber'], ['sushi', '寿司', 'violet'], ['club', 'クラブ', 'violet']].forEach(([id, text, c]) => {
   ASSETS['neon-' + id] = {
     name: `Neon sign: ${text}`, jp: 'ネオン', group: 'Signs',
     note: 'Sticks out from a shop wall at -x, high up, and faces along the road both ways.',
@@ -358,8 +409,8 @@ const NEON_GLOW = { pink: 'pink', teal: 'teal', amber: 'amber', violet: [0.63, 0
 });
 
 // The ground pools' looks, shared by every track.
-const POOL_TEX = { warm: () => Tex.lightPool(), cool: () => Tex.lightPool(), white: () => Tex.lightPoolWhite(), pink: () => Tex.lightPoolWhite() };
-const POOL_COLOUR = { warm: 0xffffff, cool: 0x9adcc0, white: 0xc8d8ff, pink: 0xff4fa0 };
+const POOL_TEX = { warm: () => Tex.lightPool(), cool: () => Tex.lightPool(), white: () => Tex.lightPoolWhite(), pink: () => Tex.lightPoolWhite(), gold: () => Tex.lightPoolWhite(), violet: () => Tex.lightPoolWhite() };
+const POOL_COLOUR = { warm: 0xffffff, cool: 0x9adcc0, white: 0xc8d8ff, pink: 0xff4fa0, gold: 0xffc870, violet: 0x9a6aff };
 function poolMat(kind) {
   return mat('pool-' + kind, () => new THREE.MeshBasicMaterial({ map: POOL_TEX[kind](), color: POOL_COLOUR[kind], transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, polygonOffset: true, polygonOffsetFactor: -4 }));
 }
@@ -478,6 +529,29 @@ function indexed(g) {
 
 // Warehouses, merged by look: about a dozen draw calls for all of them.
 // Each: { x, z, w, d, h, rot, tint (0-3), lit, door }.
+// Roof furniture every building shares: a parapet round the edge, and a few
+// boxes (air-con units, a stair or lift head) placed from the seed so the
+// same building always gets the same roof.
+function roofKit(b, out, { parapet = 0.9, units = 2, core = false } = {}) {
+  const c = Math.cos(b.rot), sn = Math.sin(b.rot);
+  const at = (lx, lz) => [b.x + lx * c + lz * sn, b.z - lx * sn + lz * c];
+  for (const [len, lx, lz, ang] of [[b.w, 0, b.d / 2, 0], [b.w, 0, -b.d / 2, 0], [b.d, b.w / 2, 0, Math.PI / 2], [b.d, -b.w / 2, 0, Math.PI / 2]]) {
+    const [x, z] = at(lx, lz);
+    out.push(placed(new THREE.BoxGeometry(len + 0.3, parapet, 0.3), x, b.h + parapet / 2, z, b.rot + ang));
+  }
+  let k = (b.seed ?? 1) * 7.3 + b.w;
+  const rnd = () => (k = (k * 9301 + 49297) % 233280) / 233280;
+  for (let i = 0; i < units; i++) {
+    const w = 1.2 + rnd() * 1.6, d = 1 + rnd() * 1.2, h = 0.8 + rnd() * 0.8;
+    const [x, z] = at((rnd() - 0.5) * (b.w - 4), (rnd() - 0.5) * (b.d - 4));
+    out.push(placed(new THREE.BoxGeometry(w, h, d), x, b.h + h / 2, z, b.rot));
+  }
+  if (core) {
+    const [x, z] = at(b.w * 0.2, -b.d * 0.15);
+    out.push(placed(new THREE.BoxGeometry(4, 3, 4.5), x, b.h + 1.5, z, b.rot));
+  }
+}
+
 const BUILDING_TINTS = [[70, 78, 80], [84, 82, 72], [58, 66, 62], [92, 88, 80]];
 function warehouses(list, group, placer) {
   const wallGeos = [[], [], [], []], roofGeos = [], doorGeos = [], winGeos = [[], [], []], lampGeos = [];
@@ -492,6 +566,7 @@ function warehouses(list, group, placer) {
       wallGeos[b.tint].push(placed(g, b.x + Math.sin(ang) * depth, b.h / 2, b.z + Math.cos(ang) * depth, ang));
     });
     roofGeos.push(placed(new THREE.PlaneGeometry(b.w, b.d), b.x, b.h, b.z, b.rot, -Math.PI / 2));
+    roofKit({ ...b, seed: Math.abs(b.x | 0) }, roofGeos, { parapet: 0.5, units: 2 });
     for (const side of [0, Math.PI]) {
       const ang = b.rot + side;
       const fx = Math.sin(ang), fz = Math.cos(ang), sx = Math.cos(ang), sz = -Math.sin(ang);
@@ -522,9 +597,16 @@ function warehouses(list, group, placer) {
 // Shop buildings, merged by look. Each: { x, z, w, d, h, rot, tint (0-3),
 // seed (1-4) }. The front (+z after rot) has a shopfront 4 m tall and rows
 // of windows above; the other sides are plain tiles.
-const SHOP_TINTS = [[150, 140, 122], [112, 116, 118], [138, 120, 108], [96, 100, 108]];
+// A shop can take a palette: 'street' (the default greys and buffs) or
+// 'neon' (Parabolica's violets, plums and golds). Awnings and the lit sign
+// band over the shopfront come in the palette's colours too.
+const SHOP_PALETTES = {
+  street: { walls: [[150, 140, 122], [112, 116, 118], [138, 120, 108], [96, 100, 108]], awnings: [0x6a2a24, 0x2a4a5a, 0x7a6a3a, 0x3a3a40], bands: [0xffe0b0, 0xd8f0ff, 0xffd090] },
+  neon: { walls: [[104, 78, 132], [126, 82, 116], [76, 64, 104], [140, 112, 78]], awnings: [0x8a1a5a, 0x4a2a7a, 0xb08a2a, 0x2a1a3a], bands: [0xff4f9a, 0xffc860, 0xa880ff] },
+};
 function shops(list, group, placer) {
-  const walls = [[], [], [], []], fronts = [[], [], [], []], uppers = [[], [], []], roofs = [];
+  const walls = new Map(), fronts = [[], [], [], []], uppers = [[], [], []], roofs = [], awnings = new Map(), bands = new Map();
+  const into = (map, key, g) => { if (!map.has(key)) map.set(key, []); map.get(key).push(g); };
   const face = (len, hgt, y0, b, ang, depth, u, v) => {
     const g = new THREE.PlaneGeometry(len, hgt);
     const uv = g.attributes.uv;
@@ -534,26 +616,41 @@ function shops(list, group, placer) {
   for (const b of list) {
     const fx = Math.sin(b.rot), fz = Math.cos(b.rot);
     // Front: shopfront, then floors above.
+    const pal = b.palette || 'street', P = SHOP_PALETTES[pal];
     fronts[(b.seed - 1) % 4].push(face(b.w, 4, 0, b, b.rot, b.d / 2 + 0.02, b.w / 16, 1));
     if (b.h > 5) uppers[b.seed % 3].push(face(b.w, b.h - 4.6, 4.3, b, b.rot, b.d / 2 + 0.02, b.w / 8, (b.h - 4.6) / 12.8));
-    walls[b.tint].push(face(b.w, b.h, 0, b, b.rot, b.d / 2, b.w / 4, b.h / 4));
+    const wk = pal + b.tint;
+    into(walls, wk, face(b.w, b.h, 0, b, b.rot, b.d / 2, b.w / 4, b.h / 4));
     for (const [len, a] of [[b.d, Math.PI / 2], [b.w, Math.PI], [b.d, -Math.PI / 2]]) {
       const depth = Math.abs(a) === Math.PI / 2 ? b.w / 2 : b.d / 2;
-      walls[b.tint].push(face(len, b.h, 0, b, b.rot + a, depth, len / 4, b.h / 4));
+      into(walls, wk, face(len, b.h, 0, b, b.rot + a, depth, len / 4, b.h / 4));
     }
     roofs.push(placed(new THREE.PlaneGeometry(b.w, b.d), b.x, b.h, b.z, b.rot, -Math.PI / 2));
+    roofKit(b, roofs, { parapet: 0.8, units: 1 + (b.seed % 3) });
+    // A sloping awning over the shopfront, and a lit sign band above it;
+    // a stone cornice line between each floor.
+    const aw = placed(new THREE.BoxGeometry(b.w - 0.6, 0.08, 1.6), b.x + fx * (b.d / 2 + 0.8), 3.75, b.z + fz * (b.d / 2 + 0.8), b.rot, 0.28);
+    into(awnings, P.awnings[(b.seed + b.tint) % P.awnings.length], aw);
+    into(bands, P.bands[(b.seed * 3 + b.tint) % P.bands.length], face(b.w - 1, 0.45, 4.05, b, b.rot, b.d / 2 + 0.05, 1, 1));
+    for (let y = 4.6; y < b.h - 1; y += 3.2) into(walls, wk, placed(new THREE.BoxGeometry(b.w + 0.2, 0.18, 0.25), b.x + fx * (b.d / 2 + 0.1), y, b.z + fz * (b.d / 2 + 0.1), b.rot));
     // Light spilling out of the shopfront onto the pavement.
     placer.pool(b.x + fx * (b.d / 2 + 2.5), b.z + fz * (b.d / 2 + 2.5), b.w * 0.9, 5, b.seed % 2 ? 'pink' : 'warm', b.rot);
   }
-  walls.forEach((geos, i) => { if (geos.length) group.add(new THREE.Mesh(merge(geos), mat('shopwall' + i, () => new THREE.MeshLambertMaterial({ map: Tex.tiles(SHOP_TINTS[i]) })))); });
+  for (const [k, geos] of walls) {
+    const tint = SHOP_PALETTES[k.slice(0, -1)].walls[Number(k.slice(-1))];
+    group.add(new THREE.Mesh(merge(geos), mat('shopwall' + k, () => new THREE.MeshLambertMaterial({ map: Tex.tiles(tint) }))));
+  }
+  for (const [c, geos] of awnings) group.add(new THREE.Mesh(merge(geos), lambert(c)));
+  for (const [c, geos] of bands) group.add(new THREE.Mesh(merge(geos), basic(c)));
   fronts.forEach((geos, i) => { if (geos.length) group.add(new THREE.Mesh(merge(geos), mat('shopfront' + i, () => new THREE.MeshBasicMaterial({ map: Tex.shopFront(i + 1), color: 0xcccccc })))); });
   uppers.forEach((geos, i) => { if (geos.length) group.add(new THREE.Mesh(merge(geos), litMat('floors' + i, Tex.floors(i + 1)))); });
   if (roofs.length) group.add(new THREE.Mesh(merge(roofs), roofMat()));
 }
 
 // Blocks of flats: balconies and windows all round. { x, z, w, d, h, rot, seed (1-3) }.
-function flats(list, group) {
-  const sides = [[], [], []], roofs = [];
+// b.crown: a colour for a lit band round the top (Parabolica's gold).
+function flats(list, group, placer) {
+  const sides = [[], [], []], roofs = [], crowns = new Map();
   for (const b of list) {
     [[b.w, 0], [b.d, Math.PI / 2], [b.w, Math.PI], [b.d, -Math.PI / 2]].forEach(([len, a], fi) => {
       const g = new THREE.PlaneGeometry(len, b.h);
@@ -563,7 +660,21 @@ function flats(list, group) {
       sides[(b.seed - 1) % 3].push(placed(g, b.x + Math.sin(ang) * depth, b.h / 2, b.z + Math.cos(ang) * depth, ang));
     });
     roofs.push(placed(new THREE.PlaneGeometry(b.w, b.d), b.x, b.h, b.z, b.rot, -Math.PI / 2));
+    roofKit(b, roofs, { parapet: 1.1, units: 3, core: true });
+    // A water tank on legs.
+    const c = Math.cos(b.rot), sn = Math.sin(b.rot), lx = -b.w * 0.25, lz = b.d * 0.15;
+    roofs.push(placed(new THREE.CylinderGeometry(1.3, 1.3, 2.2, 8), b.x + lx * c + lz * sn, b.h + 2.4, b.z - lx * sn + lz * c));
+    if (b.crown) {
+      const band = [];
+      roofKit({ ...b, h: b.h + 0.75, seed: 0 }, band, { parapet: 0.3, units: 0 });
+      if (!crowns.has(b.crown)) crowns.set(b.crown, []);
+      crowns.get(b.crown).push(...band);
+      for (const [lx, lz] of [[b.w / 2, b.d / 2], [-b.w / 2, b.d / 2], [b.w / 2, -b.d / 2], [-b.w / 2, -b.d / 2]]) {
+        placer.glow(b.x + lx * c + lz * sn, b.h + 1.2, b.z - lx * sn + lz * c, 'gold', 4);
+      }
+    }
   }
+  for (const [col, geos] of crowns) group.add(new THREE.Mesh(merge(geos), basic(col)));
   sides.forEach((geos, i) => { if (geos.length) group.add(new THREE.Mesh(merge(geos), litMat('flats' + i, Tex.flats(i + 1)))); });
   if (roofs.length) group.add(new THREE.Mesh(merge(roofs), roofMat()));
 }

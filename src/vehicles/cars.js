@@ -252,9 +252,165 @@ export const GTAR_R35 = {
   paintNames: ['Pearl White', 'Gun Metal', 'Meteor Black', 'Bayside Blue', 'Vibrant Red', 'Katsura Orange'],
 };
 
+// Based on the 2016 Aventador SV (David's reference sheet): 6.5 L V12
+// behind the seats (750 PS at 8400 rpm, 690 N·m at 5500), 1525 kg dry, about
+// 1700 kg ready to drive, a seven-speed single-clutch robot (ISR), four-wheel
+// drive that keeps most of the torque at the back. Shrieks to 8500 rpm; the
+// gear changes thump. Huge grip, a big fixed wing.
+export const AVENTADORO_SV = {
+  id: 'aventadoro-sv',
+  make: 'Lamborgino',
+  model: 'Aventadoro SV',
+  code: 'LP750',
+  year: 2016,
+  blurb: 'A V12 behind your head and a wing on the back. Loud, wide, very fast.',
+
+  mass: 1700,
+  wheelbase: 2.7,
+  frontWeight: 0.43,          // mid-engined: the weight sits behind you
+  cgHeight: 0.42,
+  trackWidth: 1.7,
+  halfWidth: 1.01,
+  halfLength: 2.42,
+  yawInertiaScale: 0.95,
+
+  idleRpm: 1000,
+  redline: 8500,
+  limiterRpm: 8600,
+  torqueCurve: [
+    [1000, 300], [2500, 470], [4000, 600], [5500, 690],
+    [7000, 670], [8400, 630], [8600, 600],
+  ],
+  throttleResponse: 15,
+  engineBraking: 150,
+  engineInertia: 0.2,
+  sound: { cylinders: 12, burble: 0.35, pitch: 1.25, sub: 0.9, rasp: 1.45 },
+
+  gearRatios: [3.91, 2.44, 1.81, 1.46, 1.19, 0.97, 0.84],
+  reverseRatio: 2.92,
+  finalDrive: 3.24,
+  drivetrainEfficiency: 0.85,
+  drivetrain: 'awd',
+  frontTorqueShare: 0.25,
+  shiftTime: 0.1,             // a quick robot, with a kick
+  autoUpshiftRpm: 8300,
+  autoDownshiftRpm: 4200,
+
+  wheelRadius: 0.355,
+  tireGrip: 1.16,
+  rearGripScale: 1.08,
+  slipPeak: 0.14,
+  slideGrip: 0.85,
+
+  maxSteer: 0.55,
+  highSpeedSteer: 0.1,
+  steerSpeed: 3.4,
+
+  brakeForce: 22000,
+  brakeFrontBias: 0.6,
+  handbrakeForce: 4600,
+  handbrakeRearGrip: 0.42,
+
+  dragCoefficient: 0.33,
+  frontalArea: 2.05,
+  downforce: 0.55,            // the SV's wing
+  rollingResistance: 0.015,
+  liftOffDrag: 0.6,
+
+  suspensionStiffness: 58,
+  suspensionDamping: 9,
+  rollScale: 0.0028,
+  pitchScale: 0.0042,
+  squatShare: 0.4,
+  shiftKick: 0.35,
+  maxRoll: 0.04,
+  maxPitch: 0.04,
+
+  paint: 0xc8141a,
+  paints: [0xc8141a, 0xe8c21a, 0x6aa82a, 0x101114, 0xe8e8e4, 0x2a4ea8],
+  paintNames: ['Rosso Mars', 'Giallo Orion', 'Verde Ithaca', 'Nero Aldebaran', 'Bianco Isis', 'Blu Nethuns'],
+};
+
+// Based on the 2020 Mustang Shelby GT500 (David's reference sheet): 5.2 L
+// supercharged V8 (771 PS at 7300 rpm, 847 N·m at 5000), 1916 kg, a
+// seven-speed twin-clutch, rear-wheel drive. Enormous shove; it wants to
+// light the rear tyres in every gear.
+export const MUSTANK_GT500 = {
+  id: 'mustank-gt500',
+  make: 'Fard',
+  model: 'Mustank Shelbi GT-500',
+  code: 'S550',
+  year: 2020,
+  blurb: 'A supercharged V8 muscle car with a twin-clutch. The most power here.',
+
+  mass: 1916,
+  wheelbase: 2.72,
+  frontWeight: 0.56,
+  cgHeight: 0.5,
+  trackWidth: 1.62,
+  halfWidth: 0.96,
+  halfLength: 2.41,
+  yawInertiaScale: 1.1,
+
+  idleRpm: 750,
+  redline: 7500,
+  limiterRpm: 7600,
+  torqueCurve: [
+    [750, 420], [2000, 640], [3500, 790], [5000, 847],
+    [6000, 820], [7300, 740], [7600, 690],
+  ],
+  throttleResponse: 12,
+  engineBraking: 150,
+  engineInertia: 0.26,
+  sound: { cylinders: 8, burble: 0.65, pitch: 0.95, sub: 1.4, rasp: 0.95 },
+
+  gearRatios: [3.2, 2.47, 1.73, 1.31, 1.0, 0.8, 0.63],
+  reverseRatio: 3.0,
+  finalDrive: 3.73,
+  drivetrainEfficiency: 0.84,
+  drivetrain: 'rwd',
+  shiftTime: 0.08,            // twin-clutch
+  autoUpshiftRpm: 7200,
+  autoDownshiftRpm: 3000,
+
+  wheelRadius: 0.355,
+  tireGrip: 1.1,
+  rearGripScale: 1.16,        // 771 PS through the back: smoke on demand, but it stays catchable
+  slipPeak: 0.16,
+  slideGrip: 0.84,
+
+  maxSteer: 0.55,
+  highSpeedSteer: 0.1,
+  steerSpeed: 3.0,
+
+  brakeForce: 21500,
+  brakeFrontBias: 0.64,
+  handbrakeForce: 5000,
+  handbrakeRearGrip: 0.38,
+
+  dragCoefficient: 0.37,
+  frontalArea: 2.2,
+  downforce: 0.2,
+  rollingResistance: 0.015,
+  liftOffDrag: 0.6,
+
+  suspensionStiffness: 46,
+  suspensionDamping: 7.5,
+  rollScale: 0.004,
+  pitchScale: 0.0055,
+  squatShare: 0.65,
+  shiftKick: 0.25,
+  maxRoll: 0.055,
+  maxPitch: 0.05,
+
+  paint: 0xb81418,
+  paints: [0xb81418, 0x1a3a8a, 0x101114, 0xe8e8e4, 0x8e9396, 0xd85a14],
+  paintNames: ['Race Red', 'Velocity Blue', 'Shadow Black', 'Oxford White', 'Carbonized Grey', 'Twister Orange'],
+};
+
 // The cars you can pick. The R34 is hidden until its body is rebuilt (David,
 // 2026-10-26): its numbers stay, so the bench still drives it.
-export const CARS = [GTAR_R35, CHALLENJER_SRT8];
+export const CARS = [GTAR_R35, CHALLENJER_SRT8, AVENTADORO_SV, MUSTANK_GT500];
 export const ALL_CARS = [SKYLINER_R34, ...CARS];
 
 export function getCar(id) {

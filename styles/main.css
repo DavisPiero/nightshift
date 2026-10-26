@@ -195,6 +195,46 @@ h1, h2, p { margin: 0; }
 .menu-l .stack { width: min(380px, 80vw); }
 #scr-main .btn.huge::after { content: ">"; position: absolute; right: 26px; animation: blink 1s steps(1) infinite; }
 
+/* ---------- Drive: mode tiles. One big picture tile for the mode that
+   works (pink header), two smaller grey ones for modes still to come. */
+.screen.modes { background: rgba(2, 5, 7, 0.7); }
+.mode-grid {
+  position: absolute; top: calc(max(16px, var(--st)) + 70px); bottom: max(22px, var(--sb));
+  left: max(16px, var(--sl)); right: max(16px, var(--sr));
+  grid-template-columns: 2fr 1fr; grid-template-rows: 1fr 1fr; gap: 14px;
+}
+.mode {
+  position: relative; cursor: pointer; border: 0; padding: 0; text-align: left; overflow: hidden;
+  display: flex; flex-direction: column; justify-content: space-between;
+  clip-path: var(--cut); background: #05090c center / cover no-repeat; image-rendering: pixelated;
+  box-shadow: inset 0 0 0 1px var(--frame), var(--sheen);
+  transition: transform 90ms steps(2), filter 90ms steps(2);
+}
+.mode.single { grid-row: 1 / span 2; }
+.mode::before { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(2, 5, 7, 0.1) 40%, rgba(2, 5, 7, 0.85)); pointer-events: none; }
+.mode::after { content: ""; position: absolute; inset: 0; pointer-events: none; background: repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.16) 0 1px, transparent 1px 3px); }
+.mode .mh {
+  position: relative; z-index: 1; display: block; padding: 8px 16px 10px;
+  font: 30px/1 var(--px); letter-spacing: 0.06em; color: #fff;
+  background: linear-gradient(180deg, rgba(22, 32, 38, 0.95), rgba(8, 13, 17, 0.95)); box-shadow: inset 0 -1px 0 var(--frame);
+}
+.mode .mh::before { content: ""; display: inline-block; width: 7px; height: 16px; margin-right: 10px; background: var(--pink); vertical-align: -1px; transform: var(--skew); }
+.mode.single .mh { font-size: 40px; background: linear-gradient(180deg, #ff5aa2, var(--pink) 55%, #d81a6c); color: var(--pink-ink); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5), inset 0 -3px 0 var(--pink-dk); }
+.mode.single .mh::before { background: var(--pink-ink); }
+.mode .ms { position: relative; z-index: 1; padding: 0 18px 16px; font: 14px/1.2 var(--dot); letter-spacing: 0.16em; text-transform: uppercase; color: var(--text); text-shadow: 0 1px 0 #000; }
+.mode:hover, .mode:focus-visible { outline: none; transform: translateX(4px); box-shadow: inset 0 0 0 2px var(--cyan), var(--sheen); }
+.mode.single:hover, .mode.single:focus-visible { filter: drop-shadow(0 0 10px rgba(255, 46, 136, 0.45)); }
+.mode:active { transform: translate(4px, 2px); }
+.mode.soon { cursor: default; filter: grayscale(1) brightness(0.55); }
+.mode.soon .mh::before { background: var(--muted); }
+.mode.soon .ms { color: var(--muted); }
+@media (max-height: 560px) {
+  .mode-grid { top: calc(max(10px, var(--st)) + 56px); gap: 10px; }
+  .mode .mh { font-size: 24px; padding: 6px 12px 8px; }
+  .mode.single .mh { font-size: 30px; }
+  .mode .ms { font-size: 12px; padding: 0 12px 10px; }
+}
+
 /* ---------- pick screens: list on the left, details on the right */
 .screen.select { align-items: stretch; justify-content: flex-start; background: linear-gradient(90deg, rgba(2, 5, 7, 0.92) 0%, rgba(2, 5, 7, 0.6) 30%, rgba(2, 5, 7, 0) 52%); }
 .side-list {
@@ -395,13 +435,15 @@ input[type=range]::-moz-range-thumb { width: 14px; height: 24px; border: 0; bord
 /* Pedals and the handbrake: pictures, not boxes. Pressed, a pedal tips away
    from you and glows (pink for gas, turquoise for brake). */
 .tc.pedal, .tc.lever { background: none; clip-path: none; box-shadow: none; flex-direction: column; transform-origin: 50% 100%; transition: transform 50ms linear, filter 50ms linear; }
-.tc.pedal svg, .tc.lever svg { width: 100%; flex: 1; min-height: 0; filter: drop-shadow(0 3px 0 rgba(0, 0, 0, 0.55)); }
-.tc.lever { background: rgba(6, 18, 24, 0.55); clip-path: var(--cut); box-shadow: inset 0 0 0 2px var(--edge-hi); padding: 6px 8px 2px; }
-.tc .cap { font: calc(13px * var(--s, 1))/1 var(--px); letter-spacing: 0.2em; color: var(--muted); padding-top: 3px; }
+.tc .art { width: 100%; flex: 1; min-height: 0; object-fit: contain; image-rendering: pixelated; filter: drop-shadow(0 3px 0 rgba(0, 0, 0, 0.55)); pointer-events: none; -webkit-user-select: none; user-select: none; }
+.tc .cap { font: calc(13px * var(--s, 1))/1 var(--px); letter-spacing: 0.2em; color: var(--muted); padding-top: 3px; text-shadow: 0 1px 0 #000; }
 .tc.pedal.held { transform: translate(-50%, -50%) perspective(300px) rotateX(24deg) scale(0.97); background: none; box-shadow: none; }
-.tc.gas.held svg { filter: brightness(0.85) drop-shadow(0 0 10px rgba(255, 46, 136, 0.9)); }
-.tc.brake.held svg { filter: brightness(0.85) drop-shadow(0 0 10px rgba(63, 240, 232, 0.9)); }
-.tc.lever.held { transform: translate(-50%, -46%); background: rgba(14, 40, 48, 0.85); box-shadow: inset 0 0 0 2px var(--cyan); }
+.tc.gas.held .art { filter: brightness(0.85) drop-shadow(0 0 10px rgba(255, 46, 136, 0.9)); }
+.tc.brake.held .art { filter: brightness(0.85) drop-shadow(0 0 10px rgba(63, 240, 232, 0.9)); }
+/* The handbrake lever is pulled up (turned about its pivot) while held. */
+.tc.lever .art { transform-origin: 26% 70%; transition: transform 60ms steps(2); }
+.tc.lever.held { background: none; box-shadow: none; }
+.tc.lever.held .art { transform: rotate(-14deg); filter: drop-shadow(0 0 10px rgba(255, 46, 136, 0.8)); }
 .tc.held .cap { color: var(--text); }
 .stick-base {
   position: absolute; transform: translate(-50%, -50%); border-radius: 50%;
@@ -475,6 +517,7 @@ input[type=range]::-moz-range-thumb { width: 14px; height: 24px; border: 0; bord
 /* ---------- loading screens */
 .loader { position: fixed; inset: 0; z-index: 30; background: #020406; overflow: hidden; transition: opacity 400ms ease; }
 .loader.done { opacity: 0; pointer-events: none; }
+.wheel-art.pixel { image-rendering: pixelated; display: block; }
 .wheel-art .spin { transform-box: fill-box; transform-origin: center; animation: spin 0.5s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
 .load-word { font: 22px/1 var(--px); letter-spacing: 0.4em; text-transform: uppercase; color: var(--muted); display: inline-block; transform: var(--skew); }

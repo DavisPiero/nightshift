@@ -10,7 +10,7 @@ import { TrackPath } from '../src/world/track-path.js';
 import { STARTER_TRACK as TEST_ROAD } from '../src/world/starter-track.js';
 import { keepOnTrack } from '../src/physics/walls.js';
 import { applyWeather } from '../src/physics/weather.js';
-import { CHALLENJER_SRT8, GTAR_R35 } from '../src/vehicles/cars.js';
+import { CHALLENJER_SRT8, GTAR_R35, CARS } from '../src/vehicles/cars.js';
 import { UNDERGROUND_TRACK } from '../src/world/underground.js';
 import { PARABOLICA_TRACK } from '../src/world/parabolica.js';
 import { carStats } from '../src/vehicles/stats.js';
@@ -214,7 +214,7 @@ console.log('Second car and ratings');
 }
 
 console.log('Lap of ' + UNDERGROUND_TRACK.name);
-for (const car of [CAR, GTAR_R35, CHALLENJER_SRT8]) {
+for (const car of [CAR, ...CARS]) {
   const lap = botLap(DEFAULT_ASSISTS, 'clear', car, UNDERGROUND_TRACK);
   console.log(`  ${car.model}: ${lap.done ? lap.t.toFixed(1) + ' s' : 'did not finish'}, wall hits ${lap.hits} (worst ${lap.worstHit.toFixed(0)} km/h), max slide ${deg(lap.maxBeta)}°`);
   check(lap.done && lap.hits === 0, car.model + ' should lap the Underground cleanly with assists on');
@@ -233,7 +233,7 @@ console.log('Lap of ' + PARABOLICA_TRACK.name);
   console.log(`  ${(t.length / 1000).toFixed(2)} km, tightest corner radius ${tight.toFixed(0)} m`);
   check(t.length > 3200 && t.length < 3700, 'Parabolica Street should be about 3.4 km (Monza at 60%)');
 }
-for (const car of [CAR, GTAR_R35, CHALLENJER_SRT8]) {
+for (const car of [CAR, ...CARS]) {
   const lap = botLap(DEFAULT_ASSISTS, 'clear', car, PARABOLICA_TRACK);
   console.log(`  ${car.model}: ${lap.done ? lap.t.toFixed(1) + ' s' : 'did not finish'}, wall hits ${lap.hits} (worst ${lap.worstHit.toFixed(0)} km/h), max slide ${deg(lap.maxBeta)}°`);
   check(lap.done && lap.hits === 0, car.model + ' should lap Parabolica Street cleanly with assists on');
@@ -256,7 +256,7 @@ console.log('Snow and weather patches');
   for (const def of [TEST_ROAD, UNDERGROUND_TRACK, PARABOLICA_TRACK]) {
     for (const weather of def.weathers || ['rain', 'fog', 'snow']) {
       if (weather === 'clear') continue;
-      for (const car of [CAR, GTAR_R35, CHALLENJER_SRT8]) {
+      for (const car of [CAR, ...CARS]) {
         const lap = botLap(DEFAULT_ASSISTS, weather, car, def);
         console.log(`  ${def.name}, ${weather}, ${car.model}: ${lap.done ? lap.t.toFixed(1) + ' s' : 'did not finish'}, wall hits ${lap.hits}, grip down to ${lap.minGrip.toFixed(2)}, biggest grip step ${lap.gripStep.toFixed(4)}`);
         check(lap.done && lap.hits === 0, `${car.model} should lap ${def.name} cleanly in ${weather} with assists on`);
