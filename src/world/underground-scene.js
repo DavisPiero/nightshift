@@ -9,6 +9,7 @@
 import * as THREE from 'three';
 import { Tex } from '../graphics/textures.js';
 import { merge, placed, instanced, strip } from './scene-kit.js';
+import { Placer } from './assets.js';
 
 const TEAL = 0x4ff0e0;     // the tunnel lights
 const ROOF_Y = 7.4;        // ceiling height at the centre
@@ -53,7 +54,7 @@ function arch(W, t) { return [W * Math.cos(t), SPRING_Y + (ROOF_Y - SPRING_Y) * 
 export function buildUnderground(track, def) {
   const group = new THREE.Group();
   const hw = track.halfWidth, W = track.wall;
-  const glowPos = [], glowCol = [];
+  const place = new Placer(); // props from the asset library
   const lamps = [];
   const at = (k, off, y = 0) => new THREE.Vector3(track.x[k] + track.leftX(k) * off, y, track.z[k] + track.leftZ(k) * off);
   const reflect = new THREE.Group(); // bright things the car's paint reflects
@@ -176,7 +177,6 @@ export function buildUnderground(track, def) {
 
   // --- Hanging and wall-mounted things ---
   const steel = new THREE.MeshLambertMaterial({ color: 0x3a4244 });
-  const dark = new THREE.MeshBasicMaterial({ color: 0x050707 });
   // Overhead boards: a frame hung from the roof, a board facing the traffic.
   const board = (k, off, w, h, map, y = 5.4) => {
     const p = at(k, off, y);
@@ -205,59 +205,31 @@ export function buildUnderground(track, def) {
   board(Math.min(track.count - 1, 1800), 0, 4.8, 0.9, Tex.ledBoard('速度注意  事故多発'), 5.8);
 
   // Jet fans in pairs under the crown of the roof.
-  const fanGeo = new THREE.CylinderGeometry(0.55, 0.55, 3.2, 10, 1, true).rotateX(Math.PI / 2);
-  const fanEnd = new THREE.CircleGeometry(0.52, 10);
-  const fans = [], fanEnds = [];
   for (let k = 120; k < track.count; k += 170) {
     for (const s of [1, -1]) {
       const p = at(k, s * 2.4, ROOF_Y - 1.0);
-      const ry = track.headingAt(k);
-      fans.push([p.x, p.y, p.z, ry]);
-      for (const e of [1, -1]) fanEnds.push([p.x + Math.sin(ry) * e * 1.58, p.y, p.z + Math.cos(ry) * e * 1.58, ry + (e > 0 ? 0 : Math.PI)]);
+      place.add('jet-fan', p.x, p.y, p.z, track.headingAt(k));
     }
   }
-  group.add(instanced(fanGeo, new THREE.MeshLambertMaterial({ color: 0x5a6466, side: THREE.DoubleSide }), fans));
-  group.add(instanced(fanEnd, dark, fanEnds));
 
   // Red fire-hydrant lamps on the left wall every 50 m, green exit signs on
   // the right wall every 200 m.
-  const redMat = new THREE.MeshBasicMaterial({ color: 0xff2a1e });
-  const reds = [], boxes = [];
   for (let k = 25; k < track.count; k += 50) {
-    const p = at(k, W - 0.08, 2.5);
-    reds.push([p.x, p.y, p.z, track.headingAt(k)]);
-    const b = at(k, W - 0.12, 1.2);
-    boxes.push([b.x, b.y, b.z, track.headingAt(k)]);
-    glowPos.push(p.x, p.y, p.z); glowCol.push(1, 0.2, 0.12);
+    const p = at(k, W - 0.08);
+    place.add('hydrant-lamp', p.x, 0, p.z, track.headingAt(k));
   }
-  group.add(instanced(new THREE.BoxGeometry(0.12, 0.22, 0.22), redMat, reds));
-  group.add(instanced(new THREE.BoxGeometry(0.2, 1.0, 0.8), new THREE.MeshLambertMaterial({ color: 0x8a1a16 }), boxes));
-  const redRefl = instanced(new THREE.BoxGeometry(0.3, 0.3, 0.3), new THREE.MeshBasicMaterial({ color: 0xff3020 }), reds);
-  reflect.add(redRefl);
-  const exitMat = new THREE.MeshBasicMaterial({ map: Tex.exitSign() });
-  const exitGeos = [];
   for (let k = 110; k < track.count; k += 200) {
-    const p = at(k, -(W - 0.04), 2.9);
-    const lx = track.leftX(k), lz = track.leftZ(k);
-    exitGeos.push(placed(new THREE.PlaneGeometry(1.0, 0.5), p.x, p.y, p.z, Math.atan2(lx, lz)));
-    glowPos.push(p.x + lx * 0.2, p.y, p.z + lz * 0.2); glowCol.push(0.2, 0.9, 0.45);
-    // The door under the sign.
-    const d = at(k, -(W - 0.03), 1.1);
-    exitGeos.push(placed(new THREE.PlaneGeometry(1.0, 2.0), d.x, d.y, d.z, Math.atan2(lx, lz)));
+    const p = at(k, -(W - 0.04));
+    place.add('exit-sign', p.x, 0, p.z, track.headingAt(k));
   }
-  // Two looks share one mesh: the sign texture's own green covers both.
-  if (exitGeos.length) group.add(new THREE.Mesh(merge(exitGeos), exitMat));
 
-  // Small halos round the red and green lamps.
-  const glowGeo = new THREE.BufferGeometry();
-  glowGeo.setAttribute('position', new THREE.Float32BufferAttribute(glowPos, 3));
-  glowGeo.setAttribute('color', new THREE.Float32BufferAttribute(glowCol, 3));
-  const glows = new THREE.Points(glowGeo, new THREE.PointsMaterial({ map: Tex.glow(), vertexColors: true, size: 1.4, sizeAttenuation: true, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
-  glows.renderOrder = 2;
-  group.add(glows);
+  // Small halos round the red and green lamps; the lamps' bright bits join
+  // the reflections.
+  const built = place.finish(group, { glowSize: 1.4 });
+  reflect.add(...built.reflect.children);
 
   return {
-    group, lamps, glows: [glows], roadMat,
+    group, lamps, glows: [built.glows], roadMat,
     backdrop: new THREE.Group(), // nothing to see beyond the walls
     reflect,
     look: {

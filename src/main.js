@@ -581,6 +581,7 @@ window.addEventListener('error', (e) => {
 const fontReady = URL_FLAGS.smoke ? Promise.resolve()
   : Promise.race([document.fonts?.load('20px "Jersey 10"') ?? Promise.resolve(), new Promise((r) => setTimeout(r, 1500))]);
 fontReady.catch(() => {}).finally(() => {
+  if (URL_FLAGS.library) { import('./ui/library.js').then((m) => m.startLibrary(URL_FLAGS)); return; }
   const game = new Game();
   if (URL_FLAGS.smoke) game.smoke = new SmokeTest();
   window.nightshift = game; // handy from the browser console
