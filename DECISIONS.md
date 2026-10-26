@@ -66,7 +66,7 @@ One line each, newest last.
 - 2026-10-26: Parabolica Street's light is pink neon (shop signs and spill) under cool white LED lamps; the park is inside the loop, the town outside.
 - 2026-10-26: David confirmed Parabolica Street's shape, name and light (pink neon, white lamps), and this session's guesses: snow grip 0.68, no patches in Clear, lamps on at sunset and dawn, walls 3.5 m out.
 - 2026-10-26: David confirmed all older open guesses as they stand: the R35 is "2017 Nissani GT-Ar"; the Challenjer keeps its newer face with 2009 name and figures; pink main buttons; no rain in the Underground; garage headlights lit, beams off; parts free and fitted at once; 3 builds per car; slammed needs coilovers; race number 08; Feel panel values as they are; classes R34 A 756, Challenjer B 635, R35 S 862.
-- 2026-10-26: m4-world signed off and merged to main (push left to David: the push was blocked here).
+- 2026-10-26: m4-world signed off, merged to main and pushed.
 - 2026-10-26: The R34 is hidden, not deleted (David): out of the car list, kept for the bench; the GT-Ar is the default car.
 - 2026-10-26: Menus restyled after the Street-Spec logo, pixel fonts kept (David). Style sheet in SPEC.md; replaces the window-bar look. Second "looks like Courtside" note, so the fix is a written style sheet.
 - 2026-10-26: Drive flow is Track, Car, Race settings, Race (four taps); weather and time left the car screen (David).

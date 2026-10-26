@@ -1,9 +1,7 @@
 # Hand-off: end of session 7 (2026-10-26)
 
 ## Repo state
-- `main`: `m4-world` merged into it (local merge commit). **Not pushed**: the push to GitHub
-  was blocked by the permission checker, so the live site is still part 2. To publish it:
-  `git push origin main` (from `main`). `m4-world` is deleted (it was never on GitHub).
+- `main`: `m4-world` merged and pushed (live on GitHub Pages). `m4-world` is deleted.
 - Branch `m4-notes` (from main): David's fourth notes, committed in steps, **not merged**.
 - Bench passes, including a new test: steered into a wall, the car touches it 3% of the time
   after the first hit (was 85%).
@@ -34,9 +32,9 @@
 - Loading stills: `./tools/loading-stills.sh` (re-run after changing how a track looks).
 
 ## Next
-1. David pushes `main`, plays `m4-notes`, then signs it off or sends notes.
+1. David plays `m4-notes`, then signs it off or sends notes.
 2. Milestone 6: racing (checkpoints, countdown, lap timing, results).
 
 ## Open with David
-- Push `main`. Sign off `m4-notes`.
+- Sign off `m4-notes`.
 - Confirm the guesses listed in STATE.md.

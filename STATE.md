@@ -3,8 +3,7 @@
 _Last updated 2026-10-26, end of session 7 (David's fourth notes)._
 
 ## Where we are
-- `m4-world` (the world) is signed off and merged into `main` locally. **`main` is not pushed
-  yet**: the push was blocked here, so David pushes it (see HANDOFF.md).
+- `m4-world` (the world) is signed off, merged into `main` and pushed (live).
 - Branch `m4-notes` holds all of David's fourth notes, built in one session, not merged:
   - menus: new look, race settings screen, loading screens;
   - garage: pop-ups, orbit and zoom, the bonnet and engine bay;
@@ -20,7 +19,6 @@ _Last updated 2026-10-26, end of session 7 (David's fourth notes)._
 - Then Milestone 6 (racing), as David chose.
 
 ## Open with David
-- Push `main` (one command, in HANDOFF.md).
 - Sign off `m4-notes`.
 - Guesses to confirm:
   - the new menu look, which was built without a mock first;
