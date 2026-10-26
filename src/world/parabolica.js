@@ -13,8 +13,8 @@ export const PARABOLICA_TRACK = {
   theme: 'parabolica',
   halfWidth: 6.5,   // four lanes, 13 m of tarmac
   wall: 10,         // concrete blocks 3.5 m beyond the road edge (room to run wide)
-  start: 200,
-  patches: [[1880, 2100], [2420, 2700], [3250, 3550]], // under the expressway, the back straight, the main straight
+  start: 3380,      // about 600 m before the first chicane, like Monza
+  patches: [[1880, 2100], [2420, 2700], [3440, 3650]], // under the expressway, the back straight, the main straight
   points: turtle([0, -200], 0, [
     ['S', 366],                                   // main straight (part one)
     ['R', 42, 36], ['S', 12], ['L', 42, 36],     // first chicane

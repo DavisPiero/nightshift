@@ -140,7 +140,7 @@ export class Screens {
       b.className = 'btn item';
       b.dataset.track = t.id;
       b.innerHTML = `<span class="num">${String(n + 1).padStart(2, '0')}</span><canvas width="72" height="40"></canvas>`
-        + `<span class="txt"><span class="name">${t.name}</span><span class="jp">${t.jp || ''}</span></span><span class="meta">${(t.path.length / 1000).toFixed(2)} KM</span>`;
+        + `<span class="txt"><span class="name${t.name.length > 14 ? ' long' : ''}">${t.name}</span><span class="jp">${t.jp || ''}</span></span><span class="meta">${(t.path.length / 1000).toFixed(2)} KM</span>`;
       drawMap(b.querySelector('canvas'), t, 3);
       const choose = () => { if (this.pick.track !== t.id) { this.pick.track = t.id; this.game.loadTrack(t.id); this.fillTracks(); } };
       b.addEventListener('click', choose);

@@ -198,6 +198,7 @@ h1, h2, p { margin: 0; }
 .item canvas { width: 72px; height: 40px; flex-shrink: 0; }
 .item .txt { flex: 1; display: flex; flex-direction: column; gap: 3px; min-width: 0; }
 .item .name { font: 26px/1 var(--px); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.item .name.long { font-size: 22px; white-space: normal; }
 .item .jp, .item .sub { position: static; transform: none; font: 12px/1 var(--dot); }
 .item .jp { font-size: 16px; } /* DotGothic16 keeps its strokes at 16 px */
 .item .sub { opacity: 0.75; letter-spacing: 0.14em; }

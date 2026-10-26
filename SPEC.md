@@ -28,7 +28,8 @@
    panel, ratings, parts, controllers, the Challenjer. **Done, signed off 2026-10-25.** (2) The
    garage: workshop, visual and performance mods, dyno, named builds. **Done, signed off
    2026-10-26.** (3) Asset library,
-   time of day, snow, weather patches, a Monza-inspired street track.
+   time of day, snow, weather patches, a Monza-inspired street track (Parabolica Street).
+   **Built, waiting for sign-off.**
    Look pass (David's third notes, 2026-10-26): neon Japan menus, new track and car pick
    layouts, the Underground track, rebuilt car bodies and a third car (R35), paint
    reflections, the garage room. **Done, signed off 2026-10-26.**
