@@ -292,7 +292,7 @@ class Game {
 
   // --- menus ---
   onScreen(name) {
-    if (['main', 'garage', 'tracks', 'setup', 'platform'].includes(name)) this.menuView = name;
+    if (['main', 'garage', 'tracks', 'setup', 'race', 'platform'].includes(name)) this.menuView = name;
   }
 
   showCar(id) {
@@ -523,12 +523,12 @@ class Game {
     this.camera.updateProjectionMatrix();
   }
 
-  // Behind the menus: a slow orbit round the parked car, or on the track
-  // screen a fly-through of the track being looked at.
+  // Behind the menus: a slow orbit round the parked car, or on the track and
+  // race settings screens a fly-through of the track being looked at.
   menuCamera(dt) {
     const v = this.vehicle;
     this.attractAngle += dt * 0.12;
-    if (this.menuView === 'tracks') {
+    if (this.menuView === 'tracks' || this.menuView === 'race') {
       const t = this.track;
       this.flyIndex = ((this.flyIndex ?? this.trackInfo.def.start) + dt * 22) % t.count;
       const i = t.wrap(Math.floor(this.flyIndex)), j = t.wrap(i + 18);
@@ -543,6 +543,10 @@ class Game {
     const dist = 7.5, h = 1.6, lookY = 0.7;
     this.camera.position.set(v.x + Math.sin(a) * dist, h, v.z + Math.cos(a) * dist);
     this.camera.lookAt(v.x, lookY, v.z);
+    // Turn the lens left so the car sits on the right, clear of the menu
+    // (more on narrow screens, where the menu takes more of the width).
+    const aspect = this.renderer.width / Math.max(1, this.renderer.height);
+    this.camera.rotateY(aspect < 1.5 ? 0.36 : 0.3);
     this.camera.fov = 50;
     this.camera.near = 0.1;
     this.camera.updateProjectionMatrix();

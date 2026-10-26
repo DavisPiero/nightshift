@@ -1,5 +1,6 @@
 // Menu screens: first-visit platform choice, main menu (Drive, Garage,
-// Settings), track pick, race setup (weather and car), garage, pause.
+// Settings), track pick, car pick, race settings (weather and time),
+// garage, pause.
 // Plain DOM. Screens stack, so Back (or Escape) always returns to where you
 // came from, e.g. Settings opened from the pause menu goes back to it.
 
@@ -33,6 +34,7 @@ export class Screens {
     $('#pause-button').addEventListener('click', () => game.pauseGame());
     $('#race-go').addEventListener('click', () => game.startRace(this.pick));
     $('#tracks-go').addEventListener('click', () => this.open('setup'));
+    $('#setup-go').addEventListener('click', () => this.open('race'));
 
     this.garage = new Garage(game, this);
 
@@ -58,16 +60,9 @@ export class Screens {
     });
 
     this.pick = { track: game.trackInfo.id, weather: game.save.lastRace.weather, time: game.timeId, car: game.carSpec.id };
-    // The Time box steps through the times this track has.
-    $('#time-btn').addEventListener('click', () => {
-      const times = trackTimes(TRACKS.find((x) => x.id === this.pick.track) || TRACKS[0]);
-      this.pick.time = times[(times.indexOf(this.pick.time) + 1) % times.length];
-      this.fillSetup();
-      this.game.previewTime(this.pick.time);
-    });
     this.buildTracks();
     this.buildCars();
-    this.buildWeather();
+    this.buildConditions();
   }
 
   el(name) { return $(`#scr-${name}`); }
@@ -99,6 +94,7 @@ export class Screens {
     const el = this.el(name);
     if (name === 'tracks') this.fillTracks();
     if (name === 'setup') { this.buildCars(); this.fillSetup(); }
+    if (name === 'race') this.fillRace(true);
     if (name === 'garage') this.garage.open();
     else this.game.garageTab = null;
     if (name === 'settings') this.settings.open();
@@ -140,7 +136,7 @@ export class Screens {
       b.className = 'btn item';
       b.dataset.track = t.id;
       b.innerHTML = `<span class="num">${String(n + 1).padStart(2, '0')}</span><canvas width="72" height="40"></canvas>`
-        + `<span class="txt"><span class="name${t.name.length > 14 ? ' long' : ''}">${t.name}</span><span class="jp">${t.jp || ''}</span></span><span class="meta">${(t.path.length / 1000).toFixed(2)} KM</span>`;
+        + `<span class="txt"><span class="name">${t.name}</span><span class="sub">${(t.path.length / 1000).toFixed(2)} KM · ${t.corners} corners</span></span>`;
       drawMap(b.querySelector('canvas'), t, 3);
       const choose = () => { if (this.pick.track !== t.id) { this.pick.track = t.id; this.game.loadTrack(t.id); this.fillTracks(); } };
       b.addEventListener('click', choose);
@@ -155,7 +151,7 @@ export class Screens {
     for (const b of document.querySelectorAll('#track-list .item')) b.classList.toggle('on', b.dataset.track === t.id);
     const ws = trackWeathers(t).map((id) => WEATHER[id].name).join(' · ');
     const el = $('#track-info');
-    el.innerHTML = `<div class="ttl"><span>Track data</span><span class="jp">コース情報</span><i class="win"></i></div>`
+    el.innerHTML = `<div class="ttl"><span>Track data</span><i class="win"></i></div>`
       + `<canvas width="240" height="150"></canvas>`
       + `<div class="info-name"><span class="name">${t.name}</span><span class="jp">${t.jp || ''}</span></div>`
       + `<p class="muted small">${t.blurb}</p>`
@@ -183,7 +179,9 @@ export class Screens {
     });
   }
 
-  buildWeather() {
+  // Race settings: weather and time as tiles. Picking one shows it on the
+  // track behind the menu at once.
+  buildConditions() {
     const list = $('#weather-list');
     list.innerHTML = '';
     for (const [id, w] of Object.entries(WEATHER)) {
@@ -192,33 +190,56 @@ export class Screens {
       b.dataset.weather = id;
       b.innerHTML = `<canvas class="ico" width="16" height="16"></canvas><span>${w.name}</span>`;
       drawWeatherIcon(b.querySelector('canvas'), id);
-      b.addEventListener('click', () => { this.pick.weather = id; this.fillSetup(); this.game.previewWeather(id); });
+      b.addEventListener('click', () => { this.pick.weather = id; this.fillRace(); this.game.previewWeather(id); });
       list.appendChild(b);
+    }
+    const times = $('#time-list');
+    times.innerHTML = '';
+    for (const [id, t] of Object.entries(TIMES)) {
+      const b = document.createElement('button');
+      b.className = 'btn time';
+      b.dataset.time = id;
+      b.innerHTML = `<span class="v">${t.clock}</span><span>${t.name}</span>`;
+      b.addEventListener('click', () => { this.pick.time = id; this.fillRace(); this.game.previewTime(id); });
+      times.appendChild(b);
     }
   }
 
   fillSetup() {
     const t = TRACKS.find((x) => x.id === this.pick.track) || TRACKS[0];
     $('#setup-title').textContent = t.name;
-    const allowed = trackWeathers(t);
-    if (!allowed.includes(this.pick.weather)) this.pick.weather = 'clear';
-    for (const b of document.querySelectorAll('#weather-list .btn')) {
-      b.hidden = !allowed.includes(b.dataset.weather);
-      b.classList.toggle('on', b.dataset.weather === this.pick.weather);
-    }
-    $('#weather-note').textContent = WEATHER[this.pick.weather].note;
-    const times = trackTimes(t);
-    if (!times.includes(this.pick.time)) this.pick.time = times.includes('night') ? 'night' : times[0];
-    const time = TIMES[this.pick.time], btn = $('#time-btn');
-    btn.querySelector('.v').textContent = time.clock;
-    btn.querySelector('.small').textContent = time.name;
-    btn.querySelector('.k').textContent = times.length > 1 ? 'Time ▸' : 'Time';
-    btn.disabled = times.length < 2;
     for (const b of document.querySelectorAll('#car-list .item')) b.classList.toggle('on', b.dataset.car === this.pick.car);
     const car = getCar(this.pick.car);
     $('#setup-car-year').textContent = `${car.year} · ${car.code}`;
     $('#setup-car-name').textContent = `${car.make} ${car.model}`;
     fillStats($('#setup-stats'), this.game.specFor(car.id), this.game.save.settings.units);
+  }
+
+  // `entering`: the screen just opened, so show the chosen weather and time
+  // on the track behind it.
+  fillRace(entering = false) {
+    const t = TRACKS.find((x) => x.id === this.pick.track) || TRACKS[0];
+    const allowed = trackWeathers(t), times = trackTimes(t);
+    if (!allowed.includes(this.pick.weather)) this.pick.weather = 'clear';
+    if (!times.includes(this.pick.time)) this.pick.time = times.includes('night') ? 'night' : times[0];
+    for (const b of document.querySelectorAll('#weather-list .btn')) {
+      b.hidden = !allowed.includes(b.dataset.weather);
+      b.classList.toggle('on', b.dataset.weather === this.pick.weather);
+    }
+    for (const b of document.querySelectorAll('#time-list .btn')) {
+      b.hidden = !times.includes(b.dataset.time);
+      b.classList.toggle('on', b.dataset.time === this.pick.time);
+    }
+    $('#weather-note').textContent = WEATHER[this.pick.weather].note;
+    if (entering) { this.game.previewTime(this.pick.time); this.game.previewWeather(this.pick.weather); }
+    const car = getCar(this.pick.car), r = carStats(this.game.specFor(car.id));
+    const el = $('#race-info');
+    el.innerHTML = `<div class="ttl"><span>Race</span><i class="win"></i></div>`
+      + `<canvas width="240" height="150"></canvas>`
+      + `<div class="info-name"><span class="name">${t.name}</span></div>`
+      + `<dl><dt>Car</dt><dd>${car.make} ${car.model}</dd><dt>Class</dt><dd><span class="cls cls-${r.cls} mini">${r.cls}</span> ${r.pi}</dd>`
+      + `<dt>Weather</dt><dd>${WEATHER[this.pick.weather].name}</dd><dt>Time</dt><dd>${TIMES[this.pick.time].clock} · ${TIMES[this.pick.time].name}</dd></dl>`;
+    drawMap(el.querySelector('canvas'), t, 4);
   }
 
 }

@@ -35,8 +35,8 @@ export function defaultSave() {
       touch: structuredClone(DEFAULT_TOUCH),
     },
     garage: {
-      selected: 'skyliner-r34',
-      owned: ['skyliner-r34'],
+      selected: 'gtar-r35',
+      owned: ['gtar-r35'],
       cars: {},                  // per car id: { active, builds: [{ name, parts, look }] }
     },
     lastRace: { track: 'starter', weather: 'clear', time: 'night' },

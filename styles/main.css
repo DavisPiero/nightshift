@@ -169,7 +169,9 @@ h1, h2, p { margin: 0; }
 .bar h2 { font: 46px/1 var(--px); text-shadow: 2px 0 0 rgba(255, 46, 136, 0.7), -2px 0 0 rgba(63, 240, 232, 0.7); display: flex; align-items: baseline; gap: 14px; }
 .bar h2 .jp { font-size: 16px; text-shadow: none; }
 .bar .where { margin-left: auto; font: 20px/1 var(--px); letter-spacing: 0.2em; text-transform: uppercase; color: var(--cyan); }
-.foot { position: absolute; bottom: max(18px, var(--sb)); right: max(18px, var(--sr)); }
+.foot { position: absolute; bottom: max(12px, var(--sb)); right: max(16px, var(--sr)); }
+/* The Continue / Race button bottom right: big enough to find, not shouting. */
+.btn.go { font-size: 32px; padding: 9px 30px 12px; min-width: 200px; text-align: center; }
 
 /* Brand */
 .jp-kicker { color: var(--pink); font: 15px/1 var(--dot); letter-spacing: 0.4em; margin: 0 0 6px 6px; text-shadow: 0 0 8px rgba(255, 46, 136, 0.6); }
@@ -198,7 +200,8 @@ h1, h2, p { margin: 0; }
 .item canvas { width: 72px; height: 40px; flex-shrink: 0; }
 .item .txt { flex: 1; display: flex; flex-direction: column; gap: 3px; min-width: 0; }
 .item .name { font: 26px/1 var(--px); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.item .name.long { font-size: 22px; white-space: normal; }
+/* Track rows: every row the same height, whatever the name. */
+#track-list .item { height: 66px; min-height: 0; }
 .item .jp, .item .sub { position: static; transform: none; font: 12px/1 var(--dot); }
 .item .jp { font-size: 16px; } /* DotGothic16 keeps its strokes at 16 px */
 .item .sub { opacity: 0.75; letter-spacing: 0.14em; }
@@ -216,18 +219,14 @@ h1, h2, p { margin: 0; }
 .info dl { display: grid; grid-template-columns: auto 1fr; gap: 4px 14px; margin: 0; font-size: 15px; }
 .info dt { color: var(--muted); text-transform: uppercase; letter-spacing: 0.14em; font-size: 13px; }
 .info dd { margin: 0; color: var(--cyan); }
-#scr-setup .info { top: auto; bottom: calc(max(16px, var(--sb)) + 150px); }
-.conditions {
-  position: absolute; right: max(16px, var(--sr)); bottom: max(16px, var(--sb));
-  width: min(720px, calc(100vw - min(400px, 40vw) - 64px)); padding: 10px 12px 12px; display: flex; flex-direction: column; gap: 8px;
-}
-.cond-row { display: flex; align-items: stretch; gap: 12px; }
-.cond-row .choices { flex: 1; display: flex; gap: 8px; }
-.cond-row .choices .btn { flex: 1; }
-.cond-row .time { display: flex; flex-direction: column; justify-content: center; align-items: flex-start; gap: 3px; padding: 6px 14px; min-width: 104px; }
-.cond-row .time:disabled { opacity: 1; cursor: default; }
-.cond-row .time .k { font: 13px/1 var(--px); letter-spacing: 0.2em; color: var(--muted); text-transform: uppercase; }
-.cond-row .time .v { font: 26px/1 var(--px); color: var(--amber); text-shadow: 0 0 8px rgba(255, 176, 42, 0.5); }
+/* Race settings: weather and time as tiles. */
+#weather-list { grid-template-columns: repeat(2, 1fr); }
+#time-list { grid-template-columns: repeat(3, 1fr); }
+.choices .btn.time { gap: 6px; }
+.choices .btn.time .v { font: 30px/1 var(--px); color: var(--amber); text-shadow: 0 0 8px rgba(255, 176, 42, 0.5); }
+.choices .btn.time.on .v { color: var(--cyan-ink); text-shadow: none; }
+#weather-note { min-height: 1.3em; }
+.cls.mini { font-size: 16px; min-width: 22px; padding: 1px 5px 2px; }
 .choices { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
 .choices .btn { text-align: center; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 10px 8px 12px; font-size: 22px; }
 .choices .btn .ico { width: 32px; height: 32px; }
@@ -397,6 +396,8 @@ input[type=range]::-moz-range-thumb { width: 14px; height: 24px; border: 0; bord
   .tag { margin-bottom: 10px; }
   .pips { margin-bottom: 10px; }
   .btn.huge { font-size: 34px; padding: 9px 22px 12px; }
+  .btn.go { font-size: 26px; padding: 7px 22px 9px; min-width: 160px; }
+  #track-list .item { height: 54px; }
   .btn { font-size: 21px; padding: 8px 16px 10px; }
   .box h2, .bar h2 { font-size: 36px; }
   #tach { width: 200px; height: 200px; }
@@ -407,7 +408,6 @@ input[type=range]::-moz-range-thumb { width: 14px; height: 24px; border: 0; bord
   .side-list, .info { top: calc(max(12px, var(--st)) + 54px); }
   .item { min-height: 54px; padding: 7px 10px 8px; }
   .item .name { font-size: 22px; }
-  #scr-setup .info { bottom: calc(max(12px, var(--sb)) + 128px); }
   .choices .btn .ico { width: 24px; height: 24px; }
   .info canvas { display: none; }
 }

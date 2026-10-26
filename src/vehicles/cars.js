@@ -252,7 +252,10 @@ export const GTAR_R35 = {
   paintNames: ['Pearl White', 'Gun Metal', 'Meteor Black', 'Bayside Blue', 'Vibrant Red', 'Katsura Orange'],
 };
 
-export const CARS = [SKYLINER_R34, GTAR_R35, CHALLENJER_SRT8];
+// The cars you can pick. The R34 is hidden until its body is rebuilt (David,
+// 2026-10-26): its numbers stay, so the bench still drives it.
+export const CARS = [GTAR_R35, CHALLENJER_SRT8];
+export const ALL_CARS = [SKYLINER_R34, ...CARS];
 
 export function getCar(id) {
   return CARS.find((c) => c.id === id) || CARS[0];

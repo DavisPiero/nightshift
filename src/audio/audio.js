@@ -9,7 +9,7 @@
 //  - intake roar (filtered noise) on throttle;
 //  - a turbo blow-off when you lift off at high rpm, and exhaust pops
 //    (timed by graphics/effects.js so they line up with the flames).
-// Ambience: rain on the road and roof, and a low night hum with crickets.
+// Ambience: rain on the road and roof, and a low night hum.
 // The car's update() feeds rpm, throttle and load. To switch to real engine
 // recordings later, replace EngineVoice with a sample player that takes the
 // same update() call.
@@ -289,12 +289,11 @@ export class GameAudio {
     rn.connect(rf).connect(this.rainGain).connect(this.ambBus);
     rn.start(0, 1);
 
-    // Night hum: a faint low drone and, now and then, crickets.
+    // Night hum: a faint low drone.
     this.hum = ctx.createOscillator(); this.hum.type = 'sine'; this.hum.frequency.value = 55;
     this.humGain = ctx.createGain(); this.humGain.gain.value = 0;
     this.hum.connect(this.humGain).connect(this.ambBus);
     this.hum.start();
-    this.cricketTimer = 1;
 
     this.applyVolumes();
   }
@@ -348,12 +347,6 @@ export class GameAudio {
     this.hissGain.gain.setTargetAtTime(wet ? Math.min(1, v.speed / 30) * 0.12 * level : 0, t, 0.1);
     this.rainGain.gain.setTargetAtTime(raining ? 0.16 * (1 + patch * 0.8) : 0, t, 0.5);
     this.humGain.gain.setTargetAtTime(0.025, t, 0.5);
-    // Crickets on dry nights: a short trill now and then.
-    this.cricketTimer -= dt;
-    if (!wet && this.cricketTimer <= 0) {
-      this.cricketTimer = 2 + Math.random() * 5;
-      this.cricket();
-    }
     if (raining && Math.random() < dt * 9 * (1 + patch)) this.drop();
     const wobble = 1 + Math.sin(t * 13) * 0.03;
     this.squealFilters[0].frequency.setTargetAtTime(900 * wobble + slide * 150, t, 0.05);
@@ -367,19 +360,6 @@ export class GameAudio {
   pop(strength) {
     if (!this.engine || this.ctx.state !== 'running') return;
     this.engine.crackle(0.3 + strength * 0.4);
-  }
-
-  cricket() {
-    const ctx = this.ctx, t = ctx.currentTime;
-    const o = ctx.createOscillator(); o.type = 'square'; o.frequency.value = 4300 + Math.random() * 400;
-    const g = ctx.createGain(); g.gain.value = 0;
-    for (let i = 0; i < 6; i++) {
-      g.gain.setValueAtTime(0.012, t + i * 0.045);
-      g.gain.setValueAtTime(0, t + i * 0.045 + 0.022);
-    }
-    const f = ctx.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = 4500; f.Q.value = 6;
-    o.connect(f).connect(g).connect(this.ambBus);
-    o.start(t); o.stop(t + 0.3);
   }
 
   drop() {

@@ -19,6 +19,25 @@
       document.head.appendChild(l);
     }
   </script>
+  <script>
+    // iPad / phone: never zoom the page. iOS ignores user-scalable=no, so a
+    // quick second tap would zoom in, and with pinch blocked it stayed stuck.
+    // The second tap of a double tap still presses the button it lands on.
+    (() => {
+      let last = 0;
+      const stop = (e) => e.preventDefault();
+      document.addEventListener('touchend', (e) => {
+        const now = e.timeStamp;
+        if (now - last < 350 && e.changedTouches.length === 1 && !e.target.closest('input, textarea')) {
+          e.preventDefault();
+          e.target.closest('button, .swatch')?.click();
+        }
+        last = now;
+      }, { passive: false });
+      document.addEventListener('dblclick', stop, { passive: false });
+      for (const g of ['gesturestart', 'gesturechange', 'gestureend']) document.addEventListener(g, stop, { passive: false });
+    })();
+  </script>
   <script type="importmap">
     { "imports": { "three": "./vendor/three.module.min.js" } }
   </script>
@@ -67,9 +86,9 @@
       <p class="tag">street racing after dark</p>
       <div class="pips" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></div>
       <nav class="stack">
-        <button class="btn huge pri" data-go="tracks">Drive<span class="jp">走る</span></button>
-        <button class="btn" data-go="garage">Garage<span class="jp">ガレージ</span></button>
-        <button class="btn" data-go="settings">Settings<span class="jp">設定</span></button>
+        <button class="btn huge pri" data-go="tracks">Drive</button>
+        <button class="btn" data-go="garage">Garage</button>
+        <button class="btn" data-go="settings">Settings</button>
       </nav>
     </div>
   </section>
@@ -93,11 +112,11 @@
       <div id="track-list" class="list"></div>
     </div>
     <aside id="track-info" class="info pnl"></aside>
-    <footer class="foot"><button id="tracks-go" class="btn huge pri">Continue</button></footer>
+    <footer class="foot"><button id="tracks-go" class="btn go pri">Continue</button></footer>
   </section>
 
-  <!-- Drive: pick a car (left), see it in the garage (right), weather along
-       the bottom right, then race. -->
+  <!-- Drive: pick a car (left), see it in the garage (right), then on to
+       race settings. -->
   <section id="scr-setup" class="screen select" hidden>
     <header class="bar"><button class="btn back" data-back>Back</button><h2>Choose a car<span class="jp">車両選択</span></h2><span id="setup-title" class="where"></span></header>
     <div class="side-list pnl">
@@ -109,15 +128,25 @@
       <div class="car-name"><span id="setup-car-year" class="sub"></span><span id="setup-car-name" class="name"></span></div>
       <div id="setup-stats" class="stats"></div>
     </aside>
-    <div class="conditions pnl">
-      <div class="ttl"><span>Conditions</span><span class="jp">天候</span><i class="win"></i></div>
-      <div class="cond-row">
+    <footer class="foot"><button id="setup-go" class="btn go pri">Continue</button></footer>
+  </section>
+
+  <!-- Drive: race settings. Weather and time on the left, the track behind
+       in that weather and light, what you are driving on the right. -->
+  <section id="scr-race" class="screen select" hidden>
+    <header class="bar"><button class="btn back" data-back>Back</button><h2>Race settings<span class="jp">レース設定</span></h2></header>
+    <div class="side-list pnl">
+      <div class="ttl"><span>Conditions</span><i class="win"></i></div>
+      <div class="list">
+        <h3 class="grp">Weather</h3>
         <div id="weather-list" class="choices"></div>
-        <button id="time-btn" class="btn time" title="Change the time of day"><span class="k">Time ▸</span><span class="v">02:00</span><span class="muted small">Night</span></button>
-        <button id="race-go" class="btn huge pri">Race</button>
+        <p id="weather-note" class="muted small"></p>
+        <h3 class="grp">Time</h3>
+        <div id="time-list" class="choices"></div>
       </div>
-      <p id="weather-note" class="muted small"></p>
     </div>
+    <aside id="race-info" class="info pnl"></aside>
+    <footer class="foot"><button id="race-go" class="btn go pri">Race</button></footer>
   </section>
 
   <!-- Garage: tabs and choices on the left, the car on the turntable, the
@@ -131,7 +160,7 @@
       </div>
     </header>
     <div class="side-list pnl">
-      <div class="ttl"><span>Tune</span><span class="jp">チューン</span><i class="win"></i></div>
+      <div class="ttl"><span>Tune</span><i class="win"></i></div>
       <nav id="garage-tabs" class="gtabs"></nav>
       <div id="garage-list" class="list"></div>
     </div>
@@ -147,7 +176,7 @@
   <section id="scr-settings" class="screen" hidden>
     <header class="bar"><button class="btn back" data-back>Back</button><h2>Settings<span class="jp">設定</span></h2></header>
     <div class="pnl box wide">
-      <div class="ttl"><span>System</span><span class="jp">設定</span><i class="win"></i></div>
+      <div class="ttl"><span>System</span><i class="win"></i></div>
       <nav class="tabs" role="tablist">
         <button class="tab" data-tab="gameplay">Gameplay</button>
         <button class="tab" data-tab="graphics">Graphics</button>
@@ -161,7 +190,7 @@
   <!-- Pause -->
   <section id="scr-pause" class="screen dim" hidden>
     <div class="pnl box">
-      <div class="ttl"><span>Paused</span><span class="jp">一時停止</span><i class="win"></i></div>
+      <div class="ttl"><span>Paused</span><i class="win"></i></div>
       <nav class="stack">
         <button class="btn pri" id="pause-resume">Resume</button>
         <button class="btn" id="pause-restart">Restart</button>
