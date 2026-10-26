@@ -358,6 +358,7 @@ class Game {
     this.state = 'driving';
     this.hud.show(true);
     this.hud.setTouch(this.save.platform === 'touch');
+    this.hud.setTrack(this.track, this.trackInfo.def.start);
     this.touch.show(this.save.platform === 'touch');
     this.restartCar();
     this.audio.resume();

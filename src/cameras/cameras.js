@@ -14,10 +14,17 @@ const _t = new THREE.Vector3();
 export const CAMERA_FEEL = { speedFov: 16, gLag: 1, shakeScale: 1 };
 const OPTIONS = { distance: 1, fov: 62, shake: true };
 
-// A little shake: road buzz that grows with speed, plus a kick on wall hits.
+// A little shake: road buzz that grows with speed, plus a kick on wall hits,
+// plus a jolt on each gear change: back into the seat on the way up, a nod
+// forward on the way down (a spring, so it settles by itself).
 class Shake {
-  constructor() { this.kick = 0; this.t = 0; }
+  constructor() { this.kick = 0; this.t = 0; this.jolt = 0; this.joltVel = 0; }
   bump(impact) { this.kick = Math.min(1, this.kick + impact / 12); }
+  shift(up) { this.joltVel += up ? 1.7 : -0.8; }
+  step(dt) {
+    this.joltVel += (-this.jolt * 90 - this.joltVel * 12) * dt;
+    this.jolt += this.joltVel * dt;
+  }
   offset(v, dt, scale) {
     this.t += dt;
     this.kick = Math.max(0, this.kick - dt * 3);
@@ -60,7 +67,7 @@ class ChaseCamera {
     // feel the shove and the stop. Eased, so it never jerks.
     const lagTarget = Math.max(-0.9, Math.min(0.9, v.aLong * 0.09)) * CAMERA_FEEL.gLag;
     this.lag = snap ? 0 : (this.lag ?? 0) + (lagTarget - (this.lag ?? 0)) * damp(3, dt);
-    const dist = (this.distance + speedK * 0.6 + this.lag) * OPTIONS.distance;
+    const dist = (this.distance + speedK * 0.6 + this.lag + this.shake.jolt * 2.6) * OPTIONS.distance;
     const tx = v.x - Math.sin(this.yaw) * dist;
     const tz = v.z - Math.cos(this.yaw) * dist;
     const ty = (this.height + speedK * 0.2) * (0.6 + 0.4 * OPTIONS.distance);
@@ -96,6 +103,9 @@ class CockpitCamera {
     _v.copy(model.cockpitEye).applyMatrix4(model.root.matrixWorld);
     // A sliver of the body's pitch, for a sense of weight; no roll at all.
     _v.y += v.pitch * 0.4;
+    // A gear change pushes you back into the seat for a moment.
+    const back = this.shake.jolt * 0.55;
+    _v.x -= Math.sin(v.heading) * back; _v.z -= Math.cos(v.heading) * back;
     cam.position.copy(_v);
     const [sx, sy] = this.shake.offset(v, dt, 0.35);
     cam.position.y += sy;
@@ -103,7 +113,7 @@ class CockpitCamera {
     const target = v.steerAngle * 0.35;
     this.look += (target - this.look) * damp(4, dt);
     const yaw = v.heading + this.look;
-    _t.set(_v.x + Math.sin(yaw) * 10 + sx, _v.y - 0.75 + v.pitch * -1.5, _v.z + Math.cos(yaw) * 10);
+    _t.set(_v.x + Math.sin(yaw) * 10 + sx, _v.y - 0.75 + v.pitch * -1.5 + this.shake.jolt * 3, _v.z + Math.cos(yaw) * 10);
     cam.up.set(0, 1, 0);
     cam.lookAt(_t);
     const fov = OPTIONS.fov + 4 + Math.min(1, v.speed / 60) * 6;
@@ -140,6 +150,10 @@ export class CameraManager {
   }
 
   update(car, dt) {
+    const gb = car.vehicle.gearbox;
+    if (this.shifts !== undefined && gb.shiftCount !== this.shifts && gb.gear > 0) this.shake.shift(gb.lastShift > 0);
+    this.shifts = gb.shiftCount;
+    this.shake.step(Math.min(dt, 0.05));
     this.cams[this.mode].update({ ...car, camera: this.camera }, dt);
     this.camera.updateProjectionMatrix();
   }

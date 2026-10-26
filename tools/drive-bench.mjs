@@ -322,6 +322,36 @@ console.log('Walls');
     if (angle < 0.5) check(grazeKmh > 30, 'a glancing hit should keep most of the speed');
     check(awayKmh > 15, 'the car should drive away from the wall');
   }
+  // Steering into the wall at speed: the car bounces off rather than riding
+  // along it grinding (David, 2026-10-26).
+  {
+    const v = new Vehicle(CAR);
+    const s0 = TEST_ROAD.start;
+    v.reset(track.x[s0], track.z[s0], track.headingAt(s0) + 0.2);
+    v.vx = Math.sin(v.heading) * 80 / 3.6; v.vz = Math.cos(v.heading) * 80 / 3.6;
+    let hint = s0, touching = 0, steps = 0, first = -1, t = 0;
+    for (; t < 4; t += DT) {
+      v.step(DT, controls({ throttle: 1, steer: -1 }));
+      const r = keepOnTrack(v, track, hint);
+      hint = r.index;
+      if (first < 0 && r.impact > 0) first = t;
+      if (first >= 0) {
+        steps++;
+        // Any corner of the body within 5 cm of the barrier counts as touching.
+        const hx = Math.sin(v.heading), hz = Math.cos(v.heading);
+        let near = -Infinity;
+        for (const [a, b] of [[1, 1], [-1, 1], [1, -1], [-1, -1]]) {
+          const p = track.nearest(v.x + hz * a * CAR.halfWidth * 0.92 + hx * b * CAR.halfLength * 0.97, v.z - hx * a * CAR.halfWidth * 0.92 + hz * b * CAR.halfLength * 0.97, hint);
+          near = Math.max(near, Math.abs(p.offset) - track.wall);
+        }
+        if (near > -0.05) touching++;
+      }
+    }
+    const share = touching / Math.max(1, steps);
+    console.log(`  steering into the wall at 80 km/h: against it ${(share * 100).toFixed(0)}% of the time after the first hit, ${kmh(v).toFixed(0)} km/h after 4 s`);
+    check(first >= 0, 'the grind test should reach the wall');
+    check(share < 0.5, 'a car steered into the wall should bounce off, not grind along it');
+  }
 }
 
 console.log(failed ? `BENCH FAIL (${failed})` : 'BENCH PASS');

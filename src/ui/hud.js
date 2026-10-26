@@ -1,7 +1,8 @@
 // Driving HUD: a pixel rev counter (a ring of chunky blocks) with the gear
-// in the middle and the speed underneath. It is drawn small on a canvas and
-// scaled up with square pixels, like the menus. Plus a debug panel (F3) with
-// the physics numbers.
+// in the middle and the speed underneath, and a minimap top right (the
+// track's outline, north up, with the car as an arrow). Both are drawn small
+// on canvases and scaled up with square pixels, like the menus. Plus a debug
+// panel (F3) with the physics numbers.
 
 const SEGMENTS = 28;
 const FONT = '"Jersey 10", ui-monospace, monospace';
@@ -11,6 +12,7 @@ export class Hud {
   constructor(root) {
     this.el = root;
     this.canvas = root.querySelector('#tach');
+    this.map = root.querySelector('#minimap');
     this.g = this.canvas.getContext('2d');
     this.debugEl = root.querySelector('#debug');
     this.debugOn = false;
@@ -29,7 +31,50 @@ export class Hud {
     this.debugEl.hidden = !this.debugOn;
   }
 
+  // A new track: draw its outline once; the car is drawn on top each frame.
+  setTrack(path, start) {
+    const W = this.map.width, H = this.map.height, pad = 8;
+    let x0 = Infinity, x1 = -Infinity, z0 = Infinity, z1 = -Infinity;
+    for (let i = 0; i < path.count; i++) { x0 = Math.min(x0, path.x[i]); x1 = Math.max(x1, path.x[i]); z0 = Math.min(z0, path.z[i]); z1 = Math.max(z1, path.z[i]); }
+    const k = Math.min((W - pad * 2) / (x1 - x0), (H - pad * 2) / (z1 - z0));
+    const ox = (W - (x1 - x0) * k) / 2, oz = (H - (z1 - z0) * k) / 2;
+    this.toMap = (x, z) => [ox + (x1 - x) * k, oz + (z1 - z) * k];
+    const c = this.outline = document.createElement('canvas');
+    c.width = W; c.height = H;
+    const g = c.getContext('2d');
+    g.lineJoin = 'round';
+    const trace = () => {
+      g.beginPath();
+      for (let i = 0; i <= path.count; i += 3) { const [x, y] = this.toMap(path.x[i % path.count], path.z[i % path.count]); if (i === 0) g.moveTo(x, y); else g.lineTo(x, y); }
+      g.closePath();
+    };
+    g.strokeStyle = 'rgba(0, 0, 0, 0.6)'; g.lineWidth = 6; trace(); g.stroke();
+    g.strokeStyle = '#2a8f92'; g.lineWidth = 3; trace(); g.stroke();
+    g.strokeStyle = '#bff8f4'; g.lineWidth = 1; trace(); g.stroke();
+    // The start line.
+    const [sx, sy] = this.toMap(path.x[start], path.z[start]);
+    g.fillStyle = '#fff'; g.fillRect(Math.round(sx) - 2, Math.round(sy) - 2, 4, 4);
+  }
+
+  drawMap(v) {
+    if (!this.outline) return;
+    const g = this.map.getContext('2d');
+    g.clearRect(0, 0, this.map.width, this.map.height);
+    g.drawImage(this.outline, 0, 0);
+    // The car: a pink arrow pointing where it faces (the map is drawn with x
+    // flipped, so the heading turns the other way).
+    const [x, y] = this.toMap(v.x, v.z);
+    g.save();
+    g.translate(x, y);
+    g.rotate(Math.PI - v.heading);
+    g.beginPath(); g.moveTo(0, -6); g.lineTo(4.5, 5); g.lineTo(0, 2.5); g.lineTo(-4.5, 5); g.closePath();
+    g.lineWidth = 2; g.strokeStyle = '#1e0010'; g.stroke();
+    g.fillStyle = ORANGE; g.fill();
+    g.restore();
+  }
+
   draw(v, dt) {
+    this.drawMap(v);
     const g = this.g, W = this.canvas.width, H = this.canvas.height;
     const s = v.spec;
     g.clearRect(0, 0, W, H);
