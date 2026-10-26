@@ -19,16 +19,64 @@
       document.head.appendChild(l);
     }
   </script>
+  <script>
+    // iPad / phone: never zoom the page. iOS ignores user-scalable=no, so a
+    // quick second tap would zoom in, and with pinch blocked it stayed stuck.
+    // The second tap of a double tap still presses the button it lands on.
+    (() => {
+      let last = 0;
+      const stop = (e) => e.preventDefault();
+      document.addEventListener('touchend', (e) => {
+        const now = e.timeStamp;
+        if (now - last < 350 && e.changedTouches.length === 1 && !e.target.closest('input, textarea')) {
+          e.preventDefault();
+          e.target.closest('button, .swatch')?.click();
+        }
+        last = now;
+      }, { passive: false });
+      document.addEventListener('dblclick', stop, { passive: false });
+      for (const g of ['gesturestart', 'gesturechange', 'gestureend']) document.addEventListener(g, stop, { passive: false });
+    })();
+  </script>
   <script type="importmap">
     { "imports": { "three": "./vendor/three.module.min.js" } }
   </script>
 </head>
 <body>
+  <!-- Start-up loading screen: a wheel spinning in the middle. Plain HTML so
+       it shows before any script runs; main.js fades it out. -->
+  <div id="boot" class="loader">
+    <div class="boot-mid">
+      <svg class="wheel-art" viewBox="-52 -52 104 104" aria-hidden="true">
+        <defs>
+          <linearGradient id="rimg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f4f7f8"/><stop offset="0.5" stop-color="#a9b3b8"/><stop offset="1" stop-color="#5a646a"/></linearGradient>
+          <radialGradient id="discg"><stop offset="0.55" stop-color="#3a3f42"/><stop offset="1" stop-color="#6f777b"/></radialGradient>
+          <path id="sidewall" d="M0 -43 A43 43 0 1 1 -0.01 -43"/>
+        </defs>
+        <g class="spin">
+          <circle r="48" fill="#0d0e0f"/><rect x="-3.2" y="-49" width="6.4" height="6" rx="1" fill="#16181a" transform="rotate(0)"/><rect x="-3.2" y="-49" width="6.4" height="6" rx="1" fill="#16181a" transform="rotate(10)"/><rect x="-3.2" y="-49" width="6.4" height="6" rx="1" fill="#16181a" transform="rotate(20)"/><rect x="-3.2" y="-49" width="6.4" height="6" rx="1" fill="#16181a" transform="rotate(30)"/><rect x="-3.2" y="-49" width="6.4" height="6" rx="1" fill="#16181a" transform="rotate(40)"/><rect x="-3.2" y="-49" width="6.4" height="6" rx="1" fill="#16181a" transform="rotate(50)"/><rect x="-3.2" y="-49" width="6.4" height="6" rx="1" fill="#16181a" transform="rotate(60)"/><rect x="-3.2" y="-49" width="6.4" height="6" rx="1" fill="#16181a" transform="rotate(70)"/><rect x="-3.2" y="-49" width="6.4" height="6" rx="1" fill="#16181a" transform="rotate(80)"/><rect x="-3.2" y="-49" width="6.4" height="6" rx="1" fill="#16181a" transform="rotate(90)"/><rect x="-3.2" y="-49" width="6.4" height="6" rx="1" fill="#16181a" transform="rotate(100)"/><rect x="-3.2" y="-49" width="6.4" height="6" rx="1" fill="#16181a" transform="rotate(110)"/><rect x="-3.2" y="-49" width="6.4" height="6" rx="1" fill="#16181a" transform="rotate(120)"/><rect x="-3.2" y="-49" width="6.4" height="6" rx="1" fill="#16181a" transform="rotate(130)"/><rect x="-3.2" y="-49" width="6.4" height="6" rx="1" fill="#16181a" transform="rotate(140)"/><rect x="-3.2" y="-49" width="6.4" height="6" rx="1" fill="#16181a" transform="rotate(150)"/><rect x="-3.2" y="-49" width="6.4" height="6" rx="1" fill="#16181a" transform="rotate(160)"/><rect x="-3.2" y="-49" width="6.4" height="6" rx="1" fill="#16181a" transform="rotate(170)"/><rect x="-3.2" y="-49" width="6.4" height="6" rx="1" fill="#16181a" transform="rotate(180)"/><rect x="-3.2" y="-49" width="6.4" height="6" rx="1" fill="#16181a" transform="rotate(190)"/><rect x="-3.2" y="-49" width="6.4" height="6" rx="1" fill="#16181a" transform="rotate(200)"/><rect x="-3.2" y="-49" width="6.4" height="6" rx="1" fill="#16181a" transform="rotate(210)"/><rect x="-3.2" y="-49" width="6.4" height="6" rx="1" fill="#16181a" transform="rotate(220)"/><rect x="-3.2" y="-49" width="6.4" height="6" rx="1" fill="#16181a" transform="rotate(230)"/><rect x="-3.2" y="-49" width="6.4" height="6" rx="1" fill="#16181a" transform="rotate(240)"/><rect x="-3.2" y="-49" width="6.4" height="6" rx="1" fill="#16181a" transform="rotate(250)"/><rect x="-3.2" y="-49" width="6.4" height="6" rx="1" fill="#16181a" transform="rotate(260)"/><rect x="-3.2" y="-49" width="6.4" height="6" rx="1" fill="#16181a" transform="rotate(270)"/><rect x="-3.2" y="-49" width="6.4" height="6" rx="1" fill="#16181a" transform="rotate(280)"/><rect x="-3.2" y="-49" width="6.4" height="6" rx="1" fill="#16181a" transform="rotate(290)"/><rect x="-3.2" y="-49" width="6.4" height="6" rx="1" fill="#16181a" transform="rotate(300)"/><rect x="-3.2" y="-49" width="6.4" height="6" rx="1" fill="#16181a" transform="rotate(310)"/><rect x="-3.2" y="-49" width="6.4" height="6" rx="1" fill="#16181a" transform="rotate(320)"/><rect x="-3.2" y="-49" width="6.4" height="6" rx="1" fill="#16181a" transform="rotate(330)"/><rect x="-3.2" y="-49" width="6.4" height="6" rx="1" fill="#16181a" transform="rotate(340)"/><rect x="-3.2" y="-49" width="6.4" height="6" rx="1" fill="#16181a" transform="rotate(350)"/>
+          <circle r="45.5" fill="#141618"/>
+          <text font-size="5.2" fill="#5c6468" letter-spacing="1.6" font-family="'Jersey 10', monospace"><textPath href="#sidewall">NIGHTSHIFT · 夜勤 · R18 · NIGHTSHIFT · 夜勤 · R18 ·</textPath></text>
+          <circle r="37" fill="#0a0b0c"/>
+          <circle r="28" fill="url(#discg)"/><circle cx="21.25" cy="5.69" r="1.2" fill="#1b1e20"/><circle cx="15.56" cy="15.56" r="1.2" fill="#1b1e20"/><circle cx="5.69" cy="21.25" r="1.2" fill="#1b1e20"/><circle cx="-5.69" cy="21.25" r="1.2" fill="#1b1e20"/><circle cx="-15.56" cy="15.56" r="1.2" fill="#1b1e20"/><circle cx="-21.25" cy="5.69" r="1.2" fill="#1b1e20"/><circle cx="-21.25" cy="-5.69" r="1.2" fill="#1b1e20"/><circle cx="-15.56" cy="-15.56" r="1.2" fill="#1b1e20"/><circle cx="-5.69" cy="-21.25" r="1.2" fill="#1b1e20"/><circle cx="5.69" cy="-21.25" r="1.2" fill="#1b1e20"/><circle cx="15.56" cy="-15.56" r="1.2" fill="#1b1e20"/><circle cx="21.25" cy="-5.69" r="1.2" fill="#1b1e20"/>
+          <circle r="12" fill="#2a2f32"/>
+        </g>
+        <path d="M-25 -16 A30 30 0 0 1 -10 -27 L-7 -21 A23 23 0 0 0 -19 -12 Z" fill="#ff2e88" stroke="#5a0a30" stroke-width="1"/>
+        <g class="spin">
+          <circle r="36" fill="none" stroke="url(#rimg)" stroke-width="3"/><g transform="rotate(0)"><path d="M-4.2 -9 L-8 -33 L-1.6 -33.6 L-0.9 -9 Z M4.2 -9 L8 -33 L1.6 -33.6 L0.9 -9 Z" fill="url(#rimg)" stroke="#2b3236" stroke-width="0.6"/></g><g transform="rotate(72)"><path d="M-4.2 -9 L-8 -33 L-1.6 -33.6 L-0.9 -9 Z M4.2 -9 L8 -33 L1.6 -33.6 L0.9 -9 Z" fill="url(#rimg)" stroke="#2b3236" stroke-width="0.6"/></g><g transform="rotate(144)"><path d="M-4.2 -9 L-8 -33 L-1.6 -33.6 L-0.9 -9 Z M4.2 -9 L8 -33 L1.6 -33.6 L0.9 -9 Z" fill="url(#rimg)" stroke="#2b3236" stroke-width="0.6"/></g><g transform="rotate(216)"><path d="M-4.2 -9 L-8 -33 L-1.6 -33.6 L-0.9 -9 Z M4.2 -9 L8 -33 L1.6 -33.6 L0.9 -9 Z" fill="url(#rimg)" stroke="#2b3236" stroke-width="0.6"/></g><g transform="rotate(288)"><path d="M-4.2 -9 L-8 -33 L-1.6 -33.6 L-0.9 -9 Z M4.2 -9 L8 -33 L1.6 -33.6 L0.9 -9 Z" fill="url(#rimg)" stroke="#2b3236" stroke-width="0.6"/></g>
+          <circle r="9.5" fill="url(#rimg)" stroke="#2b3236" stroke-width="0.6"/><circle cx="5.18" cy="3.76" r="1.1" fill="#c9d1d5"/><circle cx="-1.98" cy="6.09" r="1.1" fill="#c9d1d5"/><circle cx="-6.4" cy="0.0" r="1.1" fill="#c9d1d5"/><circle cx="-1.98" cy="-6.09" r="1.1" fill="#c9d1d5"/><circle cx="5.18" cy="-3.76" r="1.1" fill="#c9d1d5"/>
+          <circle r="3.6" fill="#15181a"/><circle r="2.2" fill="#ff2e88"/>
+        </g>
+      </svg>
+      <p class="load-word">Loading<span class="dots"><i></i><i></i><i></i></span></p>
+    </div>
+  </div>
   <canvas id="view"></canvas>
 
   <!-- Driving HUD -->
   <div id="hud" hidden>
     <canvas id="tach" width="132" height="132"></canvas>
+    <canvas id="minimap" width="120" height="120"></canvas>
     <div id="hud-buttons">
       <button id="pause-button" class="btn sq" aria-label="Pause"><i class="ico-pause"></i></button>
     </div>
@@ -44,12 +92,11 @@
   <!-- First visit: how are you playing? -->
   <section id="scr-platform" class="screen" hidden>
     <div class="brand-block">
-      <p class="jp-kicker">ナイトシフト // 夜勤</p>
-      <h1 class="brand">NIGHT<em>SHIFT</em></h1>
+      <h1 class="brand"><span class="chrome">NIGHTSHIFT</span><span class="stamp">夜勤</span></h1>
       <p class="tag">street racing after dark</p>
     </div>
     <div class="pnl box">
-      <div class="ttl"><span>Setup</span><i class="win"></i></div>
+      <div class="ttl"><span>Setup</span></div>
       <p class="label">How are you playing?</p>
       <nav class="stack">
         <button class="btn big pri" data-platform="computer"><span class="name">Computer</span><span class="sub">Keyboard</span></button>
@@ -62,14 +109,12 @@
   <!-- Main menu -->
   <section id="scr-main" class="screen left" hidden>
     <div class="menu-l">
-      <p class="jp-kicker">ナイトシフト // 夜勤</p>
-      <h1 class="brand">NIGHT<em>SHIFT</em></h1>
+      <h1 class="brand"><span class="chrome">NIGHTSHIFT</span><span class="stamp">夜勤</span></h1>
       <p class="tag">street racing after dark</p>
-      <div class="pips" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></div>
       <nav class="stack">
-        <button class="btn huge pri" data-go="tracks">Drive<span class="jp">走る</span></button>
-        <button class="btn" data-go="garage">Garage<span class="jp">ガレージ</span></button>
-        <button class="btn" data-go="settings">Settings<span class="jp">設定</span></button>
+        <button class="btn huge pri" data-go="tracks">Drive</button>
+        <button class="btn" data-go="garage">Garage</button>
+        <button class="btn" data-go="settings">Settings</button>
       </nav>
     </div>
   </section>
@@ -78,7 +123,7 @@
   <section id="scr-library" class="screen select" hidden>
     <header class="bar"><a class="btn back" href="./">Play</a><h2>Asset library<span class="jp">素材ライブラリ</span></h2><span class="where">Drag to turn · scroll to zoom · ↑↓ · L light</span></header>
     <div class="side-list pnl">
-      <div class="ttl"><span>Assets</span><i class="win"></i></div>
+      <div class="ttl"><span>Assets</span></div>
       <div id="library-list" class="list"></div>
     </div>
     <aside id="library-info" class="info pnl"></aside>
@@ -89,40 +134,51 @@
   <section id="scr-tracks" class="screen select" hidden>
     <header class="bar"><button class="btn back" data-back>Back</button><h2>Choose a track<span class="jp">コース選択</span></h2></header>
     <div class="side-list pnl">
-      <div class="ttl"><span>Tracks</span><i class="win"></i></div>
+      <div class="ttl"><span>Tracks</span></div>
       <div id="track-list" class="list"></div>
     </div>
     <aside id="track-info" class="info pnl"></aside>
-    <footer class="foot"><button id="tracks-go" class="btn huge pri">Continue</button></footer>
+    <footer class="foot"><button id="tracks-go" class="btn go pri">Continue</button></footer>
   </section>
 
-  <!-- Drive: pick a car (left), see it in the garage (right), weather along
-       the bottom right, then race. -->
+  <!-- Drive: pick a car (left), see it in the garage (right), then on to
+       race settings. -->
   <section id="scr-setup" class="screen select" hidden>
     <header class="bar"><button class="btn back" data-back>Back</button><h2>Choose a car<span class="jp">車両選択</span></h2><span id="setup-title" class="where"></span></header>
     <div class="side-list pnl">
-      <div class="ttl"><span>Cars</span><i class="win"></i></div>
+      <div class="ttl"><span>Cars</span></div>
       <div id="car-list" class="list"></div>
     </div>
     <aside class="info pnl">
-      <div class="ttl"><span>Spec</span><i class="win"></i></div>
+      <div class="ttl"><span>Spec</span></div>
       <div class="car-name"><span id="setup-car-year" class="sub"></span><span id="setup-car-name" class="name"></span></div>
       <div id="setup-stats" class="stats"></div>
     </aside>
-    <div class="conditions pnl">
-      <div class="ttl"><span>Conditions</span><span class="jp">天候</span><i class="win"></i></div>
-      <div class="cond-row">
-        <div id="weather-list" class="choices"></div>
-        <button id="time-btn" class="btn time" title="Change the time of day"><span class="k">Time ▸</span><span class="v">02:00</span><span class="muted small">Night</span></button>
-        <button id="race-go" class="btn huge pri">Race</button>
-      </div>
-      <p id="weather-note" class="muted small"></p>
-    </div>
+    <footer class="foot"><button id="setup-go" class="btn go pri">Continue</button></footer>
   </section>
 
-  <!-- Garage: tabs and choices on the left, the car on the turntable, the
-       build's ratings (and a dyno on the Engine tab) on the right. -->
-  <section id="scr-garage" class="screen select garage" hidden>
+  <!-- Drive: race settings. Weather and time on the left, the track behind
+       in that weather and light, what you are driving on the right. -->
+  <section id="scr-race" class="screen select" hidden>
+    <header class="bar"><button class="btn back" data-back>Back</button><h2>Race settings<span class="jp">レース設定</span></h2></header>
+    <div class="side-list pnl">
+      <div class="ttl"><span>Conditions</span></div>
+      <div class="list">
+        <h3 class="grp">Weather</h3>
+        <div id="weather-list" class="choices"></div>
+        <p id="weather-note" class="muted small"></p>
+        <h3 class="grp">Time</h3>
+        <div id="time-list" class="choices"></div>
+      </div>
+    </div>
+    <aside id="race-info" class="info pnl"></aside>
+    <footer class="foot"><button id="race-go" class="btn go pri">Race</button></footer>
+  </section>
+
+  <!-- Garage: a rail of tabs on the left; each opens a small pop-up with
+       its choices. The car on the turntable fills the rest (drag to turn
+       round it, scroll or pinch to zoom); the build's ratings bottom right. -->
+  <section id="scr-garage" class="screen garage" hidden>
     <header class="bar"><button class="btn back" data-back>Back</button><h2>Garage<span class="jp">ガレージ</span></h2>
       <div class="car-switch">
         <button class="btn sq" id="garage-prev" aria-label="Previous car">&lt;</button>
@@ -130,16 +186,15 @@
         <button class="btn sq" id="garage-next" aria-label="Next car">&gt;</button>
       </div>
     </header>
-    <div class="side-list pnl">
-      <div class="ttl"><span>Tune</span><span class="jp">チューン</span><i class="win"></i></div>
-      <nav id="garage-tabs" class="gtabs"></nav>
+    <nav id="garage-tabs" class="grail pnl"></nav>
+    <div id="garage-pop" class="gpop pnl" hidden>
+      <div class="ttl"><span id="garage-pop-title"></span><button class="x" id="garage-close" aria-label="Close">&times;</button></div>
+      <div id="garage-dyno" class="dyno" hidden><canvas width="300" height="150"></canvas></div>
       <div id="garage-list" class="list"></div>
     </div>
-    <aside class="info pnl">
-      <div class="ttl"><span>Build</span><span id="garage-build-name" class="jp"></span><i class="win"></i></div>
+    <aside class="gstats pnl">
+      <div class="ttl"><span>Build</span><span id="garage-build-name" class="bname"></span></div>
       <div id="garage-stats" class="stats"></div>
-      <p class="muted small">Green: better than stock. Red: worse.</p>
-      <div id="garage-dyno" class="dyno" hidden><p class="label">Dyno</p><canvas width="300" height="150"></canvas></div>
     </aside>
   </section>
 
@@ -147,7 +202,7 @@
   <section id="scr-settings" class="screen" hidden>
     <header class="bar"><button class="btn back" data-back>Back</button><h2>Settings<span class="jp">設定</span></h2></header>
     <div class="pnl box wide">
-      <div class="ttl"><span>System</span><span class="jp">設定</span><i class="win"></i></div>
+      <div class="ttl"><span>System</span></div>
       <nav class="tabs" role="tablist">
         <button class="tab" data-tab="gameplay">Gameplay</button>
         <button class="tab" data-tab="graphics">Graphics</button>
@@ -161,7 +216,7 @@
   <!-- Pause -->
   <section id="scr-pause" class="screen dim" hidden>
     <div class="pnl box">
-      <div class="ttl"><span>Paused</span><span class="jp">一時停止</span><i class="win"></i></div>
+      <div class="ttl"><span>Paused</span></div>
       <nav class="stack">
         <button class="btn pri" id="pause-resume">Resume</button>
         <button class="btn" id="pause-restart">Restart</button>
@@ -170,6 +225,15 @@
       </nav>
     </div>
   </section>
+
+  <!-- Loading into a race: a still of the track fading in, the wheel
+       bottom left, a tip. Filled by screens.js. -->
+  <div id="race-load" class="loader" hidden>
+    <div class="rl-still"></div>
+    <div class="rl-top"><p class="rl-k">Next race</p><h2 class="rl-name"></h2><p class="rl-sub"></p></div>
+    <div class="rl-wheel"><p class="load-word">Loading<span class="dots"><i></i><i></i><i></i></span></p></div>
+    <div class="rl-tip pnl"><p class="rl-tk">Tip</p><p class="rl-tt"></p></div>
+  </div>
 
   <!-- Touch layout editor -->
   <div id="layout-bar" class="pnl" hidden>

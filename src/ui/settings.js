@@ -49,8 +49,8 @@ export class Settings {
 
   graphics() {
     const s = this.s;
-    this.seg('Resolution', [['low', 'Low'], ['medium', 'Medium'], ['high', 'High']], () => this.game.graphicsName, (v) => { s.graphics = v; },
-      'Low is the intended chunky look and the fastest.');
+    this.seg('Quality', [['low', 'Low'], ['medium', 'Medium'], ['high', 'High']], () => this.game.graphicsName, (v) => { s.graphics = v; },
+      'Low is the intended chunky look and the fastest. High is sharper, with glow round lights, more lamps lit and finer clouds.');
     this.slider('Field of view', 50, 80, 1, () => s.fov, (v) => { s.fov = v; }, (v) => `${v}°`);
     this.heading('Effects');
     for (const [key, e] of Object.entries(EFFECTS)) {

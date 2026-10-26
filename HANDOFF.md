@@ -1,39 +1,40 @@
-# Hand-off: end of session 6 (2026-10-26)
+# Hand-off: end of session 7 (2026-10-26)
 
 ## Repo state
-- Branch `m4-world` (Milestone 4 part 3), committed, **not merged**. `main` is still part 2 and live.
-- Bench passes (Parabolica laps in every car, snow laps on every track, rain and fog laps
-  through the patches, grip eases through patches). Smoke test passes (four runs, about 7
-  minutes: run it in the background).
-- `review/` (git-ignored) holds screenshots for David: the Parabolica layout, the menus,
-  Parabolica at night / sunset in snow / dawn in rain, the Starter Track at sunset and in snow,
-  the library.
+- `main`: `m4-world` merged and pushed (live on GitHub Pages). `m4-world` is deleted.
+- Branch `m4-notes` (from main): David's fourth notes, committed in steps, **not merged**.
+- Bench passes, including a new test: steered into a wall, the car touches it 3% of the time
+  after the first hit (was 85%).
 
 ## Read first
-`CLAUDE.md`, `STATE.md`, then the last 8 lines of `DECISIONS.md`.
+`CLAUDE.md`, `STATE.md`, then the last 20 lines of `DECISIONS.md` and "Look of the menus" in SPEC.md.
 
 ## How the new pieces fit
-- `src/world/assets.js`: `ASSETS` is the library. An asset is a `kit()` (parts in its own
-  space: +z along the road, +x to the left of the traffic, plus glows, pools, lamp spots and
-  reflection boxes), an `object()` (baked, e.g. parked cars) or a `block()` recipe for things
-  of many sizes (warehouses, shops, flats). A track makes a `Placer`, calls
-  `add(id, x, y, z, ry, scale, colour)` / `block(id, spec)`, then `finish(group)`, which
-  returns `{ glows (a list of Points), reflect, lamps }`.
-- `track-path.js`: `turtle(start, heading, pieces)` draws a closed track from straights and
-  arcs; `TrackPath.patchAt(i)` says how far into a weather patch (def.patches, metres) sample i is.
-- `time-of-day.js`: `timeLook(baseLook, id)` turns a track's own (night) look into the look
-  at that time. `Game.applyLook()` sets the lights, sky, lamps and fog from it.
-- `physics/weather.js`: `applyWeather(vehicle, id, patch)`; each weather has a `patch` entry.
-  `main.js` re-applies it every physics step from the car's track position.
-- `world/weather.js`: rain and snow, fog closing in through patches, snow on the materials a
-  world lists in `snowy: [[material, white], ...]`.
-- Parabolica's park is inside the loop (right of travel, offset -1), the town outside (+1).
+- Menus: `index.html` + `styles/main.css`. Race settings is `#scr-race` (screens.js
+  `buildConditions` / `fillRace`); Race opens `#race-load` (`Screens.raceLoad`), which calls
+  `game.startRace(pick, true)` (state `loading`, car held) and later `game.go()`.
+- Start-up loading: `#boot` in index.html (an SVG wheel); main.js fades it after the first
+  frame. The race loading screen copies the wheel with its own ids.
+- Garage: `ui/garage.js` (tab rail, `#garage-pop`, `orbitControls`) calls
+  `game.orbitDrag/orbitZoom/orbitReset`; main.js `garageCamera` follows the orbit and shifts
+  the lens (`setViewOffset`) by `garageInset`. Ride bounce: `game.rideBounce(d)`.
+- Bonnet and engine bay: `vehicles/engine-bay.js`. `Body.geometry({ bonnet })` leaves the
+  bonnet out; `bonnetGeometry` makes it. `model.setBonnet(open)`, `model.fitPart(slot)`.
+  `buildSpec` now copies `parts` onto the spec so the model can show them.
+- Sky: `graphics/sky.js`, a shader dome in each track's backdrop
+  (`backdrop.userData.sky`), set from `WeatherView.set` (time from `look.time`, glow from
+  `look.skyGlow`). Bloom: `renderer.js`, on when the preset has `bloom`.
+- Particles: `graphics/effects.js`: `Particles` are sprites from a painted sheet, `Streaks`
+  are sparks.
+- Sound: `audio/ui-sounds.js` (menu sounds, hooked in `Screens.menuSounds`); `audio.js` has a
+  `world` gain so pause hushes the car but menus still click (`hush`).
+- Minimap: `ui/hud.js` `setTrack` / `drawMap`.
+- Loading stills: `./tools/loading-stills.sh` (re-run after changing how a track looks).
 
 ## Next
-1. David plays `m4-world` and signs it off (then merge, push, delete the branch) or sends notes.
-2. David picks the next milestone: 5 (a second full night circuit) or 6 (racing).
+1. David plays `m4-notes`, then signs it off or sends notes.
+2. Milestone 6: racing (checkpoints, countdown, lap timing, results).
 
 ## Open with David
-- Sign-off of `m4-world`.
-- Next milestone: 5 or 6.
-- Nothing else: all earlier guesses were confirmed on 2026-10-26.
+- Sign off `m4-notes`.
+- Confirm the guesses listed in STATE.md.

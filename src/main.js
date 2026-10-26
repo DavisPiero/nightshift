@@ -62,7 +62,7 @@ class Game {
 
     // World
     this.lampLights = [];
-    for (let i = 0; i < 8; i++) {
+    for (let i = 0; i < 10; i++) {
       const l = new THREE.PointLight(0xffa04a, 150, 30, 1.6);
       this.scene.add(l);
       this.lampLights.push(l);
@@ -108,7 +108,7 @@ class Game {
     window.addEventListener('blur', () => { this.controls.releaseAll(); if (this.state === 'driving') this.pauseGame(); });
     document.addEventListener('visibilitychange', () => {
       if (document.hidden) { this.controls.releaseAll(); this.audio.suspend(); if (this.state === 'driving') this.pauseGame(); }
-      else if (this.state !== 'paused') this.audio.resume();
+      else this.audio.resume(); // a paused game stays hushed, menus still click
     });
     // Sound needs a tap or key press before the browser allows it.
     const unlock = () => { this.audio.start(); this.applyAudio(); };
@@ -202,6 +202,11 @@ class Game {
     const parent = this.model?.root.parent || this.scene;
     if (this.model) { this.model.root.removeFromParent(); this.model.dispose?.(); }
     this.model = buildCar(this.specFor(this.carSpec.id), activeBuild(this.save, this.carSpec).look);
+    this.model.bodyY = this.model.body.position.y;
+    // Rebuilt while the bonnet is up (a part was fitted): keep it up, and
+    // drop the new part in.
+    if (this.bonnetUp) this.model.setBonnet(true, true);
+    if (this.fitSlot) { this.model.fitPart(this.fitSlot); this.fitSlot = null; }
     parent.add(this.model.root);
     this.audio?.setEngine(this.currentSpec());
   }
@@ -214,6 +219,30 @@ class Game {
     this.applyGraphics();
     this.saveNow();
   }
+
+  // Ride height changed in the garage: the body starts at its old height
+  // and settles onto the new one with a bounce.
+  rideBounce(d) { this.bounce = { d, t: 0 }; }
+
+  // --- garage camera: drag to look round the car, scroll or pinch to zoom.
+  // Dragging takes over from the tab's camera spot until the tab changes. ---
+  orbitDrag(dx, dy) {
+    if (!this.orbit) {
+      const o = this.camPos.clone().sub(this.camLook);
+      const dist = o.length();
+      this.orbit = { yaw: Math.atan2(o.x, o.z), pitch: Math.asin(o.y / dist), dist };
+      this.turnHold = this.turnNow; // the turntable stops while you look
+    }
+    this.orbit.yaw -= dx * 3.2;
+    this.orbit.pitch = Math.max(0.03, Math.min(1.25, this.orbit.pitch + dy * 2.4));
+  }
+
+  orbitZoom(f) {
+    if (!this.orbit) this.orbitDrag(0, 0);
+    this.orbit.dist = Math.max(2.4, Math.min(8, this.orbit.dist * f));
+  }
+
+  orbitReset() { this.orbit = null; this.turnHold = null; }
 
   get graphicsName() {
     if (URL_FLAGS.smoke) return 'low'; // keeps the headless check quick
@@ -292,7 +321,7 @@ class Game {
 
   // --- menus ---
   onScreen(name) {
-    if (['main', 'garage', 'tracks', 'setup', 'platform'].includes(name)) this.menuView = name;
+    if (['main', 'garage', 'tracks', 'setup', 'race', 'platform'].includes(name)) this.menuView = name;
   }
 
   showCar(id) {
@@ -316,7 +345,9 @@ class Game {
   }
 
   // --- driving ---
-  startRace({ track, weather, car, time = this.timeId }) {
+  // held: a loading screen is up, so set everything up but hold the car
+  // still until go().
+  startRace({ track, weather, car, time = this.timeId }, held = false) {
     this.save.lastRace = { track, weather, time };
     this.save.garage.selected = car;
     this.saveNow();
@@ -330,13 +361,16 @@ class Game {
     this.audio.start();
     this.applyAudio();
     this.screens.closeAll();
-    this.state = 'driving';
+    this.state = held ? 'loading' : 'driving';
     this.hud.show(true);
     this.hud.setTouch(this.save.platform === 'touch');
+    this.hud.setTrack(this.track, this.trackInfo.def.start);
     this.touch.show(this.save.platform === 'touch');
     this.restartCar();
     this.audio.resume();
   }
+
+  go() { if (this.state === 'loading') { this.controls.releaseAll(); this.state = 'driving'; } }
 
   restartCar() {
     this.controls.releaseAll();
@@ -351,7 +385,7 @@ class Game {
     this.controls.releaseAll();
     this.touch.show(false);
     this.screens.reset('pause');
-    this.audio.suspend();
+    this.audio.hush(true);
   }
 
   resume() {
@@ -360,6 +394,7 @@ class Game {
     this.screens.closeAll();
     this.controls.releaseAll();
     this.touch.show(this.save.platform === 'touch');
+    this.audio.hush(false);
     this.audio.resume();
   }
 
@@ -374,6 +409,7 @@ class Game {
     this.touch.show(false);
     this.state = 'menu';
     this.restartCar();
+    this.audio.hush(false);
     this.audio.resume();
   }
 
@@ -436,6 +472,8 @@ class Game {
       this.reflections.setWorld(garage ? this.garage : this.world);
     }
     this.model.setLights(!garage);
+    this.bonnetUp = garage && this.menuView === 'garage' && this.garageTab === 'engine';
+    this.model.setBonnet(this.bonnetUp);
     if (garage) {
       // The turntable turns slowly, or swings round to show what a garage tab
       // is about (the wheels, the wing, the side).
@@ -446,12 +484,18 @@ class Game {
       const d = Math.atan2(Math.sin(target - this.turnNow), Math.cos(target - this.turnNow));
       this.turnNow += d * Math.min(1, dt * 3);
       root.position.set(0, 0.06, 0);
-      root.rotation.y = this.fixedTurn ?? this.turnNow;
+      root.rotation.y = this.fixedTurn ?? this.turnHold ?? this.turnNow;
     } else {
       root.position.set(v.x, 0, v.z);
       root.rotation.y = v.heading;
     }
     this.model.update(v, dt);
+    if (this.bounce) {
+      const b = this.bounce;
+      b.t += dt;
+      this.model.body.position.y = this.model.bodyY + b.d * Math.exp(-2.6 * b.t) * Math.cos(10 * b.t);
+      if (b.t > 2.5) { this.model.body.position.y = this.model.bodyY; this.bounce = null; }
+    }
 
     // Real lights only on the lamps nearest the car.
     const n = this.preset.lampLights;
@@ -463,12 +507,13 @@ class Game {
     this.moon.position.set(v.x + sun[0], sun[1], v.z + sun[2]);
     this.moon.target.position.set(v.x, 0, v.z);
 
+    if (!garage && this.camera.view?.enabled) { this.camera.clearViewOffset(); this.lensShift = 0; }
     if (this.state === 'menu') {
       if (garage) this.garageCamera(dt); else this.menuCamera(dt);
       this.model.setInterior(false);
       this.audio.update(dt, v, this.weatherId, garage ? 0 : 0.25);
     } else {
-      if (this.state === 'driving') this.cameras.update(this.carRef(), dt);
+      if (this.state === 'driving' || this.state === 'loading') this.cameras.update(this.carRef(), dt);
       this.model.setInterior(this.cameras.mode === 'cockpit');
       this.audio.update(dt, v, this.weatherId, 1, this.weather.k);
       this.hud.draw(v, dt);
@@ -482,6 +527,7 @@ class Game {
       this.effects.update(live, v, this.model, this.camera, near, this.weatherId);
       this.weather.update(live, this.camera, v, this.state === 'menu' ? 0 : this.patch || 0);
       placeBackdrop(this.world.backdrop, this.camera);
+      this.world.backdrop?.userData.sky?.update(live);
     }
     this.renderer.render(scene, this.camera);
 
@@ -503,17 +549,31 @@ class Game {
     const v = this.garage.views;
     if (this.menuView === 'setup') return v.setup;
     const t = this.garageTab;
-    return t === 'wheels' ? v.wheels : t === 'body' ? v.body : ['engine', 'chassis', 'drive'].includes(t) ? v.side : t ? v.paint : v.garage;
+    return t === 'wheels' ? v.wheels : t === 'body' ? v.body : t === 'engine' ? v.engine : ['chassis', 'drive'].includes(t) ? v.side : t ? v.paint : v.garage;
   }
 
-  // The garage camera glides between spots; the turntable does the rest.
+  // The garage camera glides between spots (or follows your dragging); the
+  // turntable does the rest. On the Garage screen the lens shifts so the car
+  // sits in the space right of the tabs and pop-up.
   garageCamera(dt = 0) {
     const view = this.garageView();
-    const k = this.camLook && dt ? Math.min(1, dt * 4) : 1;
-    this.camPos = (this.camPos || new THREE.Vector3(...view.pos)).lerp(new THREE.Vector3(...view.pos), k);
-    this.camLook = (this.camLook || new THREE.Vector3(...view.look)).lerp(new THREE.Vector3(...view.look), k);
+    const k = this.camLook && dt ? Math.min(1, dt * (this.orbit ? 10 : 4)) : 1;
+    const look = new THREE.Vector3(...view.look), pos = new THREE.Vector3(...view.pos);
+    if (this.orbit) {
+      const o = this.orbit, c = Math.cos(o.pitch);
+      pos.set(Math.sin(o.yaw) * c, Math.sin(o.pitch), Math.cos(o.yaw) * c).multiplyScalar(o.dist).add(look);
+      // Stay inside the room (the walls are 5.25 m and 5.5 m from the middle).
+      pos.set(Math.max(-4.9, Math.min(4.9, pos.x)), Math.max(0.35, Math.min(3.4, pos.y)), Math.max(-5.1, Math.min(5.15, pos.z)));
+    }
+    this.camPos = (this.camPos || pos.clone()).lerp(pos, k);
+    this.camLook = (this.camLook || look.clone()).lerp(look, k);
     this.camera.position.copy(this.camPos);
     this.camera.lookAt(this.camLook);
+    const shift = this.menuView === 'garage' ? (this.garageInset || 0) / 2 : 0;
+    this.lensShift = (this.lensShift ?? shift) + (shift - (this.lensShift ?? shift)) * (dt ? Math.min(1, dt * 6) : 1);
+    const W = this.renderer.width, H = this.renderer.height;
+    if (Math.abs(this.lensShift) > 0.002) this.camera.setViewOffset(W, H, -this.lensShift * W, 0, W, H);
+    else this.camera.clearViewOffset();
     // Narrower screens (an iPad is 4:3) get a wider lens, so they see as
     // much from side to side as a 16:9 screen does.
     const aspect = this.renderer.width / Math.max(1, this.renderer.height);
@@ -523,12 +583,12 @@ class Game {
     this.camera.updateProjectionMatrix();
   }
 
-  // Behind the menus: a slow orbit round the parked car, or on the track
-  // screen a fly-through of the track being looked at.
+  // Behind the menus: a slow orbit round the parked car, or on the track and
+  // race settings screens a fly-through of the track being looked at.
   menuCamera(dt) {
     const v = this.vehicle;
     this.attractAngle += dt * 0.12;
-    if (this.menuView === 'tracks') {
+    if (this.menuView === 'tracks' || this.menuView === 'race') {
       const t = this.track;
       this.flyIndex = ((this.flyIndex ?? this.trackInfo.def.start) + dt * 22) % t.count;
       const i = t.wrap(Math.floor(this.flyIndex)), j = t.wrap(i + 18);
@@ -543,6 +603,10 @@ class Game {
     const dist = 7.5, h = 1.6, lookY = 0.7;
     this.camera.position.set(v.x + Math.sin(a) * dist, h, v.z + Math.cos(a) * dist);
     this.camera.lookAt(v.x, lookY, v.z);
+    // Turn the lens left so the car sits on the right, clear of the menu
+    // (more on narrow screens, where the menu takes more of the width).
+    const aspect = this.renderer.width / Math.max(1, this.renderer.height);
+    this.camera.rotateY(aspect < 1.5 ? 0.36 : 0.3);
     this.camera.fov = 50;
     this.camera.near = 0.1;
     this.camera.updateProjectionMatrix();
@@ -611,4 +675,9 @@ fontReady.catch(() => {}).finally(() => {
   const game = new Game();
   if (URL_FLAGS.smoke) game.smoke = new SmokeTest();
   window.nightshift = game; // handy from the browser console
+  // The world is built: fade the start-up screen once a frame is drawn.
+  const boot = document.querySelector('#boot');
+  const hide = () => { boot.classList.add('done'); setTimeout(() => boot.remove(), 450); };
+  if (URL_FLAGS.smoke || URL_FLAGS.shot) boot.remove();
+  else requestAnimationFrame(() => requestAnimationFrame(hide));
 });

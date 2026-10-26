@@ -1,5 +1,32 @@
 # Changelog
 
+## 0.7.0 (unreleased): David's fourth notes
+- New menu look after the Street-Spec logo: a chrome, italic NIGHTSHIFT with a pink 夜勤
+  stamp, italic titles, dark glass panels with thin frames, a vignette, no window title bars.
+  The pixel fonts stay. Japanese text only on screen titles and the world's signs.
+- Drive is now Track, Car, then a new Race settings screen (weather and time, shown on the
+  track behind as you pick them), then Race.
+- Loading screens: a spinning wheel at start-up; into a race, a still of the track, the wheel
+  bottom left and a tip.
+- Garage: a rail of tabs with pop-ups, the car fills the screen, drag to look round it,
+  scroll or pinch to zoom, the camera stands further back. No fade on every choice. Ride
+  height settles with a bounce. The Engine tab lifts the bonnet: each car has an engine
+  bay showing the fitted intake, manifolds, ECU and turbos or supercharger, and a new part
+  drops in when you fit it.
+- The Nissani Skyliner (R34) is hidden until its body is rebuilt; the GT-Ar is the default car.
+- Driving: the car bounces off walls instead of grinding along them; the camera jolts on
+  gear changes; a minimap top right.
+- Touch: pedals and a handbrake lever drawn as pictures; camera and pause moved top left;
+  a double tap no longer zooms the page in and sticks.
+- Sound: the crickets are gone; menu sounds that differ by action; backfires (crack, bang,
+  echo), a gearbox clack with a bark on upshifts and a blip on downshifts, exhaust rasp, a
+  rev limiter that bounces.
+- New sky: gradient, sun or moon glow, clouds lit pink and gold at sunset, peach at dawn and
+  by the city at night, stars. High graphics adds finer clouds, glow round bright lights
+  and more real lamp lights.
+- Particles: soft, turning smoke puffs and flame glows (PS2 style); sparks are streaks.
+- Cockpit: grey plastics faintly lit, white backlit dials, a radio display, A-pillars.
+
 ## 0.6.0 (unreleased): the world
 - New track: Parabolica Street, a Tokyo ring road round a park, shaped like Monza at about
   60% scale (3.6 km). Shops with lit fronts and neon signs, blocks of flats, vending machines,

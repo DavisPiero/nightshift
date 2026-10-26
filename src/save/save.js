@@ -35,8 +35,8 @@ export function defaultSave() {
       touch: structuredClone(DEFAULT_TOUCH),
     },
     garage: {
-      selected: 'skyliner-r34',
-      owned: ['skyliner-r34'],
+      selected: 'gtar-r35',
+      owned: ['gtar-r35'],
       cars: {},                  // per car id: { active, builds: [{ name, parts, look }] }
     },
     lastRace: { track: 'starter', weather: 'clear', time: 'night' },
@@ -84,6 +84,10 @@ export function loadSave() {
         save.garage.cars[id] = { active: 0, builds: [{ name: 'My build', parts: c.upgrades || {}, look: typeof c.paint === 'number' ? { paint: c.paint } : {} }] };
       }
     }
+    // The touch camera and pause buttons moved to the top left (the minimap
+    // took the top right); move them in saves that still had them there.
+    const lay = save.settings.touch.layout;
+    for (const [k, x] of [['camera', 0.86], ['pause', 0.95], ['camera', 0.12]]) if (lay?.[k]?.x === x && lay[k].y === 0.09) lay[k] = { ...DEFAULT_TOUCH.layout[k] };
     save.version = SAVE_VERSION;
     if (!['computer', 'touch', null].includes(save.platform)) save.platform = null;
     if (!['low', 'medium', 'high', null].includes(save.settings.graphics)) save.settings.graphics = null;

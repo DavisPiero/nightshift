@@ -66,3 +66,22 @@ One line each, newest last.
 - 2026-10-26: Parabolica Street's light is pink neon (shop signs and spill) under cool white LED lamps; the park is inside the loop, the town outside.
 - 2026-10-26: David confirmed Parabolica Street's shape, name and light (pink neon, white lamps), and this session's guesses: snow grip 0.68, no patches in Clear, lamps on at sunset and dawn, walls 3.5 m out.
 - 2026-10-26: David confirmed all older open guesses as they stand: the R35 is "2017 Nissani GT-Ar"; the Challenjer keeps its newer face with 2009 name and figures; pink main buttons; no rain in the Underground; garage headlights lit, beams off; parts free and fitted at once; 3 builds per car; slammed needs coilovers; race number 08; Feel panel values as they are; classes R34 A 756, Challenjer B 635, R35 S 862.
+- 2026-10-26: m4-world signed off, merged to main and pushed.
+- 2026-10-26: The R34 is hidden, not deleted (David): out of the car list, kept for the bench; the GT-Ar is the default car.
+- 2026-10-26: Menus restyled after the Street-Spec logo, pixel fonts kept (David). Style sheet in SPEC.md; replaces the window-bar look. Second "looks like Courtside" note, so the fix is a written style sheet.
+- 2026-10-26: Drive flow is Track, Car, Race settings, Race (four taps); weather and time left the car screen (David).
+- 2026-10-26: Walls push the car off with at least 0.8-2.2 m/s and turn the nose away, so it never grinds along them. Bench: steered into the wall it touches 3% of the time (was 85%).
+- 2026-10-26: Gear changes jolt the camera (a spring), physics unchanged.
+- 2026-10-26: Minimap top right, north up; touch camera and pause moved top left (old saves moved too).
+- 2026-10-26: The garage camera can be dragged and zoomed; the tab's camera spot returns when the tab changes. The lens shifts so the car sits right of the pop-up.
+- 2026-10-26: No on-screen "drag to look" hint in the garage: control hints stay in Settings > Controls (hard rule).
+- 2026-10-26: Loading tips never name keys, for the same rule.
+- 2026-10-26: Race loading screen stays at least 2.6 s so the tip can be read; the race is set up behind it, the car held still.
+- 2026-10-26: Track stills for the loading screen are rendered by tools/loading-stills.sh into assets/loading/ (committed).
+- 2026-10-26: The sky is a shader dome: horizon = fog colour, glow in the track's colour, sun or moon halo, clouds, stars. Rain and snow close it over; fog hides it.
+- 2026-10-26: High = 720 lines, shadows, finer clouds, bloom, 10 lamp lights. Low and Medium unchanged.
+- 2026-10-26: Particles are PS2-style sprites (David: "ala PS1/PS2"): soft puffs that turn and swell; sparks are line streaks.
+- 2026-10-26: The bonnet is cut out of the body as its own hinged panel; anything on top of it moves with it. The engine bay is drawn only while the bonnet is up.
+- 2026-10-26: Cockpit kept and reworked half way to David's references (his call): lit grey plastics, white dials, radio, A-pillars.
+- 2026-10-26: Crickets removed from the night ambience (David).
+- 2026-10-26: A double tap on iPad/phone never zooms the page (touchend guard plus gesture events blocked).

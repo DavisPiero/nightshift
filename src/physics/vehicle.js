@@ -376,17 +376,23 @@ export class Vehicle {
     const dvt = Math.min(Math.abs(vt), mu * j / this.spec.mass);
     this.vx -= Math.sign(vt) * dvt * tx;
     this.vz -= Math.sign(vt) * dvt * tz;
-    // Forgiving: settle the spin a hit causes, and turn the car a little to
-    // run along the wall instead of nosing into it.
+    // Bounce off: the car always leaves the wall a little (faster cars a
+    // little more), so it never rides along it grinding.
+    const vnOut = this.vx * nx + this.vz * nz;
+    const away = Math.min(2.2, 0.8 + 0.05 * Math.hypot(this.vx, this.vz));
+    if (vnOut < away) { this.vx += (away - vnOut) * nx; this.vz += (away - vnOut) * nz; }
+    // Forgiving: settle the spin a hit causes, and turn the nose away from
+    // the wall instead of nosing into it.
     this.yawRate = clamp(this.yawRate, -2.5, 2.5) * 0.7;
     const fx = Math.sin(this.heading), fz = Math.cos(this.heading);
     const into = fx * nx + fz * nz;
+    const side = Math.sign(fx * -nz + fz * nx) || 1; // the turn that points the nose off the wall
     if (into < 0) {
-      const side = Math.sign(fx * -nz + fz * nx) || 1;
       this.yawRate += side * Math.min(1.0, -into * 1.6) * Math.min(1, -vn / 8);
       this.wallPivot = side * Math.min(1, -into * 1.6) * 0.9;
       this.wallTimer = 0.1;
     }
+    if (into < 0.3) this.yawRate += side * 0.3 * Math.min(1, this.speed / 10);
     return -vn;
   }
 }

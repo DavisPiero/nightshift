@@ -23,16 +23,26 @@ export const DEFAULT_TOUCH = {
     handbrake: { x: 0.77, y: 0.5 },
     gearUp: { x: 0.91, y: 0.36 },
     gearDown: { x: 0.81, y: 0.3 },
-    camera: { x: 0.86, y: 0.09 },
-    pause: { x: 0.95, y: 0.09 },
+    camera: { x: 0.15, y: 0.09 },  // top left: the minimap has the top right
+    pause: { x: 0.04, y: 0.09 },
   },
+};
+
+// Pedals and the handbrake lever, drawn as pictures (SVG): brushed metal
+// plates with rubber ridges that tip down when pressed.
+const metal = (id) => `<linearGradient id="${id}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#e4e9ec"/><stop offset="0.45" stop-color="#9aa3a8"/><stop offset="1" stop-color="#5d666b"/></linearGradient>`;
+const ridges = (x, y, w, h, n) => Array.from({ length: n }, (_, i) => `<rect x="${x}" y="${y + i * (h / n) + 1}" width="${w}" height="${h / n - 3}" rx="1.5" fill="#15181a"/><rect x="${x}" y="${y + i * (h / n) + 1}" width="${w}" height="1" fill="#3a4044"/>`).join('');
+const ART = {
+  throttle: `<svg viewBox="0 0 62 75">${'<defs>' + metal('mg') + '</defs>'}<rect x="3" y="2" width="56" height="71" rx="7" fill="#1a1d1f"/><rect x="5" y="3" width="52" height="68" rx="6" fill="url(#mg)"/>${ridges(11, 9, 40, 56, 8)}</svg>`,
+  brake: `<svg viewBox="0 0 59 52">${'<defs>' + metal('mb') + '</defs>'}<rect x="2" y="2" width="55" height="48" rx="8" fill="#1a1d1f"/><rect x="4" y="3" width="51" height="45" rx="7" fill="url(#mb)"/><rect x="9" y="8" width="41" height="35" rx="4" fill="#15181a"/>${ridges(12, 11, 35, 29, 5).replaceAll('#15181a', '#24282b')}</svg>`,
+  handbrake: `<svg viewBox="0 0 52 38"><path d="M10 31 L38 9" stroke="#15181a" stroke-width="9" stroke-linecap="round"/><path d="M10 31 L38 9" stroke="#8d969b" stroke-width="5" stroke-linecap="round"/><path d="M26 18.5 L38 9" stroke="#1f2325" stroke-width="7" stroke-linecap="round"/><circle cx="40" cy="7.5" r="3" fill="#ff2e88"/><rect x="4" y="30" width="16" height="5" rx="2" fill="#2a2f32"/></svg>`,
 };
 
 // Base sizes in CSS pixels before the size setting.
 const BUTTONS = {
-  throttle: { label: 'GAS', w: 124, h: 150, cls: 'gas' },
-  brake: { label: 'BRAKE', w: 118, h: 104 },
-  handbrake: { label: 'HAND', w: 104, h: 76, cls: 'small' },
+  throttle: { label: 'GAS', w: 112, h: 136, cls: 'gas pedal' },
+  brake: { label: 'BRAKE', w: 118, h: 104, cls: 'brake pedal' },
+  handbrake: { label: 'HAND', w: 104, h: 76, cls: 'small lever' },
   gearUp: { label: '+', w: 70, h: 62, manual: true },
   gearDown: { label: '-', w: 70, h: 62, manual: true },
   camera: { label: 'CAM', w: 74, h: 52, cls: 'small', action: 'camera' },
@@ -79,7 +89,8 @@ export class TouchSource {
     for (const [name, b] of Object.entries(BUTTONS)) {
       const el = document.createElement('div');
       el.className = `tc pad ${b.cls || ''}`;
-      el.textContent = b.label;
+      if (ART[name]) el.innerHTML = `${ART[name]}<span class="cap">${b.label}</span>`;
+      else el.textContent = b.label;
       el.dataset.name = name;
       r.appendChild(el);
       this.els[name] = el;

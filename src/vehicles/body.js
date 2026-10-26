@@ -153,8 +153,9 @@ export class Body {
   // The body mesh: both halves and the end caps, with material groups. The
   // section is cut into panels (sill, side, fender top, glass, roof) that do
   // not share vertices, so the shoulder line and window edges stay crisp
-  // while each panel is smooth.
-  geometry() {
+  // while each panel is smooth. `bonnet` [z0, z1]: leave the bonnet's top
+  // out (it is its own panel, see bonnetGeometry, so it can open).
+  geometry({ bonnet = null } = {}) {
     const def = this.def;
     const zs = this.zs();
     const secs = zs.map((z) => this.section(z));
@@ -175,7 +176,9 @@ export class Body {
         zs.forEach((z, k) => { for (let j = p0; j <= p1; j++) pos.push(secs[k].p[j][0] * side, secs[k].p[j][1], z); });
         const vid = (k, j) => base + k * cols + (j - p0);
         for (let k = 0; k < zs.length - 1; k++) {
+          const zm = (zs[k] + zs[k + 1]) / 2;
           for (let j = p0; j < p1; j++) {
+            if (bonnet && j >= 8 && zm > bonnet[0] && zm < bonnet[1]) continue;
             const a = vid(k, j), b = vid(k, j + 1), c = vid(k + 1, j + 1), d = vid(k + 1, j);
             const list = tris[slot(k, j)];
             if (side > 0) list.push(a, b, c, a, c, d); else list.push(a, c, b, a, d, c);
@@ -199,6 +202,28 @@ export class Body {
     g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
     const idx = [];
     tris.forEach((list, m) => { g.addGroup(idx.length, list.length, m); idx.push(...list); });
+    g.setIndex(idx);
+    g.computeVertexNormals();
+    return g;
+  }
+
+  // The bonnet on its own: the top of the body (the arc from the fender
+  // line to the centre) between z0 and z1, both sides.
+  bonnetGeometry(z0, z1) {
+    const zs = [z0];
+    for (let z = Math.ceil(z0 / 0.05) * 0.05; z < z1 - 1e-6; z += 0.05) if (z > z0 + 1e-6) zs.push(z);
+    zs.push(z1);
+    const pos = [], idx = [];
+    for (const side of [1, -1]) {
+      const base = pos.length / 3;
+      for (const z of zs) { const { p } = this.section(z); for (let j = 8; j <= 12; j++) pos.push(p[j][0] * side, p[j][1], z); }
+      for (let k = 0; k < zs.length - 1; k++) for (let j = 0; j < 4; j++) {
+        const a = base + k * 5 + j, b = a + 1, c = a + 6, d = a + 5;
+        if (side > 0) idx.push(a, b, c, a, c, d); else idx.push(a, c, b, a, d, c);
+      }
+    }
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
     g.setIndex(idx);
     g.computeVertexNormals();
     return g;

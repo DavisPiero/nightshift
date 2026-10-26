@@ -43,7 +43,7 @@ function mixHex(a, b, k) {
 // A track's own (night) look, as it is at this time.
 export function timeLook(base, id) {
   const t = TIMES[id] || TIMES.night;
-  const look = { ...base, sun: { colour: NIGHT_SUN.colour, power: base.moon, dir: NIGHT_SUN.dir }, lampScale: 1, glow: 1, sky: Tex.skyGlow() };
+  const look = { ...base, time: TIMES[id] ? id : 'night', sun: { colour: NIGHT_SUN.colour, power: base.moon, dir: NIGHT_SUN.dir }, lampScale: 1, glow: 1, sky: Tex.skyGlow() };
   if (!t.sky) return look;
   look.fog = Object.fromEntries(Object.entries(base.fog).map(([w, c]) => [w, mixHex(c, t.fog, t.fogMix)]));
   look.hemi = [t.hemi[0], t.hemi[1], (base.hemi[2] ?? 1) * t.hemiPower];

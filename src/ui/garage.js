@@ -1,9 +1,11 @@
-// The Garage screen. Tabs down the left (Paint, Decals, Wheels, Body,
-// Engine, Chassis, Drive, Builds) with their choices in a list below; the car
-// on the turntable in the middle; the build's ratings on the right, against
-// stock, with a dyno chart on the Engine tab. Every choice is fitted at once
-// (parts are free until there is money in the game) to the build you race
-// with; the Builds tab switches, names, copies and resets builds.
+// The Garage screen. A rail of tabs down the left (Paint, Decals, Wheels,
+// Body, Engine, Chassis, Drive, Builds); each opens a small pop-up with its
+// choices, and closing it gives the car the whole screen. Drag round the car
+// to look at it, scroll or pinch to zoom. The build's ratings sit bottom
+// right, against stock, with a dyno chart in the Engine pop-up. Every choice
+// is fitted at once (parts are free until there is money in the game) to the
+// build you race with; the Builds tab switches, names, copies and resets
+// builds.
 
 import { CARS, getCar } from '../vehicles/cars.js';
 import { SLOTS, optionsFor } from '../vehicles/parts.js';
@@ -18,8 +20,8 @@ const hex = (c) => '#' + c.toString(16).padStart(6, '0');
 const esc = (t) => String(t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
 const TABS = [
-  ['paint', 'Paint', '塗装'], ['decals', 'Decals', 'デカール'], ['wheels', 'Wheels', 'ホイール'], ['body', 'Body', 'ボディ'],
-  ['engine', 'Engine', 'エンジン'], ['chassis', 'Chassis', '足回り'], ['drive', 'Drive', '駆動'], ['builds', 'Builds', 'セッティング'],
+  ['paint', 'Paint'], ['decals', 'Decals'], ['wheels', 'Wheels'], ['body', 'Body'],
+  ['engine', 'Engine'], ['chassis', 'Chassis'], ['drive', 'Drive'], ['builds', 'Builds'],
 ];
 const SLOTS_BY_TAB = { body: ['bodykit', 'aero'], engine: ['intake', 'exhaust', 'ecu', 'induction'], chassis: ['tyres', 'brakes', 'suspension', 'weight'], drive: ['gearing', 'drivetrain'] };
 
@@ -27,12 +29,13 @@ export class Garage {
   constructor(game, screens) {
     this.game = game;
     this.screens = screens;
-    this.tab = 'paint';
+    this.tab = null; // the open pop-up, or none
     this.renaming = -1;
     this.resetArmed = -1;
     const tabs = $('#garage-tabs');
-    tabs.innerHTML = TABS.map(([id, name, jp]) => `<button class="tab" data-gtab="${id}">${name}<span class="jp">${jp}</span></button>`).join('');
-    for (const b of tabs.querySelectorAll('.tab')) b.addEventListener('click', () => this.show(b.dataset.gtab));
+    tabs.innerHTML = TABS.map(([id, name]) => `<button class="tab" data-gtab="${id}">${name}</button>`).join('');
+    for (const b of tabs.querySelectorAll('.tab')) b.addEventListener('click', () => (this.tab === b.dataset.gtab ? this.close() : this.show(b.dataset.gtab)));
+    $('#garage-close').addEventListener('click', () => this.close());
     const step = (d) => {
       const i = CARS.findIndex((c) => c.id === screens.pick.car);
       screens.pickCar(CARS[(i + d + CARS.length) % CARS.length].id);
@@ -41,19 +44,76 @@ export class Garage {
     };
     $('#garage-prev').addEventListener('click', () => step(-1));
     $('#garage-next').addEventListener('click', () => step(1));
+    this.orbitControls($('#scr-garage'));
+    window.addEventListener('resize', () => this.measure());
   }
 
   get car() { return getCar(this.screens.pick.car); }
   get entry() { return garageCar(this.game.save, this.car); }
   get build() { const e = this.entry; return e.builds[e.active]; }
 
-  open() { this.show(this.tab); }
+  open() { this.close(); }
 
   show(tab) {
     this.tab = tab;
     this.game.garageTab = tab; // the camera moves to suit the tab
+    this.game.orbitReset();
     for (const b of document.querySelectorAll('#garage-tabs .tab')) b.classList.toggle('on', b.dataset.gtab === tab);
+    const pop = $('#garage-pop');
+    pop.hidden = false;
+    pop.classList.remove('pop'); void pop.offsetWidth; pop.classList.add('pop');
+    $('#garage-pop-title').textContent = TABS.find(([id]) => id === tab)[1];
+    this.fill(true);
+    this.measure();
+  }
+
+  // Close the pop-up: the car gets the screen and the camera stands back.
+  close() {
+    this.tab = null;
+    this.game.garageTab = null;
+    this.game.orbitReset();
+    for (const b of document.querySelectorAll('#garage-tabs .tab')) b.classList.remove('on');
+    $('#garage-pop').hidden = true;
     this.fill();
+    this.measure();
+  }
+
+  // How much of the screen's left side the rail and pop-up cover, so the
+  // camera can keep the car in the space that is left.
+  measure() {
+    requestAnimationFrame(() => {
+      const pop = $('#garage-pop'), rail = $('#garage-tabs');
+      const el = pop.hidden ? rail : pop;
+      this.game.garageInset = el.offsetParent ? el.getBoundingClientRect().right / window.innerWidth : 0;
+    });
+  }
+
+  // Drag on the scene to look round the car; scroll or pinch to zoom.
+  orbitControls(screen) {
+    const fingers = new Map();
+    let spread = 0;
+    const gap = () => { const [a, b] = [...fingers.values()]; return Math.hypot(a.x - b.x, a.y - b.y); };
+    screen.addEventListener('pointerdown', (e) => {
+      if (e.target !== screen) return; // only on the scene, not the panels
+      try { screen.setPointerCapture(e.pointerId); } catch { /* gone */ }
+      fingers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      if (fingers.size === 2) spread = gap();
+    });
+    screen.addEventListener('pointermove', (e) => {
+      const f = fingers.get(e.pointerId);
+      if (!f) return;
+      if (fingers.size === 1) this.game.orbitDrag((e.clientX - f.x) / window.innerHeight, (e.clientY - f.y) / window.innerHeight);
+      f.x = e.clientX; f.y = e.clientY;
+      if (fingers.size === 2) { const g = gap(); if (spread > 0) this.game.orbitZoom(spread / g); spread = g; }
+    });
+    const lift = (e) => { fingers.delete(e.pointerId); spread = 0; };
+    screen.addEventListener('pointerup', lift);
+    screen.addEventListener('pointercancel', lift);
+    screen.addEventListener('wheel', (e) => {
+      if (e.target !== screen) return;
+      e.preventDefault();
+      this.game.orbitZoom(Math.exp(Math.max(-1, Math.min(1, e.deltaY / 300)) * 0.35));
+    }, { passive: false });
   }
 
   // The build changed: drive with it, show it, save it, refresh the screen.
@@ -64,20 +124,25 @@ export class Garage {
     this.fill();
   }
 
-  fill() {
+  // `fresh`: a new tab, so its items slide in; otherwise (a choice was made)
+  // the list just updates in place.
+  fill(fresh = false) {
     const car = this.car;
     $('#garage-car-year').textContent = `${car.year} · ${car.code}`;
     $('#garage-car-name').textContent = `${car.make} ${car.model}`;
     const list = $('#garage-list');
-    const keep = list.scrollTop;
-    list.innerHTML = '';
-    this[this.tab](list);
-    list.scrollTop = keep;
-    [...list.children].forEach((c, i) => c.style.setProperty('--i', Math.min(i, 12)));
+    if (this.tab) {
+      const keep = list.scrollTop;
+      list.classList.toggle('calm', !fresh);
+      list.innerHTML = '';
+      this[this.tab](list);
+      list.scrollTop = fresh ? 0 : keep;
+      [...list.children].forEach((c, i) => c.style.setProperty('--i', Math.min(i, 12)));
+    }
     this.fillInfo();
   }
 
-  // --- the right-hand panel: build name, ratings against stock, dyno ---
+  // --- the ratings panel (build name, ratings against stock) and the dyno ---
   fillInfo() {
     const car = this.car, b = this.build, units = this.game.save.settings.units;
     $('#garage-build-name').textContent = b.name;
@@ -130,7 +195,11 @@ export class Garage {
     for (const o of opts) {
       this.item(list, {
         name: o.name, sub: o.info || 'As it left the factory', on: (b.parts[id] || 'stock') === o.id,
-        onClick: () => { if (o.id === 'stock') delete b.parts[id]; else b.parts[id] = o.id; this.changed(); },
+        onClick: () => {
+          if (o.id === 'stock') delete b.parts[id]; else b.parts[id] = o.id;
+          this.game.fitSlot = id; // an engine part drops into the open bay
+          this.changed();
+        },
       });
     }
   }
@@ -196,7 +265,12 @@ export class Garage {
       const needs = id === 'slammed' && b.parts.suspension !== 'race';
       this.item(list, {
         name: r.name, sub: needs ? 'Fit coilovers first (Chassis)' : r.info || 'Factory height', on: b.look.ride === id, disabled: needs,
-        onClick: () => { b.look.ride = id; this.changed(); },
+        onClick: () => {
+          const from = RIDE[b.look.ride].drop;
+          b.look.ride = id;
+          this.changed();
+          this.game.rideBounce(r.drop - from); // the body settles onto its new height
+        },
       });
     }
   }
