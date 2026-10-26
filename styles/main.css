@@ -223,7 +223,8 @@ h1, h2, p { margin: 0; }
 .cond-row { display: flex; align-items: stretch; gap: 12px; }
 .cond-row .choices { flex: 1; display: flex; gap: 8px; }
 .cond-row .choices .btn { flex: 1; }
-.cond-row .time { display: flex; flex-direction: column; justify-content: center; padding: 0 12px; box-shadow: inset 1px 0 0 var(--edge-hi), inset -1px 0 0 var(--edge-hi); }
+.cond-row .time { display: flex; flex-direction: column; justify-content: center; align-items: flex-start; gap: 3px; padding: 6px 14px; min-width: 104px; }
+.cond-row .time:disabled { opacity: 1; cursor: default; }
 .cond-row .time .k { font: 13px/1 var(--px); letter-spacing: 0.2em; color: var(--muted); text-transform: uppercase; }
 .cond-row .time .v { font: 26px/1 var(--px); color: var(--amber); text-shadow: 0 0 8px rgba(255, 176, 42, 0.5); }
 .choices { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }

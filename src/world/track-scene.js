@@ -271,9 +271,11 @@ export function buildTrackScene(track, def) {
   // drawn first, behind everything, and moved with the camera (see
   // placeBackdrop) so it always sits just inside the view distance.
   const backdrop = new THREE.Group();
+  const skies = []; // sky materials, repainted for the time of day
   {
     const bg = { fog: false, depthWrite: false, depthTest: false };
     const sky = new THREE.Mesh(new THREE.CylinderGeometry(900, 900, 260, 24, 1, true), new THREE.MeshBasicMaterial({ map: Tex.skyGlow(), side: THREE.BackSide, ...bg }));
+    skies.push(sky.material);
     sky.position.y = 80;
     sky.renderOrder = -11;
     backdrop.add(sky);
@@ -294,13 +296,14 @@ export function buildTrackScene(track, def) {
   // the assets), and the amber glow of the city low in the sky.
   {
     const sky = new THREE.Mesh(new THREE.CylinderGeometry(150, 150, 120, 16, 1, true), new THREE.MeshBasicMaterial({ map: Tex.skyGlow(), side: THREE.BackSide, fog: false }));
+    skies.push(sky.material);
     sky.position.y = 40;
     sky.userData.follow = true; // kept centred on the car (see reflections.js)
     reflect.add(sky);
   }
 
   return {
-    group, lamps, glows: [glows], roadMat, backdrop, reflect,
+    group, lamps, glows: [glows], roadMat, backdrop, reflect, skies,
     look: {
       fog: { clear: 0x0b1012, rain: 0x0d1418, fog: 0x1a2226 },
       hemi: [0x3a4a58, 0x141810, 1.0],

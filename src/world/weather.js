@@ -57,7 +57,9 @@ export class WeatherView {
     fog.color.setHex(this.world.look?.fog?.[this.id] ?? look.fog);
     fog.near = w.fogNear;
     fog.far = w.fogFar ? Math.min(preset.drawDistance, w.fogFar) : preset.drawDistance;
-    this.scene.background = fog.color;
+    // Overhead is the top of the sky, unless fog hides the sky altogether.
+    const top = this.world.look?.skyTop;
+    this.scene.background = top !== undefined && this.id !== 'fog' ? new THREE.Color(top) : fog.color;
     const hemi = this.scene.children.find((o) => o.isHemisphereLight);
     if (hemi) hemi.intensity = look.hemi * (this.world.look?.hemi?.[2] ?? 1);
     const road = this.world.roadMat;

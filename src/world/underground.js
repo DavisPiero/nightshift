@@ -10,7 +10,8 @@ export const UNDERGROUND_TRACK = {
   halfWidth: 6.3,   // three lanes, 12.6 m of tarmac
   wall: 8.2,        // tunnel wall, beyond a walkway on each side
   start: 40,
-  weathers: ['clear', 'fog'], // no rain under the ground; fog is exhaust haze
+  weathers: ['clear', 'fog'], // no rain or snow under the ground; fog is exhaust haze
+  times: ['night'],           // no sky to see
   points: [
     [0, -260], [0, -130], [0, 0], [0, 130], [0, 260],      // main straight past the exits
     [25, 370], [100, 440], [210, 460], [320, 420],          // long right sweeper

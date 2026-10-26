@@ -24,6 +24,7 @@ import { buildGarage } from './world/garage.js';
 import { Reflections } from './graphics/reflections.js';
 import { buildTrackScene, placeBackdrop } from './world/track-scene.js';
 import { WeatherView } from './world/weather.js';
+import { timeLook, trackTimes, TIMES } from './world/time-of-day.js';
 import { CameraManager } from './cameras/cameras.js';
 import { GameAudio } from './audio/audio.js';
 import { Hud } from './ui/hud.js';
@@ -67,6 +68,7 @@ class Game {
       this.lampLights.push(l);
     }
     this.weatherId = 'clear';
+    this.timeId = TIMES[URL_FLAGS.time] ? URL_FLAGS.time : this.save.lastRace.time;
     this.loadTrack(URL_FLAGS.track || this.save.lastRace.track);
     this.weather = new WeatherView(this.scene, this.world);
 
@@ -147,17 +149,30 @@ class Game {
     this.track = info.path;
     this.world = buildTrackScene(this.track, info.def);
     this.scene.add(this.world.group, this.world.backdrop);
-    const L = this.world.look;
-    this.hemi.color.setHex(L.hemi[0]);
-    this.hemi.groundColor.setHex(L.hemi[1]);
-    this.moon.intensity = L.moon;
-    for (const l of this.lampLights) { l.color.setHex(L.lamp); l.intensity = L.lampPower; }
-    this.reflections.setWorld(this.world);
+    this.world.baseLook = this.world.look;
     if (!trackWeathers(info).includes(this.weatherId)) this.weatherId = 'clear';
-    if (this.weather) { this.weather.world = this.world; if (this.preset) this.weather.set(this.weatherId, this.preset, this.save.settings.effects); }
+    if (this.weather) this.weather.world = this.world;
+    this.applyLook();
     this.trackIndex = info.def.start;
     this.flyIndex = undefined;
     if (this.vehicle) this.resetCar(info.def.start);
+  }
+
+  // Light the world for its track and the time of day (and the weather,
+  // which sets the fog).
+  applyLook() {
+    const w = this.world;
+    if (!trackTimes(this.trackInfo).includes(this.timeId)) this.timeId = 'night';
+    const L = w.look = timeLook(w.baseLook, this.timeId);
+    this.hemi.color.setHex(L.hemi[0]);
+    this.hemi.groundColor.setHex(L.hemi[1]);
+    this.moon.color.setHex(L.sun.colour);
+    this.moon.intensity = L.sun.power;
+    for (const l of this.lampLights) { l.color.setHex(L.lamp); l.intensity = L.lampPower * L.lampScale; }
+    for (const m of w.skies || []) { m.map = L.sky; m.needsUpdate = true; }
+    for (const g of w.glows) g.material.opacity = L.glow;
+    if (!this.inGarage) this.reflections.setWorld(w);
+    if (this.weather && this.preset) this.weather.set(this.weatherId, this.preset, this.save.settings.effects);
   }
 
   // The numbers the car drives with: stock, plus the active build's parts
@@ -295,14 +310,21 @@ class Game {
     this.weather.set(id, this.preset, this.save.settings.effects);
   }
 
+  previewTime(id) {
+    this.timeId = id;
+    this.applyLook();
+  }
+
   // --- driving ---
-  startRace({ track, weather, car }) {
-    this.save.lastRace = { track, weather };
+  startRace({ track, weather, car, time = this.timeId }) {
+    this.save.lastRace = { track, weather, time };
     this.save.garage.selected = car;
     this.saveNow();
     this.loadTrack(track);
     this.showCar(car);
     this.weatherId = trackWeathers(this.trackInfo).includes(weather) ? weather : 'clear';
+    this.timeId = time;
+    this.applyLook();
     applyWeather(this.vehicle, this.weatherId);
     this.applySettings();
     this.audio.start();
@@ -434,7 +456,8 @@ class Game {
       .map((p) => [p, (p.x - v.x) ** 2 + (p.z - v.z) ** 2])
       .sort((a, b) => a[1] - b[1]);
     for (let i = 0; i < n; i++) this.lampLights[i].position.copy(near[i][0]);
-    this.moon.position.set(v.x - 40, 80, v.z - 30);
+    const sun = this.world.look.sun.dir;
+    this.moon.position.set(v.x + sun[0], sun[1], v.z + sun[2]);
     this.moon.target.position.set(v.x, 0, v.z);
 
     if (this.state === 'menu') {
@@ -465,7 +488,7 @@ class Game {
         fps: this.loop.fps, steps: this.loop.stepsLastFrame,
         width: this.renderer.width, height: this.renderer.height, preset: this.graphicsName,
         calls: info.calls, tris: info.triangles, controls: this.controls.state,
-        trackIndex: this.trackIndex, offset: this.lastOffset, weather: this.weatherId,
+        trackIndex: this.trackIndex, offset: this.lastOffset, weather: this.weatherId, time: this.timeId,
       });
     }
     if (this.smoke) this.smoke.frame(this);

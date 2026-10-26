@@ -282,6 +282,13 @@ export const Tex = {
     g.fillStyle = grad; g.fillRect(0, 0, w, h);
   }, { nearest: false })),
 
+  // Any other sky (sunset, dawn): a vertical gradient from [offset, colour] stops, top first.
+  skyGradient: (key, stops) => cached('sky-' + key, () => canvasTexture([4, 64], (g, w, h) => {
+    const grad = g.createLinearGradient(0, 0, 0, h);
+    for (const [o, c] of stops) grad.addColorStop(o, c);
+    g.fillStyle = grad; g.fillRect(0, 0, w, h);
+  }, { nearest: false })),
+
   // Far city blocks: dark with a scatter of lit windows.
   skyline: () => cached('skyline', () => canvasTexture([32, 64], (g, w, h) => {
     g.fillStyle = '#0d1114'; g.fillRect(0, 0, w, h);

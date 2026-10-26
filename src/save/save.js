@@ -39,7 +39,7 @@ export function defaultSave() {
       owned: ['skyliner-r34'],
       cars: {},                  // per car id: { active, builds: [{ name, parts, look }] }
     },
-    lastRace: { track: 'starter', weather: 'clear' },
+    lastRace: { track: 'starter', weather: 'clear', time: 'night' },
     bestLaps: {},
   };
 }
@@ -90,7 +90,8 @@ export function loadSave() {
     if (!['auto', 'manual'].includes(save.settings.transmission)) save.settings.transmission = 'auto';
     if (!['chase', 'cockpit'].includes(save.settings.camera)) save.settings.camera = 'chase';
     if (!['kmh', 'mph'].includes(save.settings.units)) save.settings.units = 'kmh';
-    if (!['clear', 'rain', 'fog'].includes(save.lastRace.weather)) save.lastRace.weather = 'clear';
+    if (!['clear', 'rain', 'fog', 'snow'].includes(save.lastRace.weather)) save.lastRace.weather = 'clear';
+    if (!['sunset', 'night', 'dawn'].includes(save.lastRace.time)) save.lastRace.time = 'night';
     return save;
   } catch {
     console.warn('NIGHTSHIFT: save was unreadable, starting fresh');

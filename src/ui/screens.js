@@ -7,6 +7,7 @@ import { CARS, getCar } from '../vehicles/cars.js';
 import { carStats } from '../vehicles/stats.js';
 import { TRACKS, trackWeathers } from '../world/tracks.js';
 import { WEATHER } from '../physics/weather.js';
+import { TIMES, trackTimes } from '../world/time-of-day.js';
 import { Settings } from './settings.js';
 import { fillStats } from './stats-view.js';
 import { Garage } from './garage.js';
@@ -56,7 +57,14 @@ export class Screens {
       }
     });
 
-    this.pick = { track: game.trackInfo.id, weather: game.save.lastRace.weather, car: game.carSpec.id };
+    this.pick = { track: game.trackInfo.id, weather: game.save.lastRace.weather, time: game.timeId, car: game.carSpec.id };
+    // The Time box steps through the times this track has.
+    $('#time-btn').addEventListener('click', () => {
+      const times = trackTimes(TRACKS.find((x) => x.id === this.pick.track) || TRACKS[0]);
+      this.pick.time = times[(times.indexOf(this.pick.time) + 1) % times.length];
+      this.fillSetup();
+      this.game.previewTime(this.pick.time);
+    });
     this.buildTracks();
     this.buildCars();
     this.buildWeather();
@@ -152,7 +160,8 @@ export class Screens {
       + `<div class="info-name"><span class="name">${t.name}</span><span class="jp">${t.jp || ''}</span></div>`
       + `<p class="muted small">${t.blurb}</p>`
       + `<dl><dt>Length</dt><dd>${(t.path.length / 1000).toFixed(2)} km</dd><dt>Corners</dt><dd>${t.corners}</dd>`
-      + `<dt>Lanes</dt><dd>${t.def.halfWidth > 6.2 ? 3 : 2}</dd><dt>Weather</dt><dd>${ws}</dd></dl>`;
+      + `<dt>Lanes</dt><dd>${t.def.halfWidth > 6.4 ? 4 : t.def.halfWidth > 6.2 ? 3 : 2}</dd><dt>Weather</dt><dd>${ws}</dd>`
+      + `<dt>Time</dt><dd>${trackTimes(t).map((id) => TIMES[id].name).join(' · ')}</dd></dl>`;
     drawMap(el.querySelector('canvas'), t, 4);
   }
 
@@ -198,6 +207,13 @@ export class Screens {
       b.classList.toggle('on', b.dataset.weather === this.pick.weather);
     }
     $('#weather-note').textContent = WEATHER[this.pick.weather].note;
+    const times = trackTimes(t);
+    if (!times.includes(this.pick.time)) this.pick.time = times.includes('night') ? 'night' : times[0];
+    const time = TIMES[this.pick.time], btn = $('#time-btn');
+    btn.querySelector('.v').textContent = time.clock;
+    btn.querySelector('.small').textContent = time.name;
+    btn.querySelector('.k').textContent = times.length > 1 ? 'Time ▸' : 'Time';
+    btn.disabled = times.length < 2;
     for (const b of document.querySelectorAll('#car-list .item')) b.classList.toggle('on', b.dataset.car === this.pick.car);
     const car = getCar(this.pick.car);
     $('#setup-car-year').textContent = `${car.year} · ${car.code}`;
