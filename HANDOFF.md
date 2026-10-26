@@ -2,7 +2,7 @@
 
 ## Repo state
 - `main`: `m4-world` merged and pushed (live on GitHub Pages). `m4-world` is deleted.
-- Branch `m4-notes` (from main): David's fourth notes, committed in steps, **not merged**.
+- `m4-notes` (David's fourth notes) merged into `main` and pushed (live); branch deleted.
 - Bench passes, including a new test: steered into a wall, the car touches it 3% of the time
   after the first hit (was 85%).
 
@@ -32,9 +32,7 @@
 - Loading stills: `./tools/loading-stills.sh` (re-run after changing how a track looks).
 
 ## Next
-1. David plays `m4-notes`, then signs it off or sends notes.
-2. Milestone 6: racing (checkpoints, countdown, lap timing, results).
+1. Milestone 6: racing (checkpoints, countdown, lap timing, results).
 
 ## Open with David
-- Sign off `m4-notes`.
 - Confirm the guesses listed in STATE.md.

@@ -47,7 +47,7 @@ The one style sheet for every screen (fix for "it still looks like Courtside", 2
    time of day, snow, weather patches, a Monza-inspired street track (Parabolica Street).
    **Done, signed off 2026-10-26.** (4) David's fourth notes: menu restyle, race settings
    screen, loading screens, garage pop-ups and orbit, bonnet and engine bay, minimap, wall
-   bounce, sky, particles, engine sound, cockpit, touch pedals. **Built, waiting for sign-off.**
+   bounce, sky, particles, engine sound, cockpit, touch pedals. **Done, signed off 2026-10-26.**
    Look pass (David's third notes, 2026-10-26): neon Japan menus, new track and car pick
    layouts, the Underground track, rebuilt car bodies and a third car (R35), paint
    reflections, the garage room. **Done, signed off 2026-10-26.**

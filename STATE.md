@@ -4,7 +4,7 @@ _Last updated 2026-10-26, end of session 7 (David's fourth notes)._
 
 ## Where we are
 - `m4-world` (the world) is signed off, merged into `main` and pushed (live).
-- Branch `m4-notes` holds all of David's fourth notes, built in one session, not merged:
+- David's fourth notes are signed off, merged into `main` and pushed (live):
   - menus: new look, race settings screen, loading screens;
   - garage: pop-ups, orbit and zoom, the bonnet and engine bay;
   - driving: minimap, wall bounce, shift jolt;
@@ -15,11 +15,9 @@ _Last updated 2026-10-26, end of session 7 (David's fourth notes)._
 - Bench passes (with a new wall-grind test). Smoke test: see HANDOFF.md.
 
 ## Next
-- David plays `m4-notes`, then signs it off or sends notes.
-- Then Milestone 6 (racing), as David chose.
+- Milestone 6 (racing), as David chose.
 
 ## Open with David
-- Sign off `m4-notes`.
 - Guesses to confirm:
   - the new menu look, which was built without a mock first;
   - the engine sounds, which nobody has heard yet;

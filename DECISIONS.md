@@ -85,3 +85,4 @@ One line each, newest last.
 - 2026-10-26: Cockpit kept and reworked half way to David's references (his call): lit grey plastics, white dials, radio, A-pillars.
 - 2026-10-26: Crickets removed from the night ambience (David).
 - 2026-10-26: A double tap on iPad/phone never zooms the page (touchend guard plus gesture events blocked).
+- 2026-10-26: m4-notes signed off (David: "push all of it"), merged to main and pushed.
