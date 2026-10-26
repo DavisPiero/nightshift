@@ -7,6 +7,7 @@ export const STARTER_TRACK = {
   halfWidth: 6,     // 12 m of tarmac
   wall: 9.5,        // barriers 3.5 m beyond the road edge
   start: 30,        // sample index of the start line
+  patches: [[430, 650], [1300, 1480]], // heavier weather: the sweeper, the back straight
   points: [
     [0, -170], [0, -60], [0, 60], [0, 180],           // main straight
     [20, 290], [100, 360], [215, 380], [320, 340],    // long sweeper

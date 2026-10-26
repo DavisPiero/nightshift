@@ -35,8 +35,8 @@ export const TRACKS = [
 ];
 for (const t of TRACKS) t.path = new TrackPath(t.def);
 
-// Weathers a track allows (no rain falls in a tunnel).
-export function trackWeathers(t) { return t.def.weathers || ['clear', 'rain', 'fog']; }
+// Weathers a track allows (no rain or snow falls in a tunnel).
+export function trackWeathers(t) { return t.def.weathers || ['clear', 'rain', 'fog', 'snow']; }
 
 export function getTrack(id) {
   return TRACKS.find((t) => t.id === id) || TRACKS[0];

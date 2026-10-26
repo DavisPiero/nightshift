@@ -198,7 +198,7 @@ export class Effects {
     }
     if (dt <= 0) return;
     this.time += dt;
-    const wet = weather === 'rain';
+    const wet = weather === 'rain' || weather === 'snow'; // spray (or slush), no skid marks
     model.root.updateMatrixWorld(true);
 
     // Rear wheels: smoke when sliding or spinning, spray when wet.

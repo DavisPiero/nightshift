@@ -22,7 +22,8 @@ export function startLibrary(flags) {
   scene.fog = new THREE.Fog(0x0b1012, 25, 220);
   scene.background = scene.fog.color;
   const camera = new THREE.PerspectiveCamera(45, 16 / 9, 0.1, 400);
-  scene.add(new THREE.HemisphereLight(0x3a4a58, 0x141810, 1.3));
+  const sky = new THREE.HemisphereLight(0x3a4a58, 0x141810, 1.3);
+  scene.add(sky);
   const moon = new THREE.DirectionalLight(0x8090b0, 0.35);
   moon.position.set(-40, 80, -30);
   scene.add(moon);
@@ -63,7 +64,7 @@ export function startLibrary(flags) {
     }
   }
 
-  let current = null, radius = 5, centre = new THREE.Vector3(), turn = 0.6, tilt = 0.32, zoom = 1, dragging = null;
+  let current = null, radius = 5, centre = new THREE.Vector3(), turn = 0.55, tilt = 0.32, zoom = 1, dragging = null;
   function show(id) {
     if (!ASSETS[id]) id = ids[0];
     if (current) {
@@ -100,7 +101,7 @@ export function startLibrary(flags) {
       + `<dl><dt>Name</dt><dd>${id}</dd><dt>Group</dt><dd>${a.group}</dd><dt>Kind</dt><dd>${kind}</dd>`
       + `<dt>Size</dt><dd>${size.x.toFixed(1)} × ${size.y.toFixed(1)} × ${size.z.toFixed(1)} m</dd>`
       + `<dt>Pieces</dt><dd>${calls} (${Math.round(tris)} triangles)</dd>`
-      + `<dt>Lights</dt><dd>${current.lamps.length ? current.lamps.length + ' real' : 'none'}, ${current.glows.geometry.attributes.position.count} halos</dd></dl>`;
+      + `<dt>Lights</dt><dd>${current.lamps.length ? current.lamps.length + ' real' : 'none'}, ${current.glows.reduce((n, g) => n + g.geometry.attributes.position.count, 0)} halos</dd></dl>`;
     history.replaceState(null, '', `?library&asset=${id}`);
   }
 
@@ -114,7 +115,12 @@ export function startLibrary(flags) {
   });
   view.addEventListener('pointerup', () => { dragging = null; });
   view.addEventListener('wheel', (e) => { zoom = Math.max(0.35, Math.min(3, zoom * (1 + Math.sign(e.deltaY) * 0.1))); }, { passive: true });
+  // L: a work light, to see dark pieces properly (the game's night is dim).
+  let work = !!flags.worklight;
+  const setWork = () => { sky.intensity = work ? 5 : 1.3; sky.color.setHex(work ? 0x9aa8b8 : 0x3a4a58); };
+  setWork();
   window.addEventListener('keydown', (e) => {
+    if (e.code === 'KeyL') { work = !work; setWork(); return; }
     if (e.code !== 'ArrowDown' && e.code !== 'ArrowUp') return;
     e.preventDefault();
     const i = ids.indexOf(current.id) + (e.code === 'ArrowDown' ? 1 : -1);
@@ -129,7 +135,7 @@ export function startLibrary(flags) {
   const frame = () => {
     const now = performance.now(), dt = Math.min(0.1, (now - last) / 1000);
     last = now;
-    if (!dragging) turn += dt * 0.25;
+    if (!dragging && !flags.shot) turn += dt * 0.15;
     // Sit the asset left of centre-right, clear of the two panels.
     const d = radius * 3.6 * zoom;
     camera.position.set(centre.x + Math.sin(turn) * Math.cos(tilt) * d, centre.y + Math.sin(tilt) * d, centre.z + Math.cos(turn) * Math.cos(tilt) * d);

@@ -9,11 +9,13 @@
 import * as THREE from 'three';
 import { Tex } from '../graphics/textures.js';
 import { rng, strip, merge, wallStrip, placed } from './scene-kit.js';
-import { Placer } from './assets.js';
+import { Placer, roofMat } from './assets.js';
 import { buildUnderground } from './underground-scene.js';
+import { buildParabolica } from './parabolica-scene.js';
 
 export function buildTrackScene(track, def) {
   if (def.theme === 'underground') return buildUnderground(track, def);
+  if (def.theme === 'parabolica') return buildParabolica(track, def);
   const group = new THREE.Group();
   const hw = track.halfWidth;
   const r = rng(42);
@@ -266,46 +268,18 @@ export function buildTrackScene(track, def) {
   // Build every placed prop, its light pools and halos.
   const { glows, reflect, lamps } = place.finish(group);
 
-  // Far away: a ring of city blocks with a few lit windows and a low amber
-  // glow in the sky, so the horizon is not an empty black. It is a backdrop:
-  // drawn first, behind everything, and moved with the camera (see
-  // placeBackdrop) so it always sits just inside the view distance.
-  const backdrop = new THREE.Group();
   const skies = []; // sky materials, repainted for the time of day
-  {
-    const bg = { fog: false, depthWrite: false, depthTest: false };
-    const sky = new THREE.Mesh(new THREE.CylinderGeometry(900, 900, 260, 24, 1, true), new THREE.MeshBasicMaterial({ map: Tex.skyGlow(), side: THREE.BackSide, ...bg }));
-    skies.push(sky.material);
-    sky.position.y = 80;
-    sky.renderOrder = -11;
-    backdrop.add(sky);
-    const blocks = [];
-    for (let i = 0; i < 70; i++) {
-      const a = (i / 70) * Math.PI * 2 + r() * 0.05;
-      const d = 700 + r() * 120;
-      const h = 20 + r() * 60;
-      blocks.push(placed(new THREE.BoxGeometry(25 + r() * 40, h, 25 + r() * 30), Math.sin(a) * d, h / 2, Math.cos(a) * d, a));
-    }
-    const skyline = new THREE.Mesh(merge(blocks), new THREE.MeshBasicMaterial({ map: Tex.skyline(), ...bg }));
-    skyline.renderOrder = -10;
-    backdrop.add(skyline);
-    backdrop.traverse((o) => { o.frustumCulled = false; });
-  }
+  const backdrop = cityBackdrop(r, skies);
 
   // What the car's paint reflects: the lamp heads, the bright canopy (from
   // the assets), and the amber glow of the city low in the sky.
-  {
-    const sky = new THREE.Mesh(new THREE.CylinderGeometry(150, 150, 120, 16, 1, true), new THREE.MeshBasicMaterial({ map: Tex.skyGlow(), side: THREE.BackSide, fog: false }));
-    skies.push(sky.material);
-    sky.position.y = 40;
-    sky.userData.follow = true; // kept centred on the car (see reflections.js)
-    reflect.add(sky);
-  }
+  reflect.add(reflectSky(skies));
 
   return {
-    group, lamps, glows: [glows], roadMat, backdrop, reflect, skies,
+    group, lamps, glows, roadMat, backdrop, reflect, skies,
+    snowy: [[ground.material, 0xb8c0c8], [vergeMat, 0xc8ccd0], [roofMat(), 0xc4cad0]],
     look: {
-      fog: { clear: 0x0b1012, rain: 0x0d1418, fog: 0x1a2226 },
+      fog: { clear: 0x0b1012, rain: 0x0d1418, fog: 0x1a2226, snow: 0x161c22 },
       hemi: [0x3a4a58, 0x141810, 1.0],
       moon: 0.35,
       lamp: 0xffa04a, lampPower: 150,
@@ -313,6 +287,42 @@ export function buildTrackScene(track, def) {
       ground: 0x101214,
     },
   };
+}
+
+// Far away: a ring of city blocks with a few lit windows and a low glow in
+// the sky, so the horizon is not an empty black. It is a backdrop: drawn
+// first, behind everything, and moved with the camera (see placeBackdrop)
+// so it always sits just inside the view distance. Its sky material joins
+// `skies` (repainted for the time of day).
+export function cityBackdrop(r, skies, { count = 70, minH = 20, maxH = 80, windows = Tex.skyline() } = {}) {
+  const backdrop = new THREE.Group();
+  const bg = { fog: false, depthWrite: false, depthTest: false };
+  const sky = new THREE.Mesh(new THREE.CylinderGeometry(900, 900, 260, 24, 1, true), new THREE.MeshBasicMaterial({ map: Tex.skyGlow(), side: THREE.BackSide, ...bg }));
+  skies.push(sky.material);
+  sky.position.y = 80;
+  sky.renderOrder = -11;
+  backdrop.add(sky);
+  const blocks = [];
+  for (let i = 0; i < count; i++) {
+    const a = (i / count) * Math.PI * 2 + r() * 0.05;
+    const d = 700 + r() * 120;
+    const h = minH + r() * (maxH - minH);
+    blocks.push(placed(new THREE.BoxGeometry(25 + r() * 40, h, 25 + r() * 30), Math.sin(a) * d, h / 2, Math.cos(a) * d, a));
+  }
+  const skyline = new THREE.Mesh(merge(blocks), new THREE.MeshBasicMaterial({ map: windows, ...bg }));
+  skyline.renderOrder = -10;
+  backdrop.add(skyline);
+  backdrop.traverse((o) => { o.frustumCulled = false; });
+  return backdrop;
+}
+
+// The sky the car's paint reflects, kept centred on the car.
+export function reflectSky(skies) {
+  const sky = new THREE.Mesh(new THREE.CylinderGeometry(150, 150, 120, 16, 1, true), new THREE.MeshBasicMaterial({ map: Tex.skyGlow(), side: THREE.BackSide, fog: false }));
+  skies.push(sky.material);
+  sky.position.y = 40;
+  sky.userData.follow = true; // kept centred on the car (see reflections.js)
+  return sky;
 }
 
 // Keep the far backdrop centred on the camera and just inside its far plane.

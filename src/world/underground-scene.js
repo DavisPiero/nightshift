@@ -229,7 +229,7 @@ export function buildUnderground(track, def) {
   reflect.add(...built.reflect.children);
 
   return {
-    group, lamps, glows: [built.glows], roadMat,
+    group, lamps, glows: built.glows, roadMat,
     backdrop: new THREE.Group(), // nothing to see beyond the walls
     reflect,
     look: {

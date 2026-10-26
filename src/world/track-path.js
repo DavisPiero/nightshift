@@ -14,9 +14,10 @@ function catmull(p0, p1, p2, p3, t) {
 export class TrackPath {
   // points: [[x, z], ...] in driving order. halfWidth: half the tarmac width.
   // wall: distance from the centre line to the barriers.
-  constructor({ points, halfWidth, wall }) {
+  constructor({ points, halfWidth, wall, patches = [] }) {
     this.halfWidth = halfWidth;
     this.wall = wall;
+    this.patches = patches; // [[from, to], ...] metres along: heavier weather
 
     // Dense pass along the spline, then resample at even spacing.
     const dense = [];
@@ -74,6 +75,18 @@ export class TrackPath {
   headingAt(i) { return Math.atan2(this.tx[i], this.tz[i]); }
 
   wrap(i) { return ((i % this.count) + this.count) % this.count; }
+
+  // How far into a weather patch sample i is: 0 outside, 1 well inside,
+  // easing over the first and last 30 m.
+  patchAt(i) {
+    let k = 0;
+    for (const [a, b] of this.patches) {
+      const d = this.wrap(i - a), len = this.wrap(b - a);
+      if (d > len) continue;
+      k = Math.max(k, Math.min(1, d / 30, (len - d) / 30));
+    }
+    return k;
+  }
 
   // Closest centre-line sample. A hint (last known index) makes it a short
   // local search; without one it scans the whole track.

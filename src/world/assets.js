@@ -80,6 +80,36 @@ export const ASSETS = {
       lamps: [[0, 13.6, 0]],
     }),
   },
+  'led-streetlight': {
+    name: 'LED streetlight', jp: 'LED街灯', group: 'Street',
+    note: 'Tall modern lamp with a long arm and a flat white head, as on Tokyo ring roads. Parabolica Street.',
+    kit: () => {
+      const pole = lambert(0x4a4e54);
+      return {
+        parts: [
+          part(new THREE.CylinderGeometry(0.1, 0.14, 9, 6), pole, { y: 4.5 }),
+          part(new THREE.BoxGeometry(3.4, 0.12, 0.12), pole, { x: 1.6, y: 8.95 }),
+          part(new THREE.BoxGeometry(0.9, 0.1, 0.35), basic(0xeef4ff), { x: 3.2, y: 8.88 }),
+        ],
+        glows: [[3.2, 8.7, 0, 'white']],
+        pools: [[3.2, 0, 18, 18, 'white']],
+        lamps: [[3.2, 8.5, 0]],
+        reflect: [[new THREE.BoxGeometry(1.6, 0.3, 0.8), 0xeef4ff, 3.2, 8.9, 0]],
+      };
+    },
+  },
+  'park-lamp': {
+    name: 'Park lamp', jp: '公園灯', group: 'Street',
+    note: 'A short post with a round globe, along the park paths.',
+    kit: () => ({
+      parts: [
+        part(new THREE.CylinderGeometry(0.06, 0.09, 4, 6), lambert(0x2a3a34), { y: 2 }),
+        part(new THREE.IcosahedronGeometry(0.26, 1), basic(0xfff0d8), { y: 4.15 }),
+      ],
+      glows: [[0, 4.15, 0, 'amber']],
+      pools: [[0, 0, 9, 9, 'warm']],
+    }),
+  },
   'rail-post': {
     name: 'Guard rail post', jp: 'ガードレール支柱', group: 'Street',
     kit: () => ({ parts: [part(new THREE.BoxGeometry(0.12, 0.8, 0.12), lambert(0x5a5c5a), { y: 0.4 })] }),
@@ -127,6 +157,16 @@ export const ASSETS = {
       ],
     }),
   },
+  sakura: {
+    name: 'Cherry tree', jp: '桜', group: 'Nature',
+    note: 'In blossom: a wide pink crown that catches the lamp light. In the parks.',
+    kit: () => ({
+      parts: [
+        part(new THREE.IcosahedronGeometry(2.8, 0).scale(1.25, 0.8, 1.25), lambert(0xd88aa8, { flatShading: true }), { y: 4.3, shadow: true }),
+        part(new THREE.CylinderGeometry(0.18, 0.3, 3.2, 5), lambert(0x3a2a24), { y: 1.6 }),
+      ],
+    }),
+  },
   bush: {
     name: 'Bush', jp: '茂み', group: 'Nature',
     note: 'Usually placed squashed: 1.3 wide, 0.8 tall.',
@@ -165,6 +205,56 @@ export const ASSETS = {
         reflect: [[new THREE.BoxGeometry(14, 0.3, 8), 0xd8f0dc, 0, 4.8, 0]],
       };
     },
+  },
+  konbini: {
+    name: 'Convenience store', jp: 'コンビニ', group: 'Buildings',
+    note: 'Bright glass front with a band of stripes (no brand) and a white pool on the pavement. Faces +z.',
+    kit: () => {
+      const wall = lambert(0xc4c8c4);
+      return {
+        parts: [
+          part(new THREE.BoxGeometry(14, 4.4, 10), wall, { y: 2.2 }),
+          part(new THREE.PlaneGeometry(14, 4), mat('konbini', () => new THREE.MeshBasicMaterial({ map: Tex.konbini() })), { y: 2, z: 5.01 }),
+          part(new THREE.BoxGeometry(14.4, 0.3, 10.4), roofMat(), { y: 4.55 }),
+          part(new THREE.BoxGeometry(14.2, 0.5, 0.3), basic(0x1a8a6a), { y: 4.15, z: 5.1 }),
+        ],
+        pools: [[0, 8, 18, 8, 'white']],
+        glows: [[-5, 4.2, 5.3, 'white'], [5, 4.2, 5.3, 'white']],
+        lamps: [[0, 3.6, 7]],
+        reflect: [[new THREE.BoxGeometry(14, 3.6, 0.3), 0xe8f4f0, 0, 2, 5.1]],
+      };
+    },
+  },
+  footbridge: {
+    name: 'Footbridge', jp: '歩道橋', group: 'Buildings',
+    note: 'A steel footbridge spanning 32 m across the road (along x), stairs down on one side. Parabolica Street.',
+    kit: () => {
+      const steel = lambert(0x4a6a8a), conc = mat('conc', () => new THREE.MeshLambertMaterial({ map: Tex.concrete() }));
+      const parts = [
+        part(new THREE.BoxGeometry(32, 0.6, 2.4), conc, { y: 5.6 }),
+        part(new THREE.BoxGeometry(32, 1.1, 0.08), steel, { y: 6.45, z: 1.16 }),
+        part(new THREE.BoxGeometry(32, 1.1, 0.08), steel, { y: 6.45, z: -1.16 }),
+        part(new THREE.PlaneGeometry(6, 0.7), mat('fbsign', () => new THREE.MeshBasicMaterial({ map: Tex.roadSign([['歩道橋  FOOTBRIDGE', 10]], '#1d4f9a', 96, 12) })), { y: 5.05, z: -1.22, ry: Math.PI }),
+      ];
+      for (const sx of [-1, 1]) {
+        for (const pz of [-0.9, 0.9]) parts.push(part(new THREE.BoxGeometry(0.35, 5.4, 0.35), steel, { x: sx * 13.5, y: 2.7, z: pz }));
+        parts.push(part(new THREE.BoxGeometry(2, 0.35, 11.6), conc, { x: sx * 15, y: 2.8, z: 6.2, rx: 0.51 }));
+        parts.push(part(new THREE.BoxGeometry(0.08, 1, 11.6), steel, { x: sx * 15 + 1, y: 3.4, z: 6.2, rx: 0.51 }));
+      }
+      return { parts, glows: [[-6, 5.2, -1.3, 'white'], [6, 5.2, -1.3, 'white']] };
+    },
+  },
+  shop: {
+    name: 'Shop building', jp: '店舗ビル', group: 'Buildings',
+    note: 'Any size: a lit shopfront (or shutters) on the ground floor, tiled walls, windows above. Front faces the road.',
+    block: shops,
+    sample: [{ x: 0, z: 0, w: 16, d: 12, h: 13, rot: 0, tint: 0, seed: 1 }],
+  },
+  flats: {
+    name: 'Block of flats', jp: 'マンション', group: 'Buildings',
+    note: 'Any size: balconies and windows on every side, some lit.',
+    block: flats,
+    sample: [{ x: 0, z: 0, w: 20, d: 12, h: 30, rot: 0, seed: 1 }],
   },
   warehouse: {
     name: 'Warehouse', jp: '倉庫', group: 'Buildings',
@@ -224,6 +314,49 @@ export const ASSETS = {
   },
 };
 
+// Drinks vending machines in three colours.
+[['white', 0xe0e4e8, 0], ['blue', 0x2a5ab0, 1], ['red', 0xc8283a, 2]].forEach(([name, colour, seed]) => {
+  ASSETS['vending-' + name] = {
+    name: `Vending machine (${name})`, jp: '自動販売機', group: 'Street',
+    note: 'Lit drinks machine, front at +z. Stand them in twos and threes on the pavement.',
+    kit: () => ({
+      parts: [
+        part(new THREE.BoxGeometry(1, 1.85, 0.75), lambert(colour), { y: 0.925 }),
+        part(new THREE.PlaneGeometry(0.92, 1.8), mat('vend' + seed, () => new THREE.MeshBasicMaterial({ map: Tex.vending(seed) })), { y: 0.95, z: 0.38 }),
+      ],
+      pools: [[0, 1.4, 3, 2.6, 'white']],
+      reflect: [[new THREE.BoxGeometry(0.9, 1.4, 0.2), 0xf4fbff, 0, 1.1, 0.4]],
+    }),
+  };
+});
+
+// Vertical neon signs that stick out from a shop wall (the board lies in
+// the x-y plane, so it faces up and down the road; the wall is at -x).
+const NEON = { pink: '#ff3a8a', teal: '#3ff0e8', amber: '#ffb02a', violet: '#a07aff', green: '#3aff8a' };
+const NEON_GLOW = { pink: 'pink', teal: 'teal', amber: 'amber', violet: [0.63, 0.48, 1], green: [0.23, 1, 0.54] };
+[['ramen', 'ラーメン', 'pink'], ['karaoke', 'カラオケ', 'teal'], ['izakaya', '居酒屋', 'amber'], ['hotel', 'ホテル', 'pink'], ['kissa', '喫茶', 'violet'], ['pharmacy', '薬', 'green'], ['bar', 'バー', 'pink']].forEach(([id, text, c]) => {
+  ASSETS['neon-' + id] = {
+    name: `Neon sign: ${text}`, jp: 'ネオン', group: 'Signs',
+    note: 'Sticks out from a shop wall at -x, high up, and faces along the road both ways.',
+    kit: () => {
+      const h = 1.1 * (32 * text.length + 16) / 32;
+      const m = mat('neon' + id, () => new THREE.MeshBasicMaterial({ map: Tex.neonVertical(text, NEON[c]) }));
+      const glows = [];
+      for (let y = 0.6; y < h; y += 1.2) glows.push([0.6, 4 + y, 0.2, NEON_GLOW[c], 1.5], [0.6, 4 + y, -0.2, NEON_GLOW[c], 1.5]);
+      return {
+        parts: [
+          part(new THREE.BoxGeometry(1.2, h + 0.1, 0.18), basic(0x0a080c), { x: 0.6, y: 4 + h / 2 }),
+          part(new THREE.PlaneGeometry(1.1, h), m, { x: 0.6, y: 4 + h / 2, z: 0.1 }),
+          part(new THREE.PlaneGeometry(1.1, h), m, { x: 0.6, y: 4 + h / 2, z: -0.1, ry: Math.PI }),
+          part(new THREE.BoxGeometry(0.4, 0.1, 0.1), lambert(0x3a3a3a), { x: 0.2, y: 4 + h * 0.8 }),
+        ],
+        glows,
+        reflect: [[new THREE.BoxGeometry(1.2, h, 0.4), new THREE.Color(NEON[c]).getHex(), 0.6, 4 + h / 2, 0]],
+      };
+    },
+  };
+});
+
 // The ground pools' looks, shared by every track.
 const POOL_TEX = { warm: () => Tex.lightPool(), cool: () => Tex.lightPool(), white: () => Tex.lightPoolWhite(), pink: () => Tex.lightPoolWhite() };
 const POOL_COLOUR = { warm: 0xffffff, cool: 0x9adcc0, white: 0xc8d8ff, pink: 0xff4fa0 };
@@ -243,7 +376,7 @@ export class Placer {
     this.items = new Map();   // asset id -> [matrix, colour]
     this.objects = [];        // baked whole objects (parked cars)
     this.blocks = new Map();  // asset id -> list of block specs
-    this.glowPos = []; this.glowCol = [];
+    this.glowsBySize = new Map(); // halo size -> { pos, col }
     this.pools = {};          // kind -> geometries
     this.lamps = [];          // where real lights may go (THREE.Vector3)
     this.reflectGeos = new Map(); // colour -> geometries for the reflections
@@ -266,7 +399,7 @@ export class Placer {
     this.items.get(id).push([m, colour]);
     const kit = kitFor(id);
     const v = new THREE.Vector3();
-    for (const [gx, gy, gz, c] of kit.glows || []) { v.set(gx, gy, gz).applyMatrix4(m); this.glow(v.x, v.y, v.z, c); }
+    for (const [gx, gy, gz, c, size] of kit.glows || []) { v.set(gx, gy, gz).applyMatrix4(m); this.glow(v.x, v.y, v.z, c, size); }
     for (const [px, pz, w, d, kind] of kit.pools || []) { v.set(px, 0, pz).applyMatrix4(m); this.pool(v.x, v.z, w * s[0], d * s[2], kind, ry); }
     for (const [lx, ly, lz] of kit.lamps || []) this.lamps.push(new THREE.Vector3(lx, ly, lz).applyMatrix4(m));
     for (const [geo, c, rx, ryy, rz] of kit.reflect || []) {
@@ -281,10 +414,13 @@ export class Placer {
     this.blocks.get(id).push(spec);
   }
 
-  // Fake light that is not part of an asset.
-  glow(x, y, z, colour = 'amber') {
-    this.glowPos.push(x, y, z);
-    this.glowCol.push(...(Array.isArray(colour) ? colour : GLOW[colour]));
+  // Fake light that is not part of an asset. size: the halo's width
+  // (the track's default when left out).
+  glow(x, y, z, colour = 'amber', size = 0) {
+    if (!this.glowsBySize.has(size)) this.glowsBySize.set(size, { pos: [], col: [] });
+    const g = this.glowsBySize.get(size);
+    g.pos.push(x, y, z);
+    g.col.push(...(Array.isArray(colour) ? colour : GLOW[colour]));
   }
   pool(x, z, w, d = w, kind = 'warm', ry = 0) {
     (this.pools[kind] ||= []).push(placed(new THREE.PlaneGeometry(w, d), x, 0.03, z, ry, -Math.PI / 2));
@@ -294,8 +430,8 @@ export class Placer {
     this.reflectGeos.get(colour).push(geo);
   }
 
-  // Build everything into `group`. Returns the glow points (so Settings can
-  // hide them), the reflection group and the lamp spots.
+  // Build everything into `group`. Returns the glow points (a list, so
+  // Settings can hide them), the reflection group and the lamp spots.
   finish(group, { glowSize = 3.4 } = {}) {
     for (const [id, list] of this.items) {
       for (const p of kitFor(id).parts) {
@@ -312,12 +448,16 @@ export class Placer {
     for (const [id, list] of this.blocks) ASSETS[id].block(list, group, this);
     if (this.objects.length) group.add(bakeStatic(this.objects));
     for (const [kind, geos] of Object.entries(this.pools)) if (geos.length) group.add(new THREE.Mesh(merge(geos), poolMat(kind)));
-    const glowGeo = new THREE.BufferGeometry();
-    glowGeo.setAttribute('position', new THREE.Float32BufferAttribute(this.glowPos, 3));
-    glowGeo.setAttribute('color', new THREE.Float32BufferAttribute(this.glowCol, 3));
-    const glows = new THREE.Points(glowGeo, new THREE.PointsMaterial({ map: Tex.glow(), vertexColors: true, size: glowSize, sizeAttenuation: true, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
-    glows.renderOrder = 2;
-    group.add(glows);
+    if (!this.glowsBySize.size) this.glow(0, -10, 0); // always one set of halos, even if empty
+    const glows = [...this.glowsBySize].map(([size, { pos, col }]) => {
+      const geo = new THREE.BufferGeometry();
+      geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+      geo.setAttribute('color', new THREE.Float32BufferAttribute(col, 3));
+      const points = new THREE.Points(geo, new THREE.PointsMaterial({ map: Tex.glow(), vertexColors: true, size: size || glowSize, sizeAttenuation: true, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
+      points.renderOrder = 2;
+      group.add(points);
+      return points;
+    });
     const reflect = new THREE.Group();
     for (const [c, geos] of this.reflectGeos) reflect.add(new THREE.Mesh(mergeAny(geos), basic(c)));
     return { glows, reflect, lamps: this.lamps };
@@ -377,6 +517,60 @@ function warehouses(list, group, placer) {
   if (doorGeos.length) group.add(new THREE.Mesh(merge(doorGeos), mat('shutter', () => new THREE.MeshLambertMaterial({ map: Tex.shutter(), color: 0xaab0aa }))));
   winGeos.forEach((geos, i) => { if (geos.length) group.add(new THREE.Mesh(merge(geos), mat('win' + i, () => new THREE.MeshBasicMaterial({ map: Tex.windows(i + 1) })))); });
   if (lampGeos.length) group.add(new THREE.Mesh(merge(lampGeos), basic(0xd8c890)));
+}
+
+// Shop buildings, merged by look. Each: { x, z, w, d, h, rot, tint (0-3),
+// seed (1-4) }. The front (+z after rot) has a shopfront 4 m tall and rows
+// of windows above; the other sides are plain tiles.
+const SHOP_TINTS = [[150, 140, 122], [112, 116, 118], [138, 120, 108], [96, 100, 108]];
+function shops(list, group, placer) {
+  const walls = [[], [], [], []], fronts = [[], [], [], []], uppers = [[], [], []], roofs = [];
+  const face = (len, hgt, y0, b, ang, depth, u, v) => {
+    const g = new THREE.PlaneGeometry(len, hgt);
+    const uv = g.attributes.uv;
+    for (let i = 0; i < uv.count; i++) uv.setXY(i, uv.getX(i) * u, uv.getY(i) * v);
+    return placed(g, b.x + Math.sin(ang) * depth, y0 + hgt / 2, b.z + Math.cos(ang) * depth, ang);
+  };
+  for (const b of list) {
+    const fx = Math.sin(b.rot), fz = Math.cos(b.rot);
+    // Front: shopfront, then floors above.
+    fronts[(b.seed - 1) % 4].push(face(b.w, 4, 0, b, b.rot, b.d / 2 + 0.02, b.w / 16, 1));
+    if (b.h > 5) uppers[b.seed % 3].push(face(b.w, b.h - 4.6, 4.3, b, b.rot, b.d / 2 + 0.02, b.w / 8, (b.h - 4.6) / 12.8));
+    walls[b.tint].push(face(b.w, b.h, 0, b, b.rot, b.d / 2, b.w / 4, b.h / 4));
+    for (const [len, a] of [[b.d, Math.PI / 2], [b.w, Math.PI], [b.d, -Math.PI / 2]]) {
+      const depth = Math.abs(a) === Math.PI / 2 ? b.w / 2 : b.d / 2;
+      walls[b.tint].push(face(len, b.h, 0, b, b.rot + a, depth, len / 4, b.h / 4));
+    }
+    roofs.push(placed(new THREE.PlaneGeometry(b.w, b.d), b.x, b.h, b.z, b.rot, -Math.PI / 2));
+    // Light spilling out of the shopfront onto the pavement.
+    placer.pool(b.x + fx * (b.d / 2 + 2.5), b.z + fz * (b.d / 2 + 2.5), b.w * 0.9, 5, b.seed % 2 ? 'pink' : 'warm', b.rot);
+  }
+  walls.forEach((geos, i) => { if (geos.length) group.add(new THREE.Mesh(merge(geos), mat('shopwall' + i, () => new THREE.MeshLambertMaterial({ map: Tex.tiles(SHOP_TINTS[i]) })))); });
+  fronts.forEach((geos, i) => { if (geos.length) group.add(new THREE.Mesh(merge(geos), mat('shopfront' + i, () => new THREE.MeshBasicMaterial({ map: Tex.shopFront(i + 1), color: 0xcccccc })))); });
+  uppers.forEach((geos, i) => { if (geos.length) group.add(new THREE.Mesh(merge(geos), litMat('floors' + i, Tex.floors(i + 1)))); });
+  if (roofs.length) group.add(new THREE.Mesh(merge(roofs), roofMat()));
+}
+
+// Blocks of flats: balconies and windows all round. { x, z, w, d, h, rot, seed (1-3) }.
+function flats(list, group) {
+  const sides = [[], [], []], roofs = [];
+  for (const b of list) {
+    [[b.w, 0], [b.d, Math.PI / 2], [b.w, Math.PI], [b.d, -Math.PI / 2]].forEach(([len, a], fi) => {
+      const g = new THREE.PlaneGeometry(len, b.h);
+      const uv = g.attributes.uv;
+      for (let i = 0; i < uv.count; i++) uv.setXY(i, uv.getX(i) * len / 8, uv.getY(i) * b.h / 12.8);
+      const depth = fi % 2 ? b.w / 2 : b.d / 2, ang = b.rot + a;
+      sides[(b.seed - 1) % 3].push(placed(g, b.x + Math.sin(ang) * depth, b.h / 2, b.z + Math.cos(ang) * depth, ang));
+    });
+    roofs.push(placed(new THREE.PlaneGeometry(b.w, b.d), b.x, b.h, b.z, b.rot, -Math.PI / 2));
+  }
+  sides.forEach((geos, i) => { if (geos.length) group.add(new THREE.Mesh(merge(geos), litMat('flats' + i, Tex.flats(i + 1)))); });
+  if (roofs.length) group.add(new THREE.Mesh(merge(roofs), roofMat()));
+}
+
+// A wall whose lit windows glow but whose walls still take the light.
+function litMat(key, tex) {
+  return mat('lit' + key, () => new THREE.MeshLambertMaterial({ map: tex, emissive: 0xffffff, emissiveMap: tex, emissiveIntensity: 0.75 }));
 }
 
 // Flat roofs: one material, so snow can whiten every roof at once.

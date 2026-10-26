@@ -126,11 +126,15 @@ console.log('Lap of ' + TEST_ROAD.name);
 function botLap(assists, weather = 'clear', car = CAR, def = TEST_ROAD) {
   const track = new TrackPath(def);
   const v = new Vehicle(car, assists);
-  const grip = applyWeather(v, weather).grip;
+  applyWeather(v, weather);
   const s0 = def.start;
   v.reset(track.x[s0], track.z[s0], track.headingAt(s0));
-  let hint = s0, t = 0, hits = 0, travelled = 0, maxBeta = 0, worstHit = 0;
+  let hint = s0, t = 0, hits = 0, travelled = 0, maxBeta = 0, worstHit = 0, gripStep = 0, lastGrip = v.surface.grip, minGrip = 1;
   while (t < 240 && travelled < track.count) {
+    // Weather patches: grip eases down and back up again.
+    const grip = applyWeather(v, weather, weather === 'clear' ? 0 : track.patchAt(hint)).grip;
+    gripStep = Math.max(gripStep, Math.abs(grip - lastGrip));
+    lastGrip = grip; minGrip = Math.min(minGrip, grip);
     const look = Math.round(8 + v.speed * 0.5);
     const ti = track.wrap(hint + look);
     const dx = track.x[ti] - v.x, dz = track.z[ti] - v.z;
@@ -155,7 +159,7 @@ function botLap(assists, weather = 'clear', car = CAR, def = TEST_ROAD) {
     hint = r.index;
     maxBeta = Math.max(maxBeta, Math.abs(v.slipAngle));
   }
-  return { t, hits, worstHit, maxBeta, done: travelled >= track.count };
+  return { t, hits, worstHit, maxBeta, gripStep, minGrip, done: travelled >= track.count };
 }
 for (const [label, assists] of [['assists on', DEFAULT_ASSISTS], ['assists off', NO_ASSISTS]]) {
   const lap = botLap(assists);
@@ -233,6 +237,34 @@ for (const car of [CAR, GTAR_R35, CHALLENJER_SRT8]) {
   const lap = botLap(DEFAULT_ASSISTS, 'clear', car, PARABOLICA_TRACK);
   console.log(`  ${car.model}: ${lap.done ? lap.t.toFixed(1) + ' s' : 'did not finish'}, wall hits ${lap.hits} (worst ${lap.worstHit.toFixed(0)} km/h), max slide ${deg(lap.maxBeta)}°`);
   check(lap.done && lap.hits === 0, car.model + ' should lap Parabolica Street cleanly with assists on');
+}
+
+console.log('Snow and weather patches');
+{
+  const stop = (id) => {
+    const v = new Vehicle(CAR);
+    applyWeather(v, id);
+    while (kmh(v) < 100) v.step(DT, controls({ throttle: 1 }));
+    const x0 = v.x, z0 = v.z;
+    let t = 0;
+    while (v.speed > 0.1 && t < 12) { v.step(DT, controls({ brake: 1 })); t += DT; }
+    return Math.hypot(v.x - x0, v.z - z0);
+  };
+  const dRain = stop('rain'), dSnow = stop('snow');
+  console.log(`  100-0 braking: rain ${dRain.toFixed(1)} m, snow ${dSnow.toFixed(1)} m`);
+  check(dSnow > dRain, 'braking on snow should take longer than in the rain');
+  for (const def of [TEST_ROAD, UNDERGROUND_TRACK, PARABOLICA_TRACK]) {
+    for (const weather of def.weathers || ['rain', 'fog', 'snow']) {
+      if (weather === 'clear') continue;
+      for (const car of [CAR, GTAR_R35, CHALLENJER_SRT8]) {
+        const lap = botLap(DEFAULT_ASSISTS, weather, car, def);
+        console.log(`  ${def.name}, ${weather}, ${car.model}: ${lap.done ? lap.t.toFixed(1) + ' s' : 'did not finish'}, wall hits ${lap.hits}, grip down to ${lap.minGrip.toFixed(2)}, biggest grip step ${lap.gripStep.toFixed(4)}`);
+        check(lap.done && lap.hits === 0, `${car.model} should lap ${def.name} cleanly in ${weather} with assists on`);
+        check(lap.gripStep < 0.01, 'grip should ease in and out of a weather patch, never snap');
+        if (weather !== 'fog') check(lap.minGrip < applyWeather(new Vehicle(car), weather).grip - 0.04, `a ${weather} patch on ${def.name} should take some grip away`);
+      }
+    }
+  }
 }
 
 console.log('Garage builds and save');

@@ -12,8 +12,9 @@ export const PARABOLICA_TRACK = {
   name: 'Parabolica Street',
   theme: 'parabolica',
   halfWidth: 6.5,   // four lanes, 13 m of tarmac
-  wall: 9,          // concrete blocks 2.5 m beyond the road edge
+  wall: 10,         // concrete blocks 3.5 m beyond the road edge (room to run wide)
   start: 200,
+  patches: [[1880, 2100], [2420, 2700], [3250, 3550]], // under the expressway, the back straight, the main straight
   points: turtle([0, -200], 0, [
     ['S', 366],                                   // main straight (part one)
     ['R', 42, 36], ['S', 12], ['L', 42, 36],     // first chicane

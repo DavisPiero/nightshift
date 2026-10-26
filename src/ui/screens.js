@@ -257,6 +257,13 @@ function drawWeatherIcon(canvas, id) {
   } else if (id === 'rain') {
     for (let x = 3; x < 13; x++) for (let y = 3; y < 7; y++) if ((x - 8) ** 2 / 25 + (y - 5) ** 2 / 4 < 1) px(x, y, W);
     for (const [x, y] of [[4, 9], [8, 10], [12, 9], [6, 13], [10, 13]]) { px(x, y, C); px(x - 1, y + 1, C); }
+  } else if (id === 'snow') {
+    // Two pixel snowflakes.
+    for (const [cx, cy, c] of [[5, 5, W], [11, 11, O]]) {
+      for (let d = -2; d <= 2; d++) { px(cx + d, cy, c); px(cx, cy + d, c); }
+      for (const [dx, dy] of [[-1, -1], [1, 1], [-1, 1], [1, -1]]) px(cx + dx, cy + dy, c);
+    }
+    px(12, 3, W); px(3, 12, C);
   } else {
     for (const [y, a, b] of [[4, 2, 13], [7, 4, 15], [10, 1, 11], [13, 5, 14]]) for (let x = a; x < b; x++) px(x, y, x % 5 === 0 ? C : W);
   }

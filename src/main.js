@@ -405,6 +405,9 @@ class Game {
       const r = keepOnTrack(this.vehicle, this.track, this.trackIndex);
       this.trackIndex = r.index;
       this.lastOffset = r.offset;
+      // Heavier weather in the track's patches: a little less grip, eased.
+      this.patch = this.weatherId === 'clear' ? 0 : this.track.patchAt(this.trackIndex);
+      applyWeather(this.vehicle, this.weatherId, this.patch);
       if (r.impact > 0) {
         this.audio.impact(r.impact);
         this.effects.hit(r.contact, r.impact, this.vehicle);
@@ -467,7 +470,7 @@ class Game {
     } else {
       if (this.state === 'driving') this.cameras.update(this.carRef(), dt);
       this.model.setInterior(this.cameras.mode === 'cockpit');
-      this.audio.update(dt, v, this.weatherId, 1);
+      this.audio.update(dt, v, this.weatherId, 1, this.weather.k);
       this.hud.draw(v, dt);
     }
     const live = this.state === 'paused' ? 0 : dt;
@@ -477,7 +480,7 @@ class Game {
     if (!garage) {
       this.effects.renderHeight = this.renderer.height;
       this.effects.update(live, v, this.model, this.camera, near, this.weatherId);
-      this.weather.update(live, this.camera, v);
+      this.weather.update(live, this.camera, v, this.state === 'menu' ? 0 : this.patch || 0);
       placeBackdrop(this.world.backdrop, this.camera);
     }
     this.renderer.render(scene, this.camera);
@@ -581,7 +584,7 @@ class SmokeTest {
     const out = document.createElement('pre');
     out.id = 'smoke';
     out.textContent = [
-      `frames ${this.frames}, sim time ${this.t.toFixed(1)} s, platform ${game.save.platform}, weather ${game.weatherId}`,
+      `frames ${this.frames}, sim time ${this.t.toFixed(1)} s, platform ${game.save.platform}, ${game.trackInfo.name}, weather ${game.weatherId}, time ${game.timeId}`,
       `top speed ${this.maxKmh.toFixed(0)} km/h, distance ${this.travelled} m, gear ${game.vehicle.gearbox.gear}`,
       `render ${game.renderer.width}x${game.renderer.height} (${game.graphicsName}), draw calls ${game.renderer.gl.info.render.calls}`,
       game.save.platform === 'touch' ? `touch controls ${touchOk ? 'shown' : 'MISSING'}` : 'keyboard',
