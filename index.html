@@ -74,6 +74,16 @@
     </div>
   </section>
 
+  <!-- The asset library (?library): every prop, one at a time. -->
+  <section id="scr-library" class="screen select" hidden>
+    <header class="bar"><a class="btn back" href="./">Play</a><h2>Asset library<span class="jp">素材ライブラリ</span></h2><span class="where">Drag to turn · scroll to zoom · ↑↓ · L light</span></header>
+    <div class="side-list pnl">
+      <div class="ttl"><span>Assets</span><i class="win"></i></div>
+      <div id="library-list" class="list"></div>
+    </div>
+    <aside id="library-info" class="info pnl"></aside>
+  </section>
+
   <!-- Drive: pick a track. List on the left, the track flies by behind, its
        details on the right, Continue bottom right. -->
   <section id="scr-tracks" class="screen select" hidden>
@@ -103,7 +113,7 @@
       <div class="ttl"><span>Conditions</span><span class="jp">天候</span><i class="win"></i></div>
       <div class="cond-row">
         <div id="weather-list" class="choices"></div>
-        <div class="time"><span class="k">Time</span><span class="v">02:00</span><span class="muted small">Night</span></div>
+        <button id="time-btn" class="btn time" title="Change the time of day"><span class="k">Time ▸</span><span class="v">02:00</span><span class="muted small">Night</span></button>
         <button id="race-go" class="btn huge pri">Race</button>
       </div>
       <p id="weather-note" class="muted small"></p>

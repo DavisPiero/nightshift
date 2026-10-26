@@ -53,6 +53,16 @@ export const Tex = {
     for (let i = 0; i < 30; i++) g.fillRect(r() * w | 0, r() * h | 0, 1, 1);
   })),
 
+  // Lying snow: off-white with faint blue hollows and grey slush specks.
+  snow: () => cached('snow', () => canvasTexture([64, 64], (g, w, h) => {
+    noise(g, w, h, [214, 220, 226], 18, 61);
+    const r = rng(62);
+    g.fillStyle = 'rgba(150,170,195,0.35)';
+    for (let i = 0; i < 40; i++) g.fillRect(r() * w | 0, r() * h | 0, 2 + (r() * 4 | 0), 1 + (r() * 2 | 0));
+    g.fillStyle = 'rgba(110,112,116,0.4)';
+    for (let i = 0; i < 25; i++) g.fillRect(r() * w | 0, r() * h | 0, 1, 1);
+  })),
+
   // Concrete pavement / kerb with slab joints.
   concrete: () => cached('concrete', () => canvasTexture([64, 64], (g, w, h) => {
     noise(g, w, h, [104, 104, 98], 26, 2);
@@ -282,6 +292,13 @@ export const Tex = {
     g.fillStyle = grad; g.fillRect(0, 0, w, h);
   }, { nearest: false })),
 
+  // Any other sky (sunset, dawn): a vertical gradient from [offset, colour] stops, top first.
+  skyGradient: (key, stops) => cached('sky-' + key, () => canvasTexture([4, 64], (g, w, h) => {
+    const grad = g.createLinearGradient(0, 0, 0, h);
+    for (const [o, c] of stops) grad.addColorStop(o, c);
+    g.fillStyle = grad; g.fillRect(0, 0, w, h);
+  }, { nearest: false })),
+
   // Far city blocks: dark with a scatter of lit windows.
   skyline: () => cached('skyline', () => canvasTexture([32, 64], (g, w, h) => {
     g.fillStyle = '#0d1114'; g.fillRect(0, 0, w, h);
@@ -289,6 +306,17 @@ export const Tex = {
     for (let y = 2; y < h; y += 3) for (let x = 1; x < w; x += 3) {
       if (r() < 0.16) { g.fillStyle = r() < 0.8 ? '#8a6a3a' : '#7a8a8a'; g.fillRect(x, y, 1, 1); }
     }
+  }, { repeat: [2, 2] })),
+
+  // A far city at night with more lit windows, some pink and white.
+  skylineNeon: () => cached('skylineneon', () => canvasTexture([32, 64], (g, w, h) => {
+    g.fillStyle = '#0c0c12'; g.fillRect(0, 0, w, h);
+    const r = rng(52);
+    for (let y = 2; y < h; y += 3) for (let x = 1; x < w; x += 3) {
+      const k = r();
+      if (k < 0.24) { g.fillStyle = k < 0.15 ? '#b8a07a' : k < 0.2 ? '#c8d4e8' : '#e05a9a'; g.fillRect(x, y, 1, 1); }
+    }
+    g.fillStyle = '#ff3a3a'; g.fillRect(15, 0, 2, 1); // an aircraft light on a roof
   }, { repeat: [2, 2] })),
 
   // A streak of lamp light reflected in a wet road: bright at the lamp,
@@ -305,6 +333,119 @@ export const Tex = {
     }
     g.putImageData(img, 0, 0);
   }, { nearest: false })),
+
+  // --- Parabolica Street (Tokyo city ring road) ---
+
+  // Small square facade tiles, the beige and grey of Tokyo mid-rises.
+  tiles: (tint = [150, 140, 120]) => cached('tiles' + tint, () => canvasTexture([32, 32], (g, w, h) => {
+    noise(g, w, h, tint, 12, 71);
+    g.fillStyle = 'rgba(0,0,0,0.22)';
+    for (let i = 0; i < w; i += 4) { g.fillRect(i, 0, 1, h); g.fillRect(0, i, w, 1); }
+    const r = rng(72);
+    g.fillStyle = 'rgba(40,36,30,0.3)'; // grime under the sills
+    for (let i = 0; i < 6; i++) g.fillRect(r() * w | 0, r() * h | 0, 1, 4 + r() * 6 | 0);
+  })),
+
+  // Upper floors: rows of windows (one floor per 8 texels, 4 m across per
+  // 8 texels), some lit warm, some cool, a few pink.
+  floors: (seed = 1) => cached('floors' + seed, () => canvasTexture([32, 32], (g, w, h) => {
+    g.fillStyle = '#1a1a1e'; g.fillRect(0, 0, w, h);
+    const r = rng(seed * 47);
+    for (let y = 0; y < h; y += 8) for (let x = 0; x < w; x += 8) {
+      const lit = r();
+      g.fillStyle = lit < 0.22 ? '#e2c486' : lit < 0.32 ? '#b8d4dc' : lit < 0.35 ? '#ff7ab0' : '#0c0d10';
+      g.fillRect(x + 1, y + 2, 6, 4);
+      g.fillStyle = 'rgba(255,255,255,0.08)'; g.fillRect(x, y + 7, 8, 1); // sill
+    }
+  })),
+
+  // Flats: each floor a balcony rail in front of windows, a few lit.
+  flats: (seed = 1) => cached('flats' + seed, () => canvasTexture([32, 32], (g, w, h) => {
+    g.fillStyle = '#2a2a2e'; g.fillRect(0, 0, w, h);
+    const r = rng(seed * 53);
+    for (let y = 0; y < h; y += 8) {
+      for (let x = 0; x < w; x += 8) {
+        g.fillStyle = r() < 0.26 ? (r() < 0.7 ? '#d8b878' : '#9ac0d0') : '#0e0f12';
+        g.fillRect(x + 1, y + 1, 6, 4);
+      }
+      g.fillStyle = '#8a8c90'; g.fillRect(0, y + 5, w, 2); // balcony rail
+      g.fillStyle = '#505258'; g.fillRect(0, y + 7, w, 1);
+    }
+  })),
+
+  // A ground-floor shopfront: bright inside, shelves and goods, a door.
+  // 64 x 16 texels for a 16 m x 4 m front.
+  shopFront: (seed = 1) => cached('shopfront' + seed, () => canvasTexture([64, 16], (g, w, h) => {
+    const r = rng(seed * 59);
+    const glow = ['#f0e4c8', '#e8f0f4', '#ffd8e8', '#d8f4ec'][seed % 4];
+    g.fillStyle = '#18181a'; g.fillRect(0, 0, w, h);
+    for (let x = 0; x < w; x += 16) {
+      if (r() < 0.2) { // shuttered for the night
+        g.fillStyle = '#5a6064'; g.fillRect(x + 1, 3, 14, h - 3);
+        g.fillStyle = 'rgba(0,0,0,0.3)'; for (let y = 4; y < h; y += 2) g.fillRect(x + 1, y, 14, 1);
+        continue;
+      }
+      g.fillStyle = glow; g.fillRect(x + 1, 3, 14, h - 3);
+      for (let y = 5; y < h - 2; y += 3) for (let i = x + 2; i < x + 15; i++) {
+        if (r() < 0.6) { g.fillStyle = ['#c0503a', '#3a7ac0', '#d8a83a', '#4a9a5a', '#a04a8a'][(r() * 5) | 0]; g.fillRect(i, y, 1, 2); }
+      }
+      g.fillStyle = '#2a2a2c'; g.fillRect(x + 6, 6, 4, h - 6); // door
+      g.fillStyle = ['#c0283a', '#1a6aa8', '#2a8a5a', '#d88a1a'][(r() * 4) | 0]; g.fillRect(x + 1, 0, 14, 3); // awning band
+    }
+  })),
+
+  // Vertical neon sign: characters stacked in glowing tubes on a dark board.
+  neonVertical: (text, colour = '#ff3a8a') => cached('neonv' + text + colour, () => canvasTexture([32, 32 * text.length + 16], (g, w, h) => {
+    g.fillStyle = '#0a080c'; g.fillRect(0, 0, w, h);
+    g.strokeStyle = colour; g.lineWidth = 2; g.strokeRect(2, 2, w - 4, h - 4);
+    g.textAlign = 'center'; g.textBaseline = 'middle';
+    g.font = `bold 24px "Hiragino Sans", "Noto Sans JP", "Yu Gothic", "Meiryo", sans-serif`;
+    [...text].forEach((ch, i) => {
+      const y = 22 + i * 32;
+      g.lineJoin = 'round';
+      g.strokeStyle = colour; g.globalAlpha = 0.35; g.lineWidth = 6; g.strokeText(ch, w / 2, y);
+      g.globalAlpha = 1; g.lineWidth = 2.5; g.strokeText(ch, w / 2, y);
+      g.strokeStyle = '#fff4fa'; g.lineWidth = 1; g.strokeText(ch, w / 2, y);
+    });
+  }, { nearest: false })),
+
+  // Drinks vending machine front: lit rows of cans and bottles, buttons, slot.
+  vending: (seed = 1) => cached('vending' + seed, () => canvasTexture([16, 32], (g, w, h) => {
+    const r = rng(seed * 61);
+    g.fillStyle = ['#e8ecf0', '#2a5ab0', '#c8283a'][seed % 3]; g.fillRect(0, 0, w, h);
+    g.fillStyle = '#f4fbff'; g.fillRect(1, 2, w - 2, 16);
+    for (let y = 3; y < 17; y += 4) for (let x = 2; x < w - 2; x += 2) {
+      g.fillStyle = ['#d83a2a', '#2a6ad8', '#e8c83a', '#3aa85a', '#f0f0f0', '#8a4a2a'][(r() * 6) | 0];
+      g.fillRect(x, y, 1, 2);
+      g.fillStyle = '#3ae86a'; g.fillRect(x, y + 3, 1, 1); // the little lit buttons
+    }
+    g.fillStyle = '#101214'; g.fillRect(2, 21, 7, 2); g.fillRect(3, 26, 10, 4);
+  })),
+
+  // Convenience store front: bright glass, shelves, a band of colour stripes
+  // on top (no brand). 64 x 16 texels for 14 m x 4 m.
+  konbini: () => cached('konbini', () => canvasTexture([64, 16], (g, w, h) => {
+    g.fillStyle = '#f4f8f6'; g.fillRect(0, 0, w, h);
+    g.fillStyle = '#1a8a6a'; g.fillRect(0, 0, w, 2);
+    g.fillStyle = '#f0a020'; g.fillRect(0, 2, w, 1);
+    g.fillStyle = '#2a5ab8'; g.fillRect(0, 3, w, 1);
+    const r = rng(63);
+    for (let y = 6; y < h - 1; y += 3) for (let x = 1; x < w - 1; x++) {
+      if (x > 26 && x < 34) continue; // the door
+      if (r() < 0.75) { g.fillStyle = ['#d8583a', '#3a8ad8', '#e8c83a', '#4aa86a', '#c84a9a'][(r() * 5) | 0]; g.fillRect(x, y, 1, 2); }
+    }
+    g.fillStyle = '#8a9a9a'; for (let x = 0; x < w; x += 8) g.fillRect(x, 4, 1, h - 4);
+    g.fillStyle = '#c8dcd8'; g.fillRect(27, 5, 7, h - 5);
+  })),
+
+  // Concrete barrier blocks: weathered white with red bands, joints between.
+  barrier: () => cached('barrier', () => canvasTexture([32, 16], (g, w, h) => {
+    noise(g, w, h, [178, 176, 168], 20, 64);
+    g.fillStyle = '#a82a2a';
+    for (let x = 0; x < w; x += 16) g.fillRect(x + 2, 4, 6, 8);
+    g.fillStyle = 'rgba(30,30,30,0.6)'; for (let x = 0; x < w; x += 8) g.fillRect(x, 0, 1, h);
+    g.fillStyle = 'rgba(40,40,40,0.4)'; g.fillRect(0, h - 3, w, 3); // road grime
+  }, { repeat: [1, 1] })),
 
   // --- Underground (Tokyo tunnel) ---
 

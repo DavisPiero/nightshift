@@ -5,6 +5,7 @@
 import { TrackPath } from './track-path.js';
 import { STARTER_TRACK } from './starter-track.js';
 import { UNDERGROUND_TRACK } from './underground.js';
+import { PARABOLICA_TRACK } from './parabolica.js';
 
 export const TRACKS = [
   {
@@ -23,11 +24,19 @@ export const TRACKS = [
     jp: 'アンダーグラウンド',
     def: UNDERGROUND_TRACK,
   },
+  {
+    id: 'parabolica',
+    name: 'Parabolica Street',
+    blurb: 'A city ring road round a park, shaped like Monza. Long straights, two chicanes, the Lesmos and the long Parabolica.',
+    corners: 11,
+    jp: 'パラボリカ通り',
+    def: PARABOLICA_TRACK,
+  },
 ];
 for (const t of TRACKS) t.path = new TrackPath(t.def);
 
-// Weathers a track allows (no rain falls in a tunnel).
-export function trackWeathers(t) { return t.def.weathers || ['clear', 'rain', 'fog']; }
+// Weathers a track allows (no rain or snow falls in a tunnel).
+export function trackWeathers(t) { return t.def.weathers || ['clear', 'rain', 'fog', 'snow']; }
 
 export function getTrack(id) {
   return TRACKS.find((t) => t.id === id) || TRACKS[0];

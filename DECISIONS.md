@@ -58,3 +58,11 @@ One line each, newest last.
 - 2026-10-26: Paint, finish, decals and wheels are looks only. Wheel size is not offered (it would need physics and arch work).
 - 2026-10-26: Garage ratings compare with stock: green pips gained, red lost. The Engine tab shows a dyno chart (power and torque, stock faint behind).
 - 2026-10-26: The garage camera moves to suit the tab (wheels close up, rear for wing and kit, front three-quarter for parts).
+- 2026-10-26: Asset library: every prop is a named kit in src/world/assets.js, placed by a Placer that instances each one (one draw call per part). Tracks never build props themselves. `?library` shows each one.
+- 2026-10-26: Time of day: Sunset (18:40), Night (02:00), Dawn (05:10). Light only, never physics. Lamps stay on at sunset and dawn. The Underground is Night only.
+- 2026-10-26: Snow is a fourth weather: grip 0.68 (0.62 in a flurry), slide 0.86; it lies on verges, ground and roofs; the road stays dark and wet. 0.62 made the bot slide wide in Parabolica's fast sweepers.
+- 2026-10-26: Weather patches are fixed stretches of each track (on straights where possible) where the chosen weather gets heavier: more rain or snow, nearer fog, a little less grip, eased in and out over 30 m. Clear has none.
+- 2026-10-26: Parabolica Street: Monza's shape at about 60% (3.62 km), drawn as straights and arcs (a turtle). Chicanes opened up; the Curva Grande is two arcs with a short straight between; walls 3.5 m beyond the road edge; the start is about 600 m before the first chicane.
+- 2026-10-26: Parabolica Street's light is pink neon (shop signs and spill) under cool white LED lamps; the park is inside the loop, the town outside.
+- 2026-10-26: David confirmed Parabolica Street's shape, name and light (pink neon, white lamps), and this session's guesses: snow grip 0.68, no patches in Clear, lamps on at sunset and dawn, walls 3.5 m out.
+- 2026-10-26: David confirmed all older open guesses as they stand: the R35 is "2017 Nissani GT-Ar"; the Challenjer keeps its newer face with 2009 name and figures; pink main buttons; no rain in the Underground; garage headlights lit, beams off; parts free and fitted at once; 3 builds per car; slammed needs coilovers; race number 08; Feel panel values as they are; classes R34 A 756, Challenjer B 635, R35 S 862.

@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.6.0 (unreleased): the world
+- New track: Parabolica Street, a Tokyo ring road round a park, shaped like Monza at about
+  60% scale (3.6 km). Shops with lit fronts and neon signs, blocks of flats, vending machines,
+  convenience stores, power lines, white LED lamps, cherry blossom in the park, footbridges
+  and an elevated expressway crossing over.
+- Time of day: Sunset, Night or Dawn, picked in the Time box on the car pick.
+- Snow: a fourth weather with snow falling and lying on the verges and roofs; the least grip.
+- Weather patches: fixed stretches of each track where the rain turns to a downpour, the fog
+  thickens or the snow comes in harder (grip eases down a little, never snaps).
+- The asset library (`?library`): every prop, one at a time, under the game's own light.
+
 ## 0.5.0 (unreleased): garage mods
 - The Garage has eight tabs: Paint (colour and finish: gloss, metallic, pearl, matte), Decals
   (stripes, side stripe, race number, 走り屋 sticker), Wheels (six rim styles, rim and calliper

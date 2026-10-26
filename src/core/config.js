@@ -31,8 +31,9 @@ export const DEFAULT_EFFECTS = {
 
 // URL switches for testing: ?mute silences sound, ?device=computer|touch
 // skips the menus and drives straight away, ?weather=rain|fog picks the
-// weather, ?track=underground picks the track, ?car=<id> the car,
-// ?screen=tracks|setup|garage opens a menu screen, ?smoke runs the automatic
+// weather, ?time=sunset|night|dawn the time of day, ?track=underground picks the track, ?car=<id> the car,
+// ?screen=tracks|setup|garage opens a menu screen, ?library opens the asset
+// library (&asset=<id> picks one, &worklight lights it up), ?smoke runs the automatic
 // load-and-drive check and ?shot runs the loop on a timer for headless
 // screenshots (tools/shot.sh).
 const params = new URLSearchParams(location.search);
@@ -40,10 +41,14 @@ export const URL_FLAGS = {
   mute: params.has('mute') || params.has('smoke'),
   device: params.get('device'),
   weather: params.get('weather'),
+  time: params.get('time'),
   smoke: params.has('smoke'),
   debug: params.has('debug'),
   track: params.get('track'),
   car: params.get('car'),
   screen: params.get('screen'),
   shot: params.has('shot'),
+  library: params.has('library'),
+  asset: params.get('asset'),
+  worklight: params.has('worklight'),
 };

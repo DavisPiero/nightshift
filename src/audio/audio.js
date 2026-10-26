@@ -323,12 +323,14 @@ export class GameAudio {
   suspend() { this.ctx?.suspend(); }
   resume() { this.ctx?.resume(); }
 
-  // level: 1 when driving, lower behind the menus. weather: 'clear' | 'rain' | 'fog'.
-  update(dt, v, weather = 'clear', level = 1) {
+  // level: 1 when driving, lower behind the menus. weather: 'clear' | 'rain' |
+  // 'fog' | 'snow'. patch: 0..1, how far into a downpour (louder rain).
+  update(dt, v, weather = 'clear', level = 1, patch = 0) {
     if (!this.ctx || this.ctx.state !== 'running') return;
     const t = this.ctx.currentTime;
     this.engineLevel.gain.setTargetAtTime(level, t, 0.3);
-    const wet = weather === 'rain';
+    const wet = weather === 'rain' || weather === 'snow';
+    const raining = weather === 'rain';
     this.engine.update(dt, {
       rpm: v.rpm, throttle: v.throttle, load: v.load,
       redline: v.spec.redline, limiter: v.limiter,
@@ -344,7 +346,7 @@ export class GameAudio {
     const squeal = v.speed > 4 ? Math.min(1, Math.max(slide, hardStop)) * Math.min(1, v.speed / 15) : 0;
     this.squealGain.gain.setTargetAtTime(squeal * (wet ? 0.07 : 0.22) * level, t, 0.05);
     this.hissGain.gain.setTargetAtTime(wet ? Math.min(1, v.speed / 30) * 0.12 * level : 0, t, 0.1);
-    this.rainGain.gain.setTargetAtTime(wet ? 0.16 : 0, t, 0.5);
+    this.rainGain.gain.setTargetAtTime(raining ? 0.16 * (1 + patch * 0.8) : 0, t, 0.5);
     this.humGain.gain.setTargetAtTime(0.025, t, 0.5);
     // Crickets on dry nights: a short trill now and then.
     this.cricketTimer -= dt;
@@ -352,7 +354,7 @@ export class GameAudio {
       this.cricketTimer = 2 + Math.random() * 5;
       this.cricket();
     }
-    if (wet && Math.random() < dt * 9) this.drop();
+    if (raining && Math.random() < dt * 9 * (1 + patch)) this.drop();
     const wobble = 1 + Math.sin(t * 13) * 0.03;
     this.squealFilters[0].frequency.setTargetAtTime(900 * wobble + slide * 150, t, 0.05);
     this.squealFilters[1].frequency.setTargetAtTime(1450 * wobble + slide * 200, t, 0.05);

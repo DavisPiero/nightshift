@@ -14,9 +14,10 @@ function catmull(p0, p1, p2, p3, t) {
 export class TrackPath {
   // points: [[x, z], ...] in driving order. halfWidth: half the tarmac width.
   // wall: distance from the centre line to the barriers.
-  constructor({ points, halfWidth, wall }) {
+  constructor({ points, halfWidth, wall, patches = [] }) {
     this.halfWidth = halfWidth;
     this.wall = wall;
+    this.patches = patches; // [[from, to], ...] metres along: heavier weather
 
     // Dense pass along the spline, then resample at even spacing.
     const dense = [];
@@ -75,6 +76,18 @@ export class TrackPath {
 
   wrap(i) { return ((i % this.count) + this.count) % this.count; }
 
+  // How far into a weather patch sample i is: 0 outside, 1 well inside,
+  // easing over the first and last 30 m.
+  patchAt(i) {
+    let k = 0;
+    for (const [a, b] of this.patches) {
+      const d = this.wrap(i - a), len = this.wrap(b - a);
+      if (d > len) continue;
+      k = Math.max(k, Math.min(1, d / 30, (len - d) / 30));
+    }
+    return k;
+  }
+
   // Closest centre-line sample. A hint (last known index) makes it a short
   // local search; without one it scans the whole track.
   nearest(x, z, hint = -1) {
@@ -102,4 +115,37 @@ export class TrackPath {
       along: dx * this.tx[i] + dz * this.tz[i],
     };
   }
+}
+
+// Draw a closed road like a turtle: from [x, z] facing `heading`, follow a
+// list of pieces: ['S', metres] straight on, ['R', degrees, radius] turn
+// right, ['L', degrees, radius] turn left. Returns points every few metres
+// for TrackPath. Any small gap left between the end and the start is spread
+// along the whole loop, so the pieces need only add up roughly.
+export function turtle([x0, z0], heading, pieces, step = 10) {
+  let x = x0, z = z0, h = heading;
+  const pts = [[x, z]];
+  const dist = [0];
+  let s = 0;
+  const go = (len, turn) => {
+    const n = Math.max(1, Math.ceil(len / step));
+    for (let i = 0; i < n; i++) {
+      const d = len / n;
+      h += turn / n / 2;
+      x += Math.sin(h) * d; z += Math.cos(h) * d;
+      h += turn / n / 2;
+      s += d;
+      pts.push([x, z]); dist.push(s);
+    }
+  };
+  for (const [kind, a, r] of pieces) {
+    if (kind === 'S') go(a, 0);
+    else {
+      const rad = (a * Math.PI) / 180;
+      go(rad * r, kind === 'R' ? -rad : rad); // right turns lower the heading
+    }
+  }
+  const ex = x - x0, ez = z - z0;
+  pts.pop(); dist.pop(); // the last point is the first one again
+  return pts.map(([px, pz], i) => [px - ex * (dist[i] / s), pz - ez * (dist[i] / s)]);
 }
