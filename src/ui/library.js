@@ -95,7 +95,7 @@ export function startLibrary(flags) {
     const a = ASSETS[id];
     const size = box.getSize(new THREE.Vector3());
     const kind = a.block ? 'Any size (recipe)' : a.object ? 'Whole object, baked' : 'Kit, instanced';
-    $('#library-info').innerHTML = `<div class="ttl"><span>Asset</span><span class="jp">素材</span><i class="win"></i></div>`
+    $('#library-info').innerHTML = `<div class="ttl"><span>Asset</span><span class="jp">素材</span></div>`
       + `<div class="info-name"><span class="name">${a.name}</span><span class="jp">${a.jp || ''}</span></div>`
       + (a.note ? `<p class="muted small">${a.note}</p>` : '')
       + `<dl><dt>Name</dt><dd>${id}</dd><dt>Group</dt><dd>${a.group}</dd><dt>Kind</dt><dd>${kind}</dd>`

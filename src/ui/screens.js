@@ -184,7 +184,7 @@ export class Screens {
     for (const b of document.querySelectorAll('#track-list .item')) b.classList.toggle('on', b.dataset.track === t.id);
     const ws = trackWeathers(t).map((id) => WEATHER[id].name).join(' · ');
     const el = $('#track-info');
-    el.innerHTML = `<div class="ttl"><span>Track data</span><i class="win"></i></div>`
+    el.innerHTML = `<div class="ttl"><span>Track data</span></div>`
       + `<canvas width="240" height="150"></canvas>`
       + `<div class="info-name"><span class="name">${t.name}</span><span class="jp">${t.jp || ''}</span></div>`
       + `<p class="muted small">${t.blurb}</p>`
@@ -267,7 +267,7 @@ export class Screens {
     if (entering) { this.game.previewTime(this.pick.time); this.game.previewWeather(this.pick.weather); }
     const car = getCar(this.pick.car), r = carStats(this.game.specFor(car.id));
     const el = $('#race-info');
-    el.innerHTML = `<div class="ttl"><span>Race</span><i class="win"></i></div>`
+    el.innerHTML = `<div class="ttl"><span>Race</span></div>`
       + `<canvas width="240" height="150"></canvas>`
       + `<div class="info-name"><span class="name">${t.name}</span></div>`
       + `<dl><dt>Car</dt><dd>${car.make} ${car.model}</dd><dt>Class</dt><dd><span class="cls cls-${r.cls} mini">${r.cls}</span> ${r.pi}</dd>`
