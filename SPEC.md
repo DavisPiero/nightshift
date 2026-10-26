@@ -1,7 +1,7 @@
 # NIGHTSHIFT: spec
 
 ## What makes it good
-1. **In the car within seconds.** Drive, track, car, race settings, Race: four taps, each
+1. **In the car within seconds.** Drive, Single Player Race, track, car, race settings, Race: five taps, each
    screen remembering your last pick (David asked for the race settings screen, 2026-10-26).
 2. **Driving that forgives.** The car has weight and slides, but assists catch spins,
    countersteer for you a little and hold a drift once it starts. A kid with a keyboard
@@ -63,5 +63,7 @@ The one style sheet for every screen (fix for "it still looks like Courtside", 2
 - Cyberpunk clutter (holograms, chrome everywhere) or a glossy modern look in the world.
   Shine is for the cars' paint and glass.
 - Real badges, logos or exact real car names (near-miss names are fine).
-- AI opponents before Milestone 6 is done (only the shared track data they will use).
+- AI opponents in the game before Milestone 6 is done. The AI's code (src/race/) exists and is
+  benched (David, 2026-10-26: "start writing the code and logic, don't show anything").
+- Multiplayer and Career: tiles on the Drive screen only, greyed out, until David asks.
 - Online play.

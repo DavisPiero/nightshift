@@ -9,6 +9,8 @@
 // layout survives rotation and different screen sizes; the layout editor
 // lets the player drag each control where they want it.
 
+import { pixelSvg } from '../graphics/pixel-art.js';
+
 export const DEFAULT_TOUCH = {
   size: 1,               // scale for every control
   opacity: 0.8,
@@ -29,20 +31,29 @@ export const DEFAULT_TOUCH = {
 };
 
 // Pedals and the handbrake lever, drawn as pictures (SVG): brushed metal
-// plates with rubber ridges that tip down when pressed.
+// plates with rubber ridges that tip down when pressed. Each is turned into
+// a small bitmap (pixelSvg) so it has the same chunky pixels as the HUD.
 const metal = (id) => `<linearGradient id="${id}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#e4e9ec"/><stop offset="0.45" stop-color="#9aa3a8"/><stop offset="1" stop-color="#5d666b"/></linearGradient>`;
 const ridges = (x, y, w, h, n) => Array.from({ length: n }, (_, i) => `<rect x="${x}" y="${y + i * (h / n) + 1}" width="${w}" height="${h / n - 3}" rx="1.5" fill="#15181a"/><rect x="${x}" y="${y + i * (h / n) + 1}" width="${w}" height="1" fill="#3a4044"/>`).join('');
 const ART = {
   throttle: `<svg viewBox="0 0 62 75">${'<defs>' + metal('mg') + '</defs>'}<rect x="3" y="2" width="56" height="71" rx="7" fill="#1a1d1f"/><rect x="5" y="3" width="52" height="68" rx="6" fill="url(#mg)"/>${ridges(11, 9, 40, 56, 8)}</svg>`,
   brake: `<svg viewBox="0 0 59 52">${'<defs>' + metal('mb') + '</defs>'}<rect x="2" y="2" width="55" height="48" rx="8" fill="#1a1d1f"/><rect x="4" y="3" width="51" height="45" rx="7" fill="url(#mb)"/><rect x="9" y="8" width="41" height="35" rx="4" fill="#15181a"/>${ridges(12, 11, 35, 29, 5).replaceAll('#15181a', '#24282b')}</svg>`,
-  handbrake: `<svg viewBox="0 0 52 38"><path d="M10 31 L38 9" stroke="#15181a" stroke-width="9" stroke-linecap="round"/><path d="M10 31 L38 9" stroke="#8d969b" stroke-width="5" stroke-linecap="round"/><path d="M26 18.5 L38 9" stroke="#1f2325" stroke-width="7" stroke-linecap="round"/><circle cx="40" cy="7.5" r="3" fill="#ff2e88"/><rect x="4" y="30" width="16" height="5" rx="2" fill="#2a2f32"/></svg>`,
+  // A real handbrake: a metal arm with a ridged rubber grip and a pink
+  // release button, rising out of a leather gaiter on the console.
+  handbrake: `<svg viewBox="0 0 84 50"><defs>${metal('mh')}</defs>`
+    + '<rect x="2" y="37" width="52" height="11" rx="3" fill="#121416"/><rect x="4" y="38" width="48" height="4" rx="2" fill="#2b3033"/>'
+    + '<path d="M8 39 Q12 28 24 27 Q33 28 36 39 Z" fill="#191b1d" stroke="#0b0c0d" stroke-width="1"/><path d="M13 37 Q16 31 23 30 M31 37 Q29 31 24 30" stroke="#3a3f43" stroke-width="0.8" fill="none" stroke-dasharray="1.6 1.4"/>'
+    + '<g transform="rotate(-26 22 33)"><rect x="16" y="28.5" width="62" height="9" rx="4.5" fill="#0d0f10"/><rect x="18" y="29.5" width="58" height="7" rx="3.5" fill="url(#mh)"/>'
+    + '<rect x="40" y="27.5" width="34" height="11" rx="5.5" fill="#181b1d"/>'
+    + Array.from({ length: 7 }, (_, i) => `<rect x="${43 + i * 4.2}" y="28.5" width="1.6" height="9" fill="#2d3236"/>`).join('')
+    + '<rect x="73" y="29" width="8" height="8" rx="3" fill="#ff2e88"/><rect x="74" y="29.8" width="5" height="2" rx="1" fill="#ff9cc6"/></g></svg>',
 };
 
 // Base sizes in CSS pixels before the size setting.
 const BUTTONS = {
   throttle: { label: 'GAS', w: 112, h: 136, cls: 'gas pedal' },
   brake: { label: 'BRAKE', w: 118, h: 104, cls: 'brake pedal' },
-  handbrake: { label: 'HAND', w: 104, h: 76, cls: 'small lever' },
+  handbrake: { label: 'HANDBRAKE', w: 124, h: 84, cls: 'lever' },
   gearUp: { label: '+', w: 70, h: 62, manual: true },
   gearDown: { label: '-', w: 70, h: 62, manual: true },
   camera: { label: 'CAM', w: 74, h: 52, cls: 'small', action: 'camera' },
@@ -89,7 +100,11 @@ export class TouchSource {
     for (const [name, b] of Object.entries(BUTTONS)) {
       const el = document.createElement('div');
       el.className = `tc pad ${b.cls || ''}`;
-      if (ART[name]) el.innerHTML = `${ART[name]}<span class="cap">${b.label}</span>`;
+      if (ART[name]) {
+        // Drawn small and shown with square pixels, like the rest of the HUD.
+        el.innerHTML = `<img class="art" alt="" draggable="false"><span class="cap">${b.label}</span>`;
+        pixelSvg(ART[name], 1.1).then((url) => { if (url) el.querySelector('img').src = url; });
+      }
       else el.textContent = b.label;
       el.dataset.name = name;
       r.appendChild(el);

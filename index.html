@@ -71,6 +71,7 @@
       <p class="load-word">Loading<span class="dots"><i></i><i></i><i></i></span></p>
     </div>
   </div>
+  <script src="src/ui/pixel-wheel.js"></script>
   <canvas id="view"></canvas>
 
   <!-- Driving HUD -->
@@ -112,7 +113,7 @@
       <h1 class="brand"><span class="chrome">NIGHTSHIFT</span><span class="stamp">夜勤</span></h1>
       <p class="tag">street racing after dark</p>
       <nav class="stack">
-        <button class="btn huge pri" data-go="tracks">Drive</button>
+        <button class="btn huge pri" data-go="modes">Drive</button>
         <button class="btn" data-go="garage">Garage</button>
         <button class="btn" data-go="settings">Settings</button>
       </nav>
@@ -127,6 +128,18 @@
       <div id="library-list" class="list"></div>
     </div>
     <aside id="library-info" class="info pnl"></aside>
+  </section>
+
+  <!-- Drive: pick a mode. Big picture tiles (after the Automobilista 2 menu
+       David sent); only Single Player Race works for now, the other two are
+       there so the menu has room for them later. -->
+  <section id="scr-modes" class="screen modes" hidden>
+    <header class="bar"><button class="btn back" data-back>Back</button><h2>Drive<span class="jp">モード選択</span></h2></header>
+    <nav class="stack mode-grid">
+      <button class="mode single" data-go="tracks" data-sound="confirm" style="background-image: url(assets/loading/parabolica.jpg)"><span class="mh">Single Player Race</span><span class="ms">Pick a track, a car and the weather</span></button>
+      <button class="mode soon" disabled style="background-image: url(assets/loading/underground.jpg)"><span class="mh">Multiplayer Race</span><span class="ms">Coming later</span></button>
+      <button class="mode soon" disabled style="background-image: url(assets/loading/starter.jpg)"><span class="mh">Career</span><span class="ms">Coming later</span></button>
+    </nav>
   </section>
 
   <!-- Drive: pick a track. List on the left, the track flies by behind, its

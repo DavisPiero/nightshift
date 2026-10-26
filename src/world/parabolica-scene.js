@@ -1,20 +1,24 @@
 // Parabolica Street: a Tokyo ring road at night, closed for racing. Inside
 // the loop is a park (dark trees, cherry blossom, round park lamps); outside
-// it, shops with lit fronts and neon signs, blocks of flats, vending
-// machines, a convenience store, power poles and their wires. The road is
-// four lanes with an orange centre line, lit white by tall LED lamps, between
-// concrete blocks with catch fences. Footbridges cross the straights and an
-// elevated expressway crosses over the back of the circuit. Pink is this
-// track's light (the neon); the lamps are cool white.
+// it, the town in ordered blocks: shops shoulder to shoulder under one roof
+// line, a taller corner building at each end, a side street between blocks;
+// awnings, lit sign bands, paper lanterns and neon; blocks of flats behind
+// in a steady rhythm with lit gold crowns. The road is four lanes with a gold
+// centre line, lit by tall gold lamps, between concrete blocks with catch
+// fences. Footbridges cross the straights and an elevated expressway crosses
+// over the back of the circuit. The colours are purple, pink and gold
+// (David, 2026-10-26): violet walls and sky, pink neon, gold light.
 // Every prop comes from the asset library (assets.js).
 
 import * as THREE from 'three';
 import { Tex } from '../graphics/textures.js';
-import { rng, strip, merge, wallStrip, placed } from './scene-kit.js';
+import { rng, strip, merge, wallStrip, placed, fenceFrame } from './scene-kit.js';
 import { Placer, roofMat } from './assets.js';
 import { cityBackdrop, reflectSky } from './track-scene.js';
 
-const NEONS = ['neon-ramen', 'neon-karaoke', 'neon-izakaya', 'neon-hotel', 'neon-kissa', 'neon-pharmacy', 'neon-bar'];
+// Signs in the track's three colours only: pink, violet and gold.
+const NEONS = ['neon-ramen', 'neon-kissa', 'neon-izakaya', 'neon-hotel', 'neon-sushi', 'neon-pachinko', 'neon-bar', 'neon-club'];
+const LANTERNS = [0xffb040, 0xff4f8a, 0xffb040, 0xb080ff];
 const VENDING = ['vending-white', 'vending-blue', 'vending-red'];
 const IN = -1, OUT = 1; // the park is inside the clockwise loop (right of travel)
 
@@ -66,7 +70,7 @@ export function buildParabolica(track, def) {
 
   // Paint: white edge lines, dashed lane lines, a double orange centre line.
   const white = new THREE.MeshLambertMaterial({ color: 0xe0e4e0, transparent: true, opacity: 0.85, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2 });
-  const orange = new THREE.MeshLambertMaterial({ color: 0xe0901a, transparent: true, opacity: 0.85, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2 });
+  const orange = new THREE.MeshLambertMaterial({ color: 0xe8b030, transparent: true, opacity: 0.85, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2 });
   const lines = [];
   for (const s of [1, -1]) lines.push(strip(track, s * (hw - 0.35), s * (hw - 0.2), 0.012, { step: 2 }));
   for (const off of [-hw / 2, hw / 2]) for (let k = 0; k < track.count; k += 12) lines.push(strip(track, off - 0.07, off + 0.07, 0.012, { step: 1, from: k, to: k + 5, closed: false }));
@@ -96,7 +100,7 @@ export function buildParabolica(track, def) {
   if (words.length) group.add(new THREE.Mesh(merge(words), wordMat));
   if (bars.length) group.add(new THREE.Mesh(merge(bars), barMat));
   // Red and white kerbs on the inside of the hard corners.
-  const kerbMat = [new THREE.MeshLambertMaterial({ color: 0x9a2018 }), new THREE.MeshLambertMaterial({ color: 0xc8c4b8 })];
+  const kerbMat = [new THREE.MeshLambertMaterial({ color: 0x8a1a5a }), new THREE.MeshLambertMaterial({ color: 0xd8c8a0 })];
   const kerbGeos = [[], []];
   for (let k = 0; k < track.count; k += 3) {
     const c = track.curvature[k];
@@ -107,25 +111,22 @@ export function buildParabolica(track, def) {
   kerbGeos.forEach((geos, i) => { if (geos.length) group.add(new THREE.Mesh(merge(geos), kerbMat[i])); });
 
   // --- Edges: concrete blocks, catch fences, pavements ---
-  const blockMat = new THREE.MeshLambertMaterial({ map: Tex.barrier() });
+  const blockMat = new THREE.MeshLambertMaterial({ map: Tex.barrier(), color: 0xd8c8e0 });
   group.add(new THREE.Mesh(merge([1, -1].map((s) => wallStrip(track, s * W, 0, 1.0, 2, 0.5))), blockMat));
   group.add(new THREE.Mesh(merge([1, -1].map((s) => strip(track, s * W, s * (W + 0.6), 1.0, { step: 2 }))), new THREE.MeshLambertMaterial({ color: 0x9a9890 })));
-  const fenceMat = new THREE.MeshLambertMaterial({ map: Tex.fence(), transparent: true, alphaTest: 0.3, side: THREE.DoubleSide, color: 0x8a9096 });
+  const fenceMat = new THREE.MeshLambertMaterial({ map: Tex.fence(), transparent: true, alphaTest: 0.3, side: THREE.DoubleSide, color: 0x9a8aa8 });
   group.add(new THREE.Mesh(merge([1, -1].map((s) => wallStrip(track, s * (W + 0.3), 1.0, 3.6, 4, 2.5))), fenceMat));
-  for (const s of [1, -1]) for (let k = 0; k < track.count; k += 6) {
-    const [x, z] = along(k, s, W + 0.3);
-    place.add('rail-post', x, 0, z, head(k), [1, 4.5, 1]);
-  }
+  group.add(new THREE.Mesh(merge([1, -1].map((s) => fenceFrame(track, s * (W + 0.3), 1.0, 3.6))), new THREE.MeshLambertMaterial({ color: 0x3a3442 })));
   const pavement = new THREE.MeshLambertMaterial({ map: Tex.concrete(), color: 0x7c7c7a });
   for (const s of [1, -1]) group.add(new THREE.Mesh(strip(track, s * (W + 0.6), s * (W + 5), 0.12, { step: 2, uScale: 0.3, vScale: 0.3 }), pavement));
 
-  // --- Lamps: tall LED lamps every 34 m, alternating sides ---
+  // --- Lamps: tall gold lamps every 34 m, alternating sides ---
   let flip = 1;
   for (let k = 8; k < track.count; k += 34) {
     flip = -flip;
     const lx = track.leftX(k), lz = track.leftZ(k);
     const off = flip * (W + 1.4);
-    place.add('led-streetlight', track.x[k] + lx * off, 0, track.z[k] + lz * off, Math.atan2(lz * flip, -lx * flip));
+    place.add('gold-streetlight', track.x[k] + lx * off, 0, track.z[k] + lz * off, Math.atan2(lz * flip, -lx * flip));
   }
 
   // --- Landmarks first, so the town is built round them ---
@@ -162,46 +163,66 @@ export function buildParabolica(track, def) {
     roadSign(group, track, k, Tex.roadSign(lines, '#1d4f9a'), W);
   }
 
-  // --- Outside: the town ---
-  // A row of shops along the pavement, flats behind; neon on some fronts,
-  // vending machines in front of others.
-  const shops = [];
-  for (let k = 0; k < track.count;) {
-    const w = 10 + r() * 9, d = 10 + r() * 6, h = 7 + r() * 14;
+  // --- Outside: the town, in blocks ---
+  // Shops stand shoulder to shoulder, fronts on one line, one roof line per
+  // block with a taller building at each corner; a side street (a pool of
+  // gold light) between blocks. Each block has one wall colour, lanterns
+  // under its awnings and neon on every other shop. Tight corners are left
+  // open.
+  const HEIGHTS = [11, 14.5, 12, 17];
+  const WIDTHS = [11, 13, 12, 14];
+  let blockNo = 0;
+  for (let k = 0; k < track.count - 30;) {
+    const len = 64 + ((blockNo * 37) % 32), h = HEIGHTS[blockNo % HEIGHTS.length], d = 12;
     const dist = W + 5.5 + d / 2;
-    const [x, z] = along(k + w / 2, OUT, dist);
-    if (clear(x, z, Math.min(w, d) / 2, W + 4)) {
-      const rot = facing(k + w / 2, OUT);
-      const b = { x, z, w, d, h, rot, tint: (r() * 4) | 0, seed: 1 + ((r() * 4) | 0) };
+    const block = [];
+    let kk = k;
+    while (kk < k + len && kk < track.count - 14) {
+      const w = WIDTHS[(blockNo + block.length) % WIDTHS.length];
+      const [x, z] = along(kk + w / 2, OUT, dist);
+      if (Math.abs(track.curvature[at(kk + w / 2)]) > 1 / 70 || !clear(x, z, Math.min(w, d) / 2, W + 4)) { if (block.length) break; kk += 4; continue; }
+      const b = { x, z, w: w + 0.3, d, h, rot: facing(kk + w / 2, OUT), tint: blockNo % 4, seed: 1 + ((blockNo + block.length) % 4), palette: 'neon' };
       place.block('shop', b);
-      shops.push([k, w, b]);
       spots.push([x, z, Math.min(w, d) / 2 + 1]);
+      block.push([kk, w, b]);
+      kk += w;
     }
-    k += Math.round(w + (r() < 0.15 ? 8 : 0.5));
-  }
-  for (const [k, w, b] of shops) {
-    const roll = r();
-    if (roll < 0.55) {
-      // A neon sign at the front corner, sticking out over the pavement.
-      const [x, z] = along(k + (r() < 0.5 ? 1.5 : w - 1.5), OUT, W + 5.4);
-      place.add(NEONS[(r() * NEONS.length) | 0], x, Math.max(0, Math.min(3, b.h - 10)), z, head(k) + Math.PI);
-    } else if (roll < 0.8) {
-      // Two or three vending machines by the door.
-      const n = 2 + ((r() * 2) | 0);
-      for (let i = 0; i < n; i++) {
-        const [x, z] = along(k + 2 + i * 1.05, OUT, W + 4.4);
-        place.add(VENDING[(r() * 3) | 0], x, 0.12, z, facing(k, OUT));
+    if (block.length) {
+      block[0][2].h += 5;
+      if (block.length > 2) block[block.length - 1][2].h += 5;
+      const lantern = LANTERNS[blockNo % LANTERNS.length], glow = lantern === 0xff4f8a ? 'pink' : lantern === 0xb080ff ? 'violet' : 'gold';
+      for (let q = block[0][0] + 1.5; q < kk - 1; q += 3) {
+        const [x, z] = along(q, OUT, W + 4.2);
+        place.add('lantern', x, 2.8, z, head(q), 1, lantern);
+        place.glow(x, 3.05, z, glow, 1.3);
       }
+      block.forEach(([q, w], n) => {
+        if (n % 2) return;
+        const [x, z] = along(q + 1.2, OUT, W + 5.4);
+        place.add(NEONS[(blockNo * 3 + n) % NEONS.length], x, Math.max(0, Math.min(3, block[n][2].h - 10)), z, head(q) + Math.PI);
+      });
+      // Vending machines at the corner of the side street.
+      for (let i = 0; i < 3; i++) {
+        const [x, z] = along(kk - 2 - i * 1.05, OUT, W + 4.4);
+        place.add(VENDING[(blockNo + i) % 3], x, 0.12, z, facing(kk, OUT));
+      }
+      const [gx, gz] = along(kk + 7, OUT, W + 9);
+      place.pool(gx, gz, 10, 14, 'gold', head(kk));
     }
+    k = Math.max(kk, k + 4) + 14;
+    blockNo++;
   }
-  // Flats behind the shops.
-  for (let k = 0; k < track.count; k += 26) {
-    if (r() < 0.3) continue;
-    const w = 16 + r() * 14, d = 12 + r() * 8, h = 18 + r() * 26;
-    const [x, z] = along(k, OUT, W + 34 + d / 2 + r() * 20);
+  // Flats behind the shops, square to the road, at one distance, in a
+  // rhythm of heights; every other one with a lit crown.
+  const FLAT_H = [32, 46, 38, 54];
+  let fn = 0;
+  for (let k = 0; k < track.count; k += 46) {
+    const w = 22, d = 14, h = FLAT_H[fn % FLAT_H.length];
+    const [x, z] = along(k, OUT, W + 40 + d / 2);
     if (!clear(x, z, Math.max(w, d) / 2, W + 26)) continue;
-    place.block('flats', { x, z, w, d, h, rot: facing(k, OUT) + (r() - 0.5) * 0.1, seed: 1 + ((r() * 3) | 0) });
+    place.block('flats', { x, z, w, d, h, rot: facing(k, OUT), seed: 1 + (fn % 3), crown: fn % 2 ? 0xffc860 : 0xff4f9a });
     spots.push([x, z, Math.max(w, d) / 2]);
+    fn++;
   }
   // Two convenience stores, lit up on corners.
   for (const k of [520, 2860]) {
@@ -213,8 +234,8 @@ export function buildParabolica(track, def) {
     const wire = [];
     let prev = null;
     for (let k = 0; k < track.count; k += 32) {
-      const [x, z] = along(k, OUT, W + 4.6);
-      if (!clear(x, z, 0.5, W + 3)) { prev = null; continue; }
+      const [x, z] = along(k, OUT, W + 2.6);
+      if (!clear(x, z, 0.5, W + 2)) { prev = null; continue; }
       place.add('power-pole', x, 0, z, head(k)); // cross-arm across the road
       const tops = [-0.9, 0, 0.9].map((o) => { const t = at(k); return [x + track.leftX(t) * o, 9.4, z + track.leftZ(t) * o]; });
       if (prev && Math.hypot(prev[1][0] - x, prev[1][2] - z) < 40) {
@@ -276,12 +297,12 @@ export function buildParabolica(track, def) {
     group, lamps, glows, roadMat, backdrop, reflect, skies,
     snowy: [[park.material, 0xb8c0c8], [pavement, 0xc8ccd0], [city.material, 0x9a9ea4], [roofMat(), 0xc4cad0]],
     look: {
-      fog: { clear: 0x0e0c16, rain: 0x10121a, fog: 0x201e2c, snow: 0x181a24 },
-      hemi: [0x4a4268, 0x141018, 1.0],
+      fog: { clear: 0x140c20, rain: 0x14101e, fog: 0x261c34, snow: 0x1c1826 },
+      hemi: [0x5a4280, 0x1a1020, 1.0],
       moon: 0.3,
-      lamp: 0xdfe6ff, lampPower: 125,
-      skyGlow: 0xa8407a, // the neon's pink, low in the sky
-      reflectBg: 0x140c1a,
+      lamp: 0xffc878, lampPower: 125,  // gold
+      skyGlow: 0xb0408a, // the neon's pink, low in the violet sky
+      reflectBg: 0x1a0c22,
       ground: 0x0e0e12,
     },
   };

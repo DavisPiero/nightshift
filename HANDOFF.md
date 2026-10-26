@@ -1,38 +1,37 @@
-# Hand-off: end of session 7 (2026-10-26)
+# Hand-off: end of session 8 (2026-10-26)
 
 ## Repo state
-- `main`: `m4-world` merged and pushed (live on GitHub Pages). `m4-world` is deleted.
-- `m4-notes` (David's fourth notes) merged into `main` and pushed (live); branch deleted.
-- Bench passes, including a new test: steered into a wall, the car touches it 3% of the time
-  after the first hit (was 85%).
+- David's fifth notes, built on `fifth-notes`, merged into `main` and pushed (live on GitHub
+  Pages) as he asked; the branch is deleted.
+- Driving bench, AI bench (`node tools/ai-bench.mjs`) and smoke test pass.
 
 ## Read first
-`CLAUDE.md`, `STATE.md`, then the last 20 lines of `DECISIONS.md` and "Look of the menus" in SPEC.md.
+`CLAUDE.md`, `STATE.md`, then the last 20 lines of `DECISIONS.md`.
 
 ## How the new pieces fit
-- Menus: `index.html` + `styles/main.css`. Race settings is `#scr-race` (screens.js
-  `buildConditions` / `fillRace`); Race opens `#race-load` (`Screens.raceLoad`), which calls
-  `game.startRace(pick, true)` (state `loading`, car held) and later `game.go()`.
-- Start-up loading: `#boot` in index.html (an SVG wheel); main.js fades it after the first
-  frame. The race loading screen copies the wheel with its own ids.
-- Garage: `ui/garage.js` (tab rail, `#garage-pop`, `orbitControls`) calls
-  `game.orbitDrag/orbitZoom/orbitReset`; main.js `garageCamera` follows the orbit and shifts
-  the lens (`setViewOffset`) by `garageInset`. Ride bounce: `game.rideBounce(d)`.
-- Bonnet and engine bay: `vehicles/engine-bay.js`. `Body.geometry({ bonnet })` leaves the
-  bonnet out; `bonnetGeometry` makes it. `model.setBonnet(open)`, `model.fitPart(slot)`.
-  `buildSpec` now copies `parts` onto the spec so the model can show them.
-- Sky: `graphics/sky.js`, a shader dome in each track's backdrop
-  (`backdrop.userData.sky`), set from `WeatherView.set` (time from `look.time`, glow from
-  `look.skyGlow`). Bloom: `renderer.js`, on when the preset has `bloom`.
-- Particles: `graphics/effects.js`: `Particles` are sprites from a painted sheet, `Streaks`
-  are sparks.
-- Sound: `audio/ui-sounds.js` (menu sounds, hooked in `Screens.menuSounds`); `audio.js` has a
-  `world` gain so pause hushes the car but menus still click (`hush`).
-- Minimap: `ui/hud.js` `setTrack` / `drawMap`.
-- Loading stills: `./tools/loading-stills.sh` (re-run after changing how a track looks).
+- Dots fix: `graphics/renderer.js` post shader no longer rounds each channel to 6 bits.
+- Low sun: `world/time-of-day.js` (sun power, `glare`); `main.js placeGlare` projects the sun
+  to the screen and `renderer.setGlare` draws core, veil, streak and ghosts, scaled by how much
+  of the sun is open sky (taps of the scene image). `graphics/reflections.js setSky` paints the
+  warm horizon and sun into the paint's reflections.
+- Cabin: `vehicles/cabin.js` builds it into the `cockpit` group, now a child of the body (it
+  leans). `fitInside` lowers roof-level parts (y > 0.9 m) up to 6 cm to stay under each car's
+  roof. The cockpit camera reads the eye from `model.body.matrixWorld`.
+- Rear engine: a car's `def.engineLid` makes `engine-bay.js` cut the lid behind the cabin,
+  hinged at the cabin end (`bay.dir`); the garage turns the car round for the Engine tab
+  (`model.engineRear`).
+- Pixel pictures: `graphics/pixel-art.js pixelSvg` (touch pedals, handbrake);
+  `ui/pixel-wheel.js` (plain script, `window.PixelWheel.mount/wake`).
+- Drive modes: `#scr-modes` in index.html, styles under "Drive: mode tiles" in main.css.
+- Parabolica: `parabolica-scene.js` town section (blocks, lanterns, flats with crowns); shop
+  palettes in `assets.js SHOP_PALETTES`; `roofKit` gives every building its roof.
+- Race AI: `race/racing-line.js`, `race/ai-driver.js`, `race/race.js`. To use in the game:
+  build a `RacingLine` when the track loads, make `AIDriver`s for each opponent, and step a
+  `Race` from `Game.update` with the player's controls; the HUD can read `race.lights`,
+  `race.order` and each car's `lap`, `lapTimes`.
 
 ## Next
-1. Milestone 6: racing (checkpoints, countdown, lap timing, results).
+1. Milestone 6: AI on the track, countdown, lap timing, results.
 
 ## Open with David
 - Confirm the guesses listed in STATE.md.

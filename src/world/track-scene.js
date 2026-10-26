@@ -9,7 +9,7 @@
 import * as THREE from 'three';
 import { buildSky } from '../graphics/sky.js';
 import { Tex } from '../graphics/textures.js';
-import { rng, strip, merge, wallStrip, placed } from './scene-kit.js';
+import { rng, strip, merge, wallStrip, placed, fenceFrame } from './scene-kit.js';
 import { Placer, roofMat } from './assets.js';
 import { buildUnderground } from './underground-scene.js';
 import { buildParabolica } from './parabolica-scene.js';
@@ -85,6 +85,7 @@ export function buildTrackScene(track, def) {
   const fenceTex = Tex.fence();
   const fenceMat = new THREE.MeshLambertMaterial({ map: fenceTex, transparent: true, alphaTest: 0.3, side: THREE.DoubleSide, color: 0x9a9e98 });
   group.add(new THREE.Mesh(merge([1, -1].map((s) => wallStrip(track, s * (track.wall + 4), 0, 2.4, 4, 2.5))), fenceMat));
+  group.add(new THREE.Mesh(merge([1, -1].map((s) => fenceFrame(track, s * (track.wall + 4), 0, 2.4))), new THREE.MeshLambertMaterial({ color: 0x5a5e5c })));
 
   // Streetlights every ~40 m, alternating sides, arm over the road.
   let flip = 1;

@@ -2,8 +2,12 @@
 // block walls, a green epoxy floor, a half-open roller shutter, a workbench,
 // a red tool chest, tyres, boxes and an old monitor (after David's
 // garage.jpg), lit by two big light panels over the car, a turquoise tube
-// along the back wall and a pink 夜勤 ("night shift") neon sign. It is its
-// own scene: the car is moved into it for the Garage and car-pick screens.
+// along the back wall and a pink 夜勤 ("night shift") neon sign. Steel roof
+// beams, yellow safety lines, a second bench with a vice, tools and a lamp,
+// tools hung on the pegboard, an engine hoist, a tool cart, a jack and a
+// creeper; a desk fan turns and one tube flickers now and then (update()).
+// It is its own scene: the car is moved into it for the Garage and car-pick
+// screens.
 
 import * as THREE from 'three';
 import { Tex } from '../graphics/textures.js';
@@ -79,11 +83,100 @@ export function buildGarage() {
   for (let i = 0; i < 4; i++) add(tyre, rubber, W / 2 - 0.6, 0.12 + i * 0.25, -D / 2 + 0.7, i * 0.4);
   for (let i = 0; i < 3; i++) add(tyre, rubber, W / 2 - 1.35, 0.12 + i * 0.25, -D / 2 + 0.6, i * 0.3);
   const card = new THREE.MeshLambertMaterial({ color: 0x9a7448 });
-  add(new THREE.BoxGeometry(0.6, 0.45, 0.5), card, -W / 2 + 0.6, 0.23, 2.6, 0.3);
-  add(new THREE.BoxGeometry(0.45, 0.35, 0.4), card, -W / 2 + 0.55, 0.62, 2.55, -0.2);
+  add(new THREE.BoxGeometry(0.6, 0.45, 0.5), card, -W / 2 + 0.6, 0.23, 3.1, 0.3);
+  add(new THREE.BoxGeometry(0.45, 0.35, 0.4), card, -W / 2 + 0.55, 0.62, 3.05, -0.2);
   add(new THREE.BoxGeometry(0.5, 0.4, 0.5), card, W / 2 - 0.7, 0.2, 3.4, 0.6);
-  add(new THREE.CylinderGeometry(0.3, 0.3, 0.9, 12), new THREE.MeshLambertMaterial({ color: 0x1f4a6a }), -W / 2 + 0.5, 0.45, -0.2);
+  add(new THREE.CylinderGeometry(0.3, 0.3, 0.9, 12), new THREE.MeshLambertMaterial({ color: 0x1f4a6a }), -W / 2 + 0.5, 0.45, -2.5);
   add(new THREE.ConeGeometry(0.18, 0.5, 8), new THREE.MeshLambertMaterial({ map: Tex.cone() }), -3.6, 0.25, 3.9);
+
+  // --- Workshop: structure, a working bench, tools, lifting gear ---
+  const yellow = new THREE.MeshLambertMaterial({ color: 0xc8a020 });
+  const darkSteel = new THREE.MeshStandardMaterial({ color: 0x2a2e30, roughness: 0.55, metalness: 0.6 });
+  const chrome = new THREE.MeshStandardMaterial({ color: 0xc8ccd0, metalness: 1, roughness: 0.25 });
+  const black = new THREE.MeshLambertMaterial({ color: 0x141516 });
+  // Roof beams (I-sections) across the room, with conduit along the walls.
+  for (const z of [-3.6, 0, 3.6]) {
+    add(new THREE.BoxGeometry(W, 0.06, 0.22), darkSteel, 0, H - 0.08, z);
+    add(new THREE.BoxGeometry(W, 0.3, 0.04), darkSteel, 0, H - 0.25, z);
+    add(new THREE.BoxGeometry(W, 0.06, 0.22), darkSteel, 0, H - 0.42, z);
+  }
+  for (const s of [1, -1]) add(new THREE.CylinderGeometry(0.03, 0.03, D - 0.6, 6).rotateX(Math.PI / 2), new THREE.MeshLambertMaterial({ color: 0x5a6060 }), s * (W / 2 - 0.08), H - 0.6, 0);
+  // Yellow safety lines round the turntable and the work bay.
+  const line = (w, d, x, z) => { const m = add(new THREE.PlaneGeometry(w, d), yellow, x, 0.004, z); m.rotation.x = -Math.PI / 2; m.receiveShadow = true; };
+  line(7.4, 0.08, 0, -3.7); line(7.4, 0.08, 0, 3.7); line(0.08, 7.4, -3.7, 0); line(0.08, 7.4, 3.7, 0);
+  for (let i = 0; i < 6; i++) { const m = add(new THREE.PlaneGeometry(0.5, 0.08), yellow, -W / 2 + 0.6 + i * 0.25, 0.005, 4.6); m.rotation.set(-Math.PI / 2, 0, 0.8); }
+
+  // A second bench on the left wall: a steel top, a vice, tools laid out,
+  // a toolbox and a lamp on an arm with a warm light.
+  const benchZ = 1.0, bx = -W / 2 + 0.45;
+  add(new THREE.BoxGeometry(0.8, 0.06, 2.6), darkSteel, bx, 0.95, benchZ);
+  add(new THREE.BoxGeometry(0.76, 0.6, 2.5), new THREE.MeshLambertMaterial({ color: 0x3a4a5a }), bx, 0.6, benchZ);
+  for (let i = 0; i < 3; i++) add(new THREE.BoxGeometry(0.02, 0.025, 0.5), chrome, bx + 0.39, 0.82 - i * 0.18, benchZ - 0.6 + (i % 2) * 1.2);
+  add(new THREE.BoxGeometry(0.22, 0.14, 0.18), new THREE.MeshLambertMaterial({ color: 0x2a4a7a }), bx + 0.1, 1.06, benchZ + 0.9); // vice
+  add(new THREE.BoxGeometry(0.04, 0.12, 0.25), chrome, bx + 0.22, 1.1, benchZ + 0.9);
+  for (let i = 0; i < 5; i++) { // spanners
+    const w = add(new THREE.BoxGeometry(0.03, 0.012, 0.18 + i * 0.03), chrome, bx + 0.15 + i * 0.05, 0.985, benchZ - 0.2);
+    w.rotation.y = 0.15;
+  }
+  for (const [c, z] of [[0xc82a1a, 0.15], [0xe8b020, 0.3], [0x1a5aa8, 0.45]]) { // screwdrivers
+    const h = add(new THREE.CylinderGeometry(0.018, 0.018, 0.1, 6).rotateZ(Math.PI / 2), new THREE.MeshLambertMaterial({ color: c }), bx + 0.05, 0.995, benchZ + z);
+    const sh = add(new THREE.CylinderGeometry(0.005, 0.005, 0.12, 4).rotateZ(Math.PI / 2), chrome, bx + 0.16, 0.995, benchZ + z);
+    h.castShadow = sh.castShadow = false;
+  }
+  add(new THREE.BoxGeometry(0.4, 0.22, 0.25), new THREE.MeshStandardMaterial({ color: 0xb01a14, roughness: 0.5, metalness: 0.3 }), bx + 0.05, 1.09, benchZ - 0.85);
+  add(new THREE.CylinderGeometry(0.06, 0.07, 0.18, 8), new THREE.MeshLambertMaterial({ color: 0xe8e2d0 }), bx + 0.2, 1.07, benchZ + 0.35); // mug
+  const arm = add(new THREE.BoxGeometry(0.03, 0.03, 0.7), darkSteel, bx - 0.15, 1.6, benchZ + 0.2);
+  arm.rotation.x = -0.6;
+  add(new THREE.BoxGeometry(0.03, 0.6, 0.03), darkSteel, bx - 0.3, 1.25, benchZ - 0.05);
+  const shade = add(new THREE.ConeGeometry(0.13, 0.16, 10, 1, true), new THREE.MeshLambertMaterial({ color: 0x2a5a4a, side: THREE.DoubleSide }), bx - 0.05, 1.78, benchZ + 0.45);
+  shade.castShadow = false;
+  const bulb = new THREE.Mesh(new THREE.SphereGeometry(0.045, 8, 6), new THREE.MeshBasicMaterial({ color: 0xffe0a0 }));
+  bulb.position.set(bx - 0.05, 1.71, benchZ + 0.45);
+  group.add(bulb);
+  const benchLamp = new THREE.PointLight(0xffc880, 2.2, 3.2, 1.5);
+  benchLamp.position.set(bx + 0.05, 1.6, benchZ + 0.45);
+  scene.add(benchLamp);
+  // A desk fan on the bench that turns.
+  const fan = new THREE.Group();
+  fan.position.set(bx + 0.1, 1.15, benchZ + 1.15);
+  fan.rotation.y = Math.PI / 2 + 0.4;
+  group.add(fan);
+  fan.add(new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.1, 0.03, 10), black));
+  const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.015, 0.2, 6), black); stem.position.y = 0.1; fan.add(stem);
+  const cage = new THREE.Mesh(new THREE.TorusGeometry(0.13, 0.008, 4, 18), chrome); cage.position.set(0, 0.24, 0.04); fan.add(cage);
+  const blades = new THREE.Group(); blades.position.set(0, 0.24, 0.045); fan.add(blades);
+  for (let i = 0; i < 3; i++) { const b = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.11, 0.005), new THREE.MeshLambertMaterial({ color: 0x8aa8a0 })); b.position.y = 0.055; const g = new THREE.Group(); g.rotation.z = i * 2.094; g.add(b); blades.add(g); }
+
+  // Tools hung on the pegboard on the right wall.
+  const peg = W / 2 - 0.05;
+  for (let i = 0; i < 7; i++) add(new THREE.BoxGeometry(0.02, 0.2 + i * 0.03, 0.035), chrome, peg, 2.15 - i * 0.015, -2.9 + i * 0.16);
+  for (let i = 0; i < 4; i++) add(new THREE.BoxGeometry(0.03, 0.22, 0.06), new THREE.MeshLambertMaterial({ color: [0xc82a1a, 0xe8b020, 0x1a5aa8, 0x2a2a2a][i] }), peg, 1.6, -1.2 + i * 0.22);
+  add(new THREE.TorusGeometry(0.22, 0.03, 6, 14).rotateY(Math.PI / 2), new THREE.MeshLambertMaterial({ color: 0x1a1a1a }), peg, 2.1, -0.6); // a hose coil
+
+  // An engine hoist in the back corner: legs, a post, a boom and a hook.
+  {
+    const hx = -W / 2 + 1.3, hz = -D / 2 + 1.6;
+    for (const s of [1, -1]) { const leg = add(new THREE.BoxGeometry(0.08, 0.08, 1.4), new THREE.MeshLambertMaterial({ color: 0xb02a1a }), hx + s * 0.35, 0.08, hz + 0.5); leg.rotation.y = s * 0.2; }
+    add(new THREE.BoxGeometry(0.1, 1.9, 0.1), new THREE.MeshLambertMaterial({ color: 0xb02a1a }), hx, 0.95, hz);
+    const boom = add(new THREE.BoxGeometry(0.09, 0.09, 1.5), new THREE.MeshLambertMaterial({ color: 0xb02a1a }), hx, 1.95, hz + 0.6);
+    boom.rotation.x = -0.25;
+    add(new THREE.CylinderGeometry(0.008, 0.008, 0.6, 4), chrome, hx, 1.95, hz + 1.3);
+    add(new THREE.TorusGeometry(0.05, 0.012, 4, 8), chrome, hx, 1.62, hz + 1.3);
+  }
+  // A rolling tool cart, a trolley jack and a creeper on the floor.
+  add(new THREE.BoxGeometry(0.8, 0.04, 0.5), red, 3.6, 0.85, -2.6);
+  add(new THREE.BoxGeometry(0.8, 0.04, 0.5), red, 3.6, 0.45, -2.6);
+  for (const x of [-0.37, 0.37]) for (const z of [-0.22, 0.22]) add(new THREE.BoxGeometry(0.03, 0.8, 0.03), darkSteel, 3.6 + x, 0.48, -2.6 + z);
+  for (let i = 0; i < 4; i++) add(new THREE.BoxGeometry(0.12, 0.1, 0.12), new THREE.MeshLambertMaterial({ color: [0x3a5a8a, 0xc8a040, 0x2a2a2a, 0x5a5a5a][i] }), 3.35 + i * 0.17, 0.92, -2.6);
+  const jack = add(new THREE.BoxGeometry(0.35, 0.14, 0.7), new THREE.MeshLambertMaterial({ color: 0xb02a1a }), -3.2, 0.09, 3.2, 0.5);
+  jack.castShadow = true;
+  const handle = add(new THREE.CylinderGeometry(0.015, 0.015, 1.0, 5), darkSteel, -3.45, 0.4, 3.6, 0.5);
+  handle.rotation.x = -0.9;
+  add(new THREE.BoxGeometry(0.5, 0.05, 1.0), new THREE.MeshLambertMaterial({ color: 0x2a2c2e }), 3.9, 0.08, 3.4, -0.3);
+  // A fire extinguisher by the door, a clock over the bench.
+  add(new THREE.CylinderGeometry(0.09, 0.09, 0.5, 10), new THREE.MeshLambertMaterial({ color: 0xc81a14 }), W / 2 - 0.25, 0.75, 4.9);
+  const clock = add(new THREE.CylinderGeometry(0.2, 0.2, 0.04, 16).rotateZ(Math.PI / 2), new THREE.MeshLambertMaterial({ color: 0xe8e4d8 }), -W / 2 + 0.03, 2.75, benchZ);
+  clock.castShadow = false;
 
   // The turntable: a dark steel disc with a turquoise ring of light.
   add(new THREE.CylinderGeometry(3.0, 3.05, 0.06, 40), new THREE.MeshStandardMaterial({ color: 0x15191a, roughness: 0.35, metalness: 0.6 }), 0, 0.03, 0);
@@ -147,8 +240,21 @@ export function buildGarage() {
   door.position.set(0, 1.1, D / 2 - 0.1); door.rotation.y = Math.PI;
   reflect.add(door);
 
+  // Life: the fan turns, and the back tube flickers now and then like an
+  // old fluorescent.
+  let t = 0, flick = 3;
+  const update = (dt) => {
+    t += dt;
+    blades.rotation.z -= dt * 14;
+    flick -= dt;
+    const off = flick < 0.25 && flick > 0 && Math.sin(t * 90) > 0;
+    tubeMat.color.setHex(off ? 0x1a3a38 : 0x4ff0e0);
+    back.intensity = off ? 2 : 7;
+    if (flick < 0) flick = 4 + Math.random() * 7;
+  };
+
   return {
-    scene, group, reflect,
+    scene, group, reflect, update,
     look: { reflectBg: 0x1a2222, ground: 0x24342c },
     // Camera spots, all looking at the car: the Garage screen shifts its lens
     // to keep the car clear of the tabs; the car pick sits it right of the list.
