@@ -14,7 +14,7 @@ void main() { vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }`;
 const POST_FRAG = /* glsl */`
 uniform sampler2D tScene, tBloom;
 uniform vec2 resolution;
-uniform float dither, bloom;
+uniform float dither, bloom, filmic;
 uniform vec2 sunUv;
 uniform float glare;
 uniform vec3 glareCol;
@@ -61,6 +61,12 @@ void main() {
     }
     c = mix(c, c * glareCol * 1.35, 0.12 * k);
     c += glareCol * g * k;
+  }
+  // Filmic tone mapping (ACES fit) for the realistic looks: bright lamps and
+  // sun roll off to white instead of clipping.
+  if (filmic > 0.0) {
+    vec3 x = c * 0.9;
+    c = mix(c, clamp((x * (2.51 * x + 0.03)) / (x * (2.43 * x + 0.59) + 0.14), 0.0, 1.0), filmic);
   }
   // Linear to display.
   c = pow(max(c, 0.0), vec3(1.0 / 2.2));
@@ -115,7 +121,7 @@ export class RetroRenderer {
     this.postCam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
     this.post = new THREE.ShaderMaterial({
       uniforms: {
-        tScene: { value: this.target.texture }, resolution: { value: new THREE.Vector2() }, dither: { value: 1 },
+        tScene: { value: this.target.texture }, resolution: { value: new THREE.Vector2() }, dither: { value: 1 }, filmic: { value: 0 },
         sunUv: { value: new THREE.Vector2() }, glare: { value: 0 }, glareCol: { value: new THREE.Color() },
       },
       vertexShader: POST_VERT, fragmentShader: POST_FRAG, depthTest: false, depthWrite: false,
@@ -138,6 +144,13 @@ export class RetroRenderer {
 
   configure(preset) {
     this.renderHeight = preset.renderHeight;
+    const smooth = !!preset.smooth;
+    const f = smooth ? THREE.LinearFilter : THREE.NearestFilter;
+    this.target.texture.minFilter = f; this.target.texture.magFilter = f;
+    this.target.samples = smooth ? 4 : 0;
+    this.target.texture.needsUpdate = true;
+    this.post.uniforms.filmic.value = smooth ? 1 : 0;
+    this.canvas.style.imageRendering = smooth ? 'auto' : 'pixelated';
     this.gl.shadowMap.enabled = preset.shadows;
     this.post.uniforms.dither.value = preset.dither ? 1 : 0;
     this.bloomOn = !!preset.bloom;

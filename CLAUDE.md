@@ -14,7 +14,7 @@ way they are, HANDOFF.md for how the last session ended. BRIEF.md is the origina
   knows where a control came from.
 - Physics runs at a fixed 1/120 s step and never imports Three.js (so the bench can run it in Node).
 - Automatic gearbox is the default. Manual is optional and must never be needed to be quick.
-- Art: low-poly, small nearest-filtered textures, fog, no full-screen pixelate filter.
+- Art: realistic (since Milestone 6, 2026-10-28): physically based materials, smooth filtering, tone mapping. Low graphics keeps the old chunky-pixel look. Menus, HUD and VHS overlays stay retro on purpose.
   Neon Japan is the theme (David, 2026-10-26): each track has its own light colour (the
   Starter Track warm amber, the Underground turquoise, Parabolica Street pink neon under
   white lamps), with neon signs and Japanese text as accents. Cars have clear-coated paint that reflects the lights round them; the world

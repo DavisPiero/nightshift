@@ -3,15 +3,17 @@
 
 export const GRAPHICS = {
   low:    { renderHeight: 360, shadows: false, lampLights: 4, drawDistance: 170, dither: true },
-  medium: { renderHeight: 480, shadows: false, lampLights: 6, drawDistance: 220, dither: true },
+  // Medium and High are the realistic looks: drawn near the screen's own
+  // resolution, smooth edges (4x multisampling), filmic tone mapping, no dither.
+  medium: { renderHeight: 720, shadows: false, lampLights: 6, drawDistance: 220, dither: false, smooth: true },
   // High also gets finer clouds, glow round bright lights (bloom) and more
   // real lamp lights.
-  high:   { renderHeight: 720, shadows: true,  lampLights: 10, drawDistance: 280, dither: true, skyDetail: true, bloom: true },
+  high:   { renderHeight: 1080, shadows: true,  lampLights: 10, drawDistance: 280, dither: false, skyDetail: true, bloom: true, smooth: true },
 };
 
-// Low by default on every device: it is the look, not just the fast option.
+// Medium by default (the realistic look); Low keeps the old chunky-pixel look and is the fast option.
 export function defaultGraphicsFor() {
-  return 'low';
+  return 'medium';
 }
 
 // Effects that can be switched on and off in Settings > Graphics.

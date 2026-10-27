@@ -1,6 +1,6 @@
 # NIGHTSHIFT: state
 
-_Last updated 2026-10-26, end of session 8 (David's fifth notes)._
+_Last updated 2026-10-28, session 9 (realism overhaul, on branch `m6-realism`, not merged)._
 
 ## Where we are
 - David's fifth notes are built and pushed to `main` (live), as he asked ("push it without
@@ -18,11 +18,13 @@ _Last updated 2026-10-26, end of session 8 (David's fifth notes)._
   - race AI written and benched, not shown in the game.
 - Driving bench, AI bench and smoke test pass.
 
-## Next
-- Milestone 6 (racing): put the AI on the track (src/race/ is ready), countdown, lap timing,
-  results.
+## Now: Milestone 6 = realism overhaul (branch `m6-realism`)
+- Done: audit (`AUDIT.md`), smooth renderer on Medium/High (default Medium), reference images in `Reference/Realism/`.
+- Next: Stage 2 cars and cockpits (R34, R35, Challenjer now; Mustank, Aventadoro, Miata when sheets arrive), then world, lighting, post effects, balancing (separate commits), UI.
+- Racing is parked until after this.
 
 ## Open with David
+- Send: Mustang, Aventador and Miata reference sheets, and the notice-board reference image.
 - Guesses to confirm (this session):
   - the new cars' names, years, colours and numbers; the Aventadoro landing in class X;
   - the handbrake lever's look; the mode tiles' pictures (track stills);
