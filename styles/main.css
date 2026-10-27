@@ -199,7 +199,7 @@ h1, h2, p { margin: 0; }
    works (pink header), two smaller grey ones for modes still to come. */
 .screen.modes { background: rgba(2, 5, 7, 0.7); }
 .mode-grid {
-  position: absolute; top: calc(max(16px, var(--st)) + 70px); bottom: max(22px, var(--sb));
+  position: absolute; top: calc(max(16px, var(--st)) + 70px); height: min(52vh, 380px);
   left: max(16px, var(--sl)); right: max(16px, var(--sr));
   grid-template-columns: 2fr 1fr; grid-template-rows: 1fr 1fr; gap: 14px;
 }
@@ -527,7 +527,9 @@ input[type=range]::-moz-range-thumb { width: 14px; height: 24px; border: 0; bord
 /* Start-up: the wheel in the middle, over a dark vignette. */
 #boot { display: flex; align-items: center; justify-content: center; background: radial-gradient(ellipse at center, #0b1418 0%, #020406 70%); }
 .boot-mid { display: flex; flex-direction: column; align-items: center; gap: 22px; }
-#boot .wheel-art { width: min(220px, 36vmin); height: auto; filter: drop-shadow(0 0 24px rgba(63, 240, 232, 0.18)); }
+.boot-log { margin: 0; font: 18px/1.45 'DotGothic16', monospace; color: #9ff7f0; text-shadow: 0 0 8px rgba(63, 240, 232, 0.35); white-space: pre; min-width: 24em; max-width: 92vw; text-align: left; }
+#boot .boot-mid { align-items: flex-start; }
+.rl-wheel .boot-log { font-size: 15px; min-width: 0; }
 /* Into a race: the track still slowly drifting closer, the wheel bottom
    left, a tip bottom right. */
 .rl-still { position: absolute; inset: -4%; background: center / cover no-repeat; animation: drift 7s ease-out both; }
