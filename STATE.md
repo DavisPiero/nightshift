@@ -19,8 +19,9 @@ _Last updated 2026-10-28, session 9 (realism overhaul, on branch `m6-realism`, n
 - Driving bench, AI bench and smoke test pass.
 
 ## Now: Milestone 6 = realism overhaul (branch `m6-realism`)
-- Done: audit (`AUDIT.md`), smooth renderer on Medium/High (default Medium), reference images in `Reference/Realism/`.
-- Next: Stage 2 cars and cockpits (R34, R35, Challenjer now; Mustank, Aventadoro, Miata when sheets arrive), then world, lighting, post effects, balancing (separate commits), UI.
+- Done: audit (`AUDIT.md`); smooth renderer on Medium/High (default Medium); speed blur, grain, lens fringing; smooth textures; cockpit FOV and visors; bigger zoomed minimap; shorter mode tiles; boot-text loader; class thresholds.
+- Not done: redesigned car and world models (the biggest part), the Miata, the notice board (no reference image yet), exhaust flame/smoke/spark upgrades, ambient occlusion, exposure adaptation, lens dirt, headlight pools and wet roads, sun raise.
+- Next: model redesign (R34, R35, Challenjer first), then the Mustang, Aventador, Miata once the sheets arrive.
 - Racing is parked until after this.
 
 ## Open with David

@@ -104,4 +104,11 @@ One line each, newest last.
 - 2026-10-28: Milestone 6 is now the realism overhaul (David's brief); racing is parked until after it. Overturns the "low-poly, nearest-filtered, pixel" art rule and "no glossy modern look in the world": the world and cars go realistic, the menus, HUD and VHS overlays stay retro on purpose. Neon-Japan per-track light colours stay.
 - 2026-10-28: Medium and High are the realistic looks (native-ish resolution 720/1080, 4x multisampling, linear filtering, ACES tone mapping, no dither) and Medium is the default. Low keeps the old chunky look and is the fast option for iPad.
 - 2026-10-28: Visual work and car balancing go on separate commits; physics untouched in the visual stages.
+- 2026-10-28: Cockpit camera base FOV +8 (now Settings FOV + 12, up to +18 at speed) and the folded sun visors are gone.
+- 2026-10-28: Post pass on the realistic looks: speed blur (strongest at the screen edges, from 25 km/h up to full at 80), film grain, lens fringing. Each has its own switch in Settings > Graphics, all on by default. Visual only; physics untouched.
+- 2026-10-28: Lamp dots: the realistic looks have no dither at all, so the cause is gone there; the glow sprites stay. Low keeps the (fixed) dither.
+- 2026-10-28: Minimap: 270 px, zoomed to about 200 m across, turns with the car (up is ahead). Drive mode tiles are at most 52% of the screen high.
+- 2026-10-28: The wheel loader is replaced by BIOS-style boot text (`ui/boot-log.js`) on the start-up and race loading screens.
+- 2026-10-28: Class thresholds raised to D<450, C 450, B 600, A 750, S 850, X 950, so S and X are rare: Aventadoro X, R35 S, R34 and Mustank A, Challenjer B. Assists were already on by default.
+- 2026-10-28: Real-world figures noted for a later balance pass (not applied, they would change the feel): R34 ~276 PS, 0-100 ~5.0 s, ~255 km/h (game 336 hp, 5.6 s, 278); Mustang GT500 ~760 hp, ~3.5 s, ~290 km/h (game 332 km/h top); R35 ~2.9 s (game 3.9 s); Aventador SV ~2.8 s, 350+ km/h (game 3.5 s, 353).
 
