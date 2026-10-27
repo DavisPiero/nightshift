@@ -119,7 +119,7 @@ class CockpitCamera {
     _t.set(_v.x + Math.sin(yaw) * 10 + sx, _v.y - 0.75 + v.pitch * -1.5 + this.shake.jolt * 3, _v.z + Math.cos(yaw) * 10);
     cam.up.set(0, 1, 0).lerp(_up, 0.6).normalize();
     cam.lookAt(_t);
-    const fov = OPTIONS.fov + 4 + Math.min(1, v.speed / 60) * 6;
+    const fov = OPTIONS.fov + 12 + Math.min(1, v.speed / 60) * 6;
     this.fov += (fov - this.fov) * damp(2, dt);
     cam.fov = this.fov;
     cam.near = 0.04;

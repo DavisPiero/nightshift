@@ -401,10 +401,10 @@ input[type=range]::-moz-range-thumb { width: 14px; height: 24px; border: 0; bord
 #hud.touch #tach { width: 200px; height: 200px; right: auto; left: 50%; transform: translateX(-50%); bottom: max(4px, var(--sb)); }
 #hud-buttons { position: absolute; top: max(14px, var(--st)); left: max(16px, var(--sl)); display: flex; gap: 8px; pointer-events: auto; }
 #minimap {
-  position: absolute; top: max(14px, var(--st)); right: max(16px, var(--sr)); width: 168px; height: 168px;
+  position: absolute; top: max(14px, var(--st)); right: max(16px, var(--sr)); width: 270px; height: 270px; overflow: hidden;
   background: rgba(4, 10, 14, 0.62); clip-path: var(--cut); box-shadow: inset 0 0 0 1px var(--edge-hi);
 }
-#hud.touch #minimap { width: 124px; height: 124px; }
+#hud.touch #minimap { width: 180px; height: 180px; }
 #hud.touch #hud-buttons { display: none; }
 .ico-pause { display: inline-block; width: 14px; height: 18px; border-left: 5px solid currentColor; border-right: 5px solid currentColor; vertical-align: middle; }
 #debug {
@@ -478,8 +478,8 @@ input[type=range]::-moz-range-thumb { width: 14px; height: 24px; border: 0; bord
   .box h2, .bar h2 { font-size: 36px; }
   #tach { width: 200px; height: 200px; }
   #hud.touch #tach { width: 160px; height: 160px; }
-  #minimap { width: 132px; height: 132px; }
-  #hud.touch #minimap { width: 104px; height: 104px; }
+  #minimap { width: 200px; height: 200px; }
+  #hud.touch #minimap { width: 150px; height: 150px; }
   .box { padding: 10px 14px 14px; gap: 8px; }
   .box.wide { max-height: calc(100vh - 80px); }
   .row { padding: 4px 8px; }
