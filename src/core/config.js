@@ -25,12 +25,15 @@ export const EFFECTS = {
   beams: { label: 'Headlight beams', hint: 'Visible beams of light from the headlights.' },
   glow: { label: 'Lamp glow', hint: 'Soft halos round lamps and lights.' },
   reflections: { label: 'Wet reflections', hint: 'Lamps reflected in the road when it rains.' },
+  motionBlur: { label: 'Motion blur', hint: 'Streaks the edges of the screen as you go faster. Realistic looks only.' },
+  grain: { label: 'Film grain', hint: 'A fine moving grain, like film. Realistic looks only.' },
+  lens: { label: 'Lens fringing', hint: 'A slight colour split towards the corners. Realistic looks only.' },
   dither: { label: 'Dither', hint: 'The fine pixel pattern of an old console.' },
   shadows: { label: 'Shadows', hint: 'Real shadows from the moon. Slower, best on a computer.' },
 };
 export const DEFAULT_EFFECTS = {
   smoke: true, flames: true, skids: true, sparks: true,
-  beams: true, glow: true, reflections: true, dither: true, shadows: false,
+  beams: true, glow: true, reflections: true, motionBlur: true, grain: true, lens: true, dither: true, shadows: false,
 };
 
 // URL switches for testing: ?mute silences sound, ?device=computer|touch

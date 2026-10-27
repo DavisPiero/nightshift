@@ -6,6 +6,7 @@
 // light like they do on film.
 
 import * as THREE from 'three';
+import { setSmoothTextures } from './textures.js';
 
 const POST_VERT = /* glsl */`
 varying vec2 vUv;
@@ -14,7 +15,7 @@ void main() { vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }`;
 const POST_FRAG = /* glsl */`
 uniform sampler2D tScene, tBloom;
 uniform vec2 resolution;
-uniform float dither, bloom, filmic;
+uniform float dither, bloom, filmic, blurK, grain, aberr, time;
 uniform vec2 sunUv;
 uniform float glare;
 uniform vec3 glareCol;
@@ -42,7 +43,24 @@ float bayer4(vec2 p) {
 }
 
 void main() {
-  vec3 c = texture2D(tScene, vUv).rgb;
+  vec3 c;
+  vec2 rd = vUv - 0.5;
+  float edge = dot(rd, rd);
+  if (blurK > 0.0 || aberr > 0.0) {
+    // Speed blur: taps pulled toward the middle of the screen (stronger at the
+    // edges, so the road ahead stays readable), with the red and blue
+    // channels split a hair towards the corners.
+    vec2 ab = rd * aberr * (0.0018 + edge * 0.011);
+    c = vec3(0.0);
+    float n = blurK > 0.0 ? 7.0 : 1.0;
+    for (int i = 0; i < 7; i++) {
+      if (float(i) >= n) break;
+      float t = float(i) / 6.0;
+      vec2 uv = vUv - rd * blurK * 0.09 * t * (0.3 + edge * 3.0);
+      c += vec3(texture2D(tScene, uv + ab).r, texture2D(tScene, uv).g, texture2D(tScene, uv - ab).b);
+    }
+    c /= n;
+  } else c = texture2D(tScene, vUv).rgb;
   c += texture2D(tBloom, vUv).rgb * bloom;
   // Driving into a low sun: a hot core, a wide warm veil over everything,
   // a thin horizontal streak and a few faint lens ghosts across the screen.
@@ -82,6 +100,9 @@ void main() {
   // fewer bits: rounding each channel on its own broke soft glows (lamp
   // halos, tail-light spill) into pink and blue dots (David, twice).
   c += bayer4(gl_FragCoord.xy) * dither / 110.0;
+  // Film grain: fine, changes every frame, strongest in the shadows.
+  float n = fract(sin(dot(gl_FragCoord.xy + time * 61.0, vec2(12.9898, 78.233))) * 43758.5453) - 0.5;
+  c += n * grain * (0.035 + (1.0 - l) * 0.05);
   gl_FragColor = vec4(clamp(c, 0.0, 1.0), 1.0);
 }`;
 
@@ -121,7 +142,7 @@ export class RetroRenderer {
     this.postCam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
     this.post = new THREE.ShaderMaterial({
       uniforms: {
-        tScene: { value: this.target.texture }, resolution: { value: new THREE.Vector2() }, dither: { value: 1 }, filmic: { value: 0 },
+        tScene: { value: this.target.texture }, resolution: { value: new THREE.Vector2() }, dither: { value: 1 }, filmic: { value: 0 }, blurK: { value: 0 }, grain: { value: 0 }, aberr: { value: 0 }, time: { value: 0 },
         sunUv: { value: new THREE.Vector2() }, glare: { value: 0 }, glareCol: { value: new THREE.Color() },
       },
       vertexShader: POST_VERT, fragmentShader: POST_FRAG, depthTest: false, depthWrite: false,
@@ -150,6 +171,8 @@ export class RetroRenderer {
     this.target.samples = smooth ? 4 : 0;
     this.target.texture.needsUpdate = true;
     this.post.uniforms.filmic.value = smooth ? 1 : 0;
+    this.lens = smooth;
+    setSmoothTextures(smooth);
     this.canvas.style.imageRendering = smooth ? 'auto' : 'pixelated';
     this.gl.shadowMap.enabled = preset.shadows;
     this.post.uniforms.dither.value = preset.dither ? 1 : 0;
@@ -172,6 +195,16 @@ export class RetroRenderer {
     const bw = Math.max(1, Math.round(rw / 4)), bh = Math.max(1, Math.round(rh / 4));
     this.bloomA.setSize(bw, bh); this.bloomB.setSize(bw, bh);
     this.blurStep = [1 / bw, 1 / bh];
+  }
+
+  // Speed blur, film grain and lens fringing (realistic looks only). `blur`
+  // 0..1 is how fast the car is going; each effect has its own switch.
+  setLens({ blur = 0, grain = false, aberration = false, time = 0 }) {
+    const u = this.post.uniforms;
+    u.blurK.value = this.lens ? blur : 0;
+    u.grain.value = this.lens && grain ? 1 : 0;
+    u.aberr.value = this.lens && aberration ? 1 : 0;
+    u.time.value = time % 100;
   }
 
   // The low sun's glare: where it is on screen (0..1), how strong, its colour.

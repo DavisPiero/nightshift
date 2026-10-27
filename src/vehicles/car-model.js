@@ -39,8 +39,11 @@ function beamGeometry(length, radius) {
 // are clear-coated; matte is not.
 export function paintMaterial(color, finish = 'metallic') {
   const f = FINISHES[finish] || FINISHES.metallic;
+  // A little wear (swirls, fine scratches, dirt) breaks up the reflections.
+  const wear = Tex.wear();
   return new THREE.MeshPhysicalMaterial({
-    color, metalness: f.metalness, roughness: f.roughness, clearcoat: f.clearcoat, clearcoatRoughness: 0.07,
+    color, metalness: f.metalness, roughness: f.roughness, clearcoat: f.clearcoat, clearcoatRoughness: f.clearcoat ? 0.5 : 0.07,
+    clearcoatRoughnessMap: f.clearcoat ? wear : null,
     iridescence: f.iridescence, iridescenceIOR: 1.6, envMapIntensity: f.clearcoat ? 1.1 : 0.5,
   });
 }

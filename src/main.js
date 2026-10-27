@@ -279,7 +279,7 @@ class Game {
 
   applyGraphics() {
     const fx = this.save.settings.effects;
-    const preset = { ...GRAPHICS[this.graphicsName], shadows: fx.shadows && !URL_FLAGS.smoke, dither: fx.dither };
+    const preset = { ...GRAPHICS[this.graphicsName], shadows: fx.shadows && !URL_FLAGS.smoke, dither: fx.dither && !GRAPHICS[this.graphicsName].smooth };
     this.preset = preset;
     this.renderer.configure(preset);
     this.camera.far = preset.drawDistance + 30;
@@ -534,6 +534,8 @@ class Game {
       this.world.backdrop?.userData.sky?.update(live);
     }
     this.placeGlare(garage);
+    const fxs = this.save.settings.effects;
+    this.renderer.setLens({ blur: garage || this.state !== 'driving' ? 0 : Math.max(0, Math.min(1, (v.speed - 25) / 55)), grain: fxs.grain, aberration: fxs.lens, time: this.t || performance.now() / 1000 });
     this.renderer.render(scene, this.camera);
 
     if (this.hud.debugOn) {

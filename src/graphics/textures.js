@@ -9,6 +9,15 @@ function rng(seed) {
   return () => ((s = (s * 1664525 + 1013904223) >>> 0) / 4294967296);
 }
 
+// Textures that are nearest-filtered for the chunky look; the realistic
+// graphics levels switch them to smooth filtering (and back).
+const chunky = new Set();
+let smoothOn = false;
+export function setSmoothTextures(on) {
+  smoothOn = on;
+  for (const t of chunky) { t.magFilter = on ? THREE.LinearFilter : THREE.NearestFilter; t.anisotropy = on ? 8 : 2; t.needsUpdate = true; }
+}
+
 function canvasTexture(size, paint, { repeat = [1, 1], nearest = true, srgb = true } = {}) {
   const c = document.createElement('canvas');
   c.width = size[0]; c.height = size[1];
@@ -17,7 +26,7 @@ function canvasTexture(size, paint, { repeat = [1, 1], nearest = true, srgb = tr
   const t = new THREE.CanvasTexture(c);
   t.wrapS = t.wrapT = THREE.RepeatWrapping;
   t.repeat.set(repeat[0], repeat[1]);
-  if (nearest) t.magFilter = THREE.NearestFilter;
+  if (nearest) { chunky.add(t); t.magFilter = smoothOn ? THREE.LinearFilter : THREE.NearestFilter; }
   t.minFilter = THREE.LinearMipmapLinearFilter;
   t.anisotropy = 2;
   if (srgb) t.colorSpace = THREE.SRGBColorSpace;
@@ -44,6 +53,25 @@ function cached(name, make) {
 }
 
 export const Tex = {
+  // Surface wear for car paint, as a roughness multiplier (dark = glossy,
+  // light = dull): faint swirls, a few fine scratches and dirty patches.
+  wear: () => cached('wear', () => canvasTexture([128, 128], (g, w, h) => {
+    const r = rng(77);
+    g.fillStyle = '#262626'; g.fillRect(0, 0, w, h);
+    for (let i = 0; i < 90; i++) { // soft dirt and swirl patches
+      const x = r() * w, y = r() * h, rad = 4 + r() * 14, a = 0.04 + r() * 0.08;
+      const gr = g.createRadialGradient(x, y, 0, x, y, rad);
+      gr.addColorStop(0, `rgba(255,255,255,${a})`); gr.addColorStop(1, 'rgba(255,255,255,0)');
+      g.fillStyle = gr; g.fillRect(x - rad, y - rad, rad * 2, rad * 2);
+    }
+    g.lineWidth = 0.6;
+    for (let i = 0; i < 40; i++) { // fine scratches
+      const x = r() * w, y = r() * h, a = r() * Math.PI, l = 3 + r() * 12;
+      g.strokeStyle = `rgba(255,255,255,${0.25 + r() * 0.4})`;
+      g.beginPath(); g.moveTo(x, y); g.lineTo(x + Math.cos(a) * l, y + Math.sin(a) * l); g.stroke();
+    }
+  }, { nearest: false, srgb: false })),
+
   asphalt: () => cached('asphalt', () => canvasTexture([64, 64], (g, w, h) => {
     noise(g, w, h, [50, 50, 52], 10, 1);
     const r = rng(7);
