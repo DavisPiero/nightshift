@@ -39,8 +39,8 @@ export class Screens {
 
     this.garage = new Garage(game, this);
     this.menuSounds();
-    // The race loading screen has the same pixel wheel as the start-up screen.
-    window.PixelWheel?.mount($('#race-load .rl-wheel'));
+    // The race loading screen has the same boot text as the start-up screen.
+    window.BootLog?.mount($('#race-load .rl-wheel'));
 
     // Keyboard: Escape goes back; arrows move between buttons.
     window.addEventListener('keydown', (e) => {
@@ -175,7 +175,7 @@ export class Screens {
     el.querySelector('.rl-tt').textContent = TIPS[this.tip];
     el.classList.remove('done');
     el.hidden = false;
-    window.PixelWheel?.wake();
+    window.BootLog?.wake();
     const shown = performance.now();
     // Two frames so the screen is up before the heavy work starts.
     requestAnimationFrame(() => requestAnimationFrame(() => {

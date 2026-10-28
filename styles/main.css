@@ -199,7 +199,7 @@ h1, h2, p { margin: 0; }
    works (pink header), two smaller grey ones for modes still to come. */
 .screen.modes { background: rgba(2, 5, 7, 0.7); }
 .mode-grid {
-  position: absolute; top: calc(max(16px, var(--st)) + 70px); bottom: max(22px, var(--sb));
+  position: absolute; top: calc(max(16px, var(--st)) + 70px); height: min(52vh, 380px);
   left: max(16px, var(--sl)); right: max(16px, var(--sr));
   grid-template-columns: 2fr 1fr; grid-template-rows: 1fr 1fr; gap: 14px;
 }
@@ -401,10 +401,10 @@ input[type=range]::-moz-range-thumb { width: 14px; height: 24px; border: 0; bord
 #hud.touch #tach { width: 200px; height: 200px; right: auto; left: 50%; transform: translateX(-50%); bottom: max(4px, var(--sb)); }
 #hud-buttons { position: absolute; top: max(14px, var(--st)); left: max(16px, var(--sl)); display: flex; gap: 8px; pointer-events: auto; }
 #minimap {
-  position: absolute; top: max(14px, var(--st)); right: max(16px, var(--sr)); width: 168px; height: 168px;
+  position: absolute; top: max(14px, var(--st)); right: max(16px, var(--sr)); width: 270px; height: 270px; overflow: hidden;
   background: rgba(4, 10, 14, 0.62); clip-path: var(--cut); box-shadow: inset 0 0 0 1px var(--edge-hi);
 }
-#hud.touch #minimap { width: 124px; height: 124px; }
+#hud.touch #minimap { width: 180px; height: 180px; }
 #hud.touch #hud-buttons { display: none; }
 .ico-pause { display: inline-block; width: 14px; height: 18px; border-left: 5px solid currentColor; border-right: 5px solid currentColor; vertical-align: middle; }
 #debug {
@@ -478,8 +478,8 @@ input[type=range]::-moz-range-thumb { width: 14px; height: 24px; border: 0; bord
   .box h2, .bar h2 { font-size: 36px; }
   #tach { width: 200px; height: 200px; }
   #hud.touch #tach { width: 160px; height: 160px; }
-  #minimap { width: 132px; height: 132px; }
-  #hud.touch #minimap { width: 104px; height: 104px; }
+  #minimap { width: 200px; height: 200px; }
+  #hud.touch #minimap { width: 150px; height: 150px; }
   .box { padding: 10px 14px 14px; gap: 8px; }
   .box.wide { max-height: calc(100vh - 80px); }
   .row { padding: 4px 8px; }
@@ -527,7 +527,9 @@ input[type=range]::-moz-range-thumb { width: 14px; height: 24px; border: 0; bord
 /* Start-up: the wheel in the middle, over a dark vignette. */
 #boot { display: flex; align-items: center; justify-content: center; background: radial-gradient(ellipse at center, #0b1418 0%, #020406 70%); }
 .boot-mid { display: flex; flex-direction: column; align-items: center; gap: 22px; }
-#boot .wheel-art { width: min(220px, 36vmin); height: auto; filter: drop-shadow(0 0 24px rgba(63, 240, 232, 0.18)); }
+.boot-log { margin: 0; font: 18px/1.45 'DotGothic16', monospace; color: #9ff7f0; text-shadow: 0 0 8px rgba(63, 240, 232, 0.35); white-space: pre; min-width: 24em; max-width: 92vw; text-align: left; }
+#boot .boot-mid { align-items: flex-start; }
+.rl-wheel .boot-log { font-size: 15px; min-width: 0; }
 /* Into a race: the track still slowly drifting closer, the wheel bottom
    left, a tip bottom right. */
 .rl-still { position: absolute; inset: -4%; background: center / cover no-repeat; animation: drift 7s ease-out both; }

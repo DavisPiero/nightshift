@@ -2,11 +2,12 @@
 // moment (top speed, 0-100, 100-0) or from the grip numbers it drives with,
 // so every part fitted moves them honestly and a new car rates itself.
 // They combine into a 1-1000 score and a class:
-//   D below 400, C 400-549, B 550-699, A 700-799, S 800-899, X 900 and up.
+//   D below 450, C 450-599, B 600-749, A 750-849, S 850-949, X 950 and up
+// (raised in Milestone 6 so S and X are rare).
 
 import { Vehicle } from '../physics/vehicle.js';
 
-export const CLASSES = [['X', 900], ['S', 800], ['A', 700], ['B', 550], ['C', 400], ['D', 0]];
+export const CLASSES = [['X', 950], ['S', 850], ['A', 750], ['B', 600], ['C', 450], ['D', 0]];
 export const classFor = (pi) => CLASSES.find(([, min]) => pi >= min)[0];
 
 // How each stat maps to 1..10 (raw value at 1, raw value at 10).

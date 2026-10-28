@@ -14,7 +14,7 @@ way they are, HANDOFF.md for how the last session ended. BRIEF.md is the origina
   knows where a control came from.
 - Physics runs at a fixed 1/120 s step and never imports Three.js (so the bench can run it in Node).
 - Automatic gearbox is the default. Manual is optional and must never be needed to be quick.
-- Art: low-poly, small nearest-filtered textures, fog, no full-screen pixelate filter.
+- Art: realistic (since Milestone 6, 2026-10-28): physically based materials, smooth filtering, tone mapping. Low graphics keeps the old chunky-pixel look. Menus, HUD and VHS overlays stay retro on purpose.
   Neon Japan is the theme (David, 2026-10-26): each track has its own light colour (the
   Starter Track warm amber, the Underground turquoise, Parabolica Street pink neon under
   white lamps), with neon signs and Japanese text as accents. Cars have clear-coated paint that reflects the lights round them; the world
@@ -61,7 +61,7 @@ way they are, HANDOFF.md for how the last session ended. BRIEF.md is the origina
 - `src/cameras/` chase and cockpit cameras, camera shake
 - `src/audio/` engine, tyres, wind, impacts, backfires, rain and night ambience (`audio.js`), menu sounds (`ui-sounds.js`), all synthesised
 - `src/race/` race AI, not in the game yet: the racing line (`racing-line.js`), AI drivers (`ai-driver.js`), the race manager: grid, countdown, laps, places (`race.js`)
-- `src/ui/` screens (menus, Drive modes, race settings, loading into a race, pause), the pixel loading wheel (`pixel-wheel.js`, a plain script), loading tips (`tips.js`), the asset library page (`library.js`), the garage screen (`garage.js`), the ratings display (`stats-view.js`), settings tabs, HUD rev counter and minimap, debug panel (F3), Feel panel (F4)
+- `src/ui/` screens (menus, Drive modes, race settings, loading into a race, pause), the start-up and loading boot text (`boot-log.js`, a plain script), loading tips (`tips.js`), the asset library page (`library.js`), the garage screen (`garage.js`), the ratings display (`stats-view.js`), settings tabs, HUD rev counter and minimap, debug panel (F3), Feel panel (F4)
 - `src/save/` versioned localStorage save (version 3: up to 3 named builds per car; migrates 1 and 2)
 - `tools/` smoke test, driving bench, AI bench (`ai-bench.mjs`: six AI cars race two laps on every track), headless screenshots (`shot.mjs`), the race loading stills (`loading-stills.sh`, writes `assets/loading/`)
 

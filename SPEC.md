@@ -52,7 +52,7 @@ The one style sheet for every screen (fix for "it still looks like Courtside", 2
    layouts, the Underground track, rebuilt car bodies and a third car (R35), paint
    reflections, the garage room. **Done, signed off 2026-10-26.**
 5. Night circuit: a second, full track.
-6. Racing: checkpoints, countdown, lap timing, results. Restart already exists.
+6. Realism overhaul (M6, started 2026-10-28), then racing: checkpoints, countdown, lap timing, results. Restart already exists.
 7. Garage extras: in-game currency and prices for parts (later).
 8. Saving and settings: the rest (most of it is done in 3).
 9. Polish and release.

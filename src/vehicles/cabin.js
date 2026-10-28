@@ -175,14 +175,10 @@ export function buildCabin(cockpit, { dx, sh, spec, mats, B }) {
     cockpit.add(pillar);
   }
 
-  // Headliner, visors, mirror, and the dome light.
+  // Headliner, mirror, and the dome light.
   const ly = sh.linerY ?? 1.315;
   const liner = add(new THREE.PlaneGeometry(1.25, 0.85), lower, 0, ly, -0.12);
   liner.rotation.x = Math.PI / 2;
-  for (const s of [1, -1]) { // sun visors, folded up flat to the roof
-    const v = add(extrudeZ(rounded(0.32, 0.14, 0.03), 0.018, 0.005), cloth, s * 0.34, ly - 0.015, 0.36);
-    v.rotation.x = Math.PI / 2;
-  }
   add(extrudeZ(rounded(0.24, 0.065, 0.02), 0.03, 0.008), black, 0, ly - 0.075, 0.5);
   add(new THREE.BoxGeometry(0.21, 0.05, 0.004), chrome, 0, ly - 0.075, 0.484);
   add(new THREE.BoxGeometry(0.015, 0.06, 0.015), black, 0, ly - 0.03, 0.5);
