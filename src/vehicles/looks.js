@@ -50,7 +50,7 @@ export const RIDE = {
 
 // A look with every field filled in. null colours mean "the car's own".
 export function defaultLook(car) {
-  return { paint: car?.paint ?? 0xeeeeea, finish: 'metallic', decal: 'none', decalColour: 0xf2f2ee, rim: null, rimColour: null, caliper: null, ride: 'stock' };
+  return { paint: car?.paint ?? 0xeeeeea, finish: 'metallic', decal: car?.stripes ? 'stripes' : 'none', decalColour: car?.stripes ?? 0xf2f2ee, rim: null, rimColour: null, caliper: null, ride: 'stock' };
 }
 
 // Fill in anything missing or unknown, so an old save can never break a car.
