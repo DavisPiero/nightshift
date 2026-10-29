@@ -255,7 +255,7 @@ export function buildCar(spec, look = spec.paint, { simple = false } = {}) {
     engineRear: !!sh.def.engineLid,
     // Where the driver's eyes are, in the body's space (so they lean and
     // drop with it).
-    cockpitEye: new THREE.Vector3(dx, 1.17 + sh.cockpitOffset[0], -0.08 + sh.cockpitOffset[1]),
+    cockpitEye: new THREE.Vector3(dx * (sh.cabinScale ?? 1), 1.17 * (sh.cabinScale ?? 1) + sh.cockpitOffset[0], -0.08 * (sh.cabinScale ?? 1) + sh.cockpitOffset[1]),
     headGlows,
     setPaint(color) { paint.color.set(color); },
     // Lift the bonnet (the garage's Engine tab). `now`: no animation.
@@ -490,6 +490,53 @@ function r34Details({ B, add, box, mats: m, spec, tip }) {
   return { exhausts: ex, tails };
 }
 
+// The Miata (1990 MX-5): a small, round-nosed roadster. Pop-up headlights
+// (open, because the lights are on), amber indicators low in the nose, a low
+// mouth, a bonnet with soft bulges over the wings, oval tail lights, a plate
+// between them, one exhaust and a black soft top (def.softTop).
+function miataDetails({ B, add, box, mats: m, spec, tip }) {
+  const zf = B.z1, zr = B.z0;
+  // Nose: a low, wide mouth with a thin lip, amber indicators in the corners.
+  add(flatShape(roundRect(0, 0.33, 0.92, 0.1, 0.035), zf, 1), m.black);
+  add(flatShape(roundRect(0, 0.4, 0.5, 0.05, 0.015), zf, 1, 0.006), m.trim);
+  for (const s of [1, -1]) {
+    add(flatShape(roundRect(s * 0.58, 0.45, 0.2, 0.075, 0.025), zf, 1, 0.004), m.lampInner);
+    add(flatShape(roundRect(s * 0.58, 0.45, 0.17, 0.05, 0.02), zf, 1, 0.007), m.amber);
+    add(flatShape(roundRect(s * 0.24, 0.47, 0.1, 0.05, 0.015), zf, 1, 0.005), m.lampInner);
+  }
+  const lip = box(1.4, 0.02, 0.14, m.carbon, 0, 0.27, zf - 0.05);
+  lip.rotation.x = 0.04;
+  // Pop-up headlights, raised: a black bucket, the lamp facing forward, the
+  // body-colour lid tipped up behind it.
+  for (const s of [1, -1]) {
+    const x = s * 0.5, y = B.hood(1.58) + 0.02;
+    const bucket = add(new THREE.CylinderGeometry(0.085, 0.085, 0.11, 14), m.black);
+    bucket.rotation.x = Math.PI / 2; bucket.position.set(x, y + 0.07, 1.58);
+    const disc = add(new THREE.CircleGeometry(0.07, 14), m.headlight);
+    disc.position.set(x, y + 0.07, 1.58 + 0.058);
+    const lid = box(0.19, 0.012, 0.15, m.paint, x, y + 0.14, 1.52);
+    lid.rotation.x = -0.35;
+  }
+  // The bonnet's two soft bulges over the front wings, and a door handle.
+  for (const s of [1, -1]) add(B.decal(1.25, 1.72, s > 0 ? 7.2 : 4.8, s > 0 ? 8.2 : 5.8, { lift: 0.004, sides: [s], nz: 4, nt: 1 }), m.paint);
+  add(B.decal(-0.05, 0.1, 5.2, 5.4, { lift: 0.006, nz: 1, nt: 1 }), m.black);
+  for (const s of [1, -1]) box(0.04, 0.05, 1.5, m.carbon, s * 0.78, 0.2, 0);
+  // Tail: a wide oval lamp each side (two round lenses), a dark plate panel,
+  // reverse lamps, a lip under the bumper and one exhaust on the left.
+  const tails = [];
+  for (const s of [1, -1]) {
+    add(flatShape(roundRect(s * 0.66, 0.74, 0.34, 0.12, 0.05), zr, -1, 0.003), m.tailRing);
+    tails.push(roundLamp(add, m, s * 0.58, 0.74, zr, 0.052, -1, m.tail));
+    tails.push(roundLamp(add, m, s * 0.74, 0.74, zr, 0.052, -1, m.tail));
+  }
+  add(flatShape(roundRect(0, 0.66, 0.5, 0.13, 0.02), zr, -1, 0.004), m.black);
+  add(flatShape(roundRect(0, 0.66, 0.4, 0.085, 0.01), zr, -1, 0.007), m.plate);
+  add(flatShape(roundRect(0, 0.4, 1.2, 0.09, 0.03), zr, -1), m.black);
+  const ex = [exhaust(add, m, 0.5, 0.3, zr - 0.02, 0.035 * tip, 0.16)];
+  mirror(add, m, B, 0.56, 0.9);
+  return { exhausts: ex, tails };
+}
+
 // The R34's tall stock wing on two uprights, with endplates and a small flap.
 function r34Wing({ box, m, zr }) {
   for (const s of [1, -1]) { const up = box(0.05, 0.22, 0.14, m.paint, s * 0.58, 1.1, zr + 0.25); up.rotation.x = -0.12; }
@@ -655,11 +702,18 @@ function aventadoroDetails({ B, add, box, mats: m, spec, tip }) {
   add(B.decal(-1.25, -0.72, 7.1, 7.9, { lift: 0.006, nz: 3, nt: 2 }), m.black);
   for (const s of [1, -1]) box(0.06, 0.08, 2.0, m.carbon, s * 0.97, 0.15, 0.02);
   // Engine lid: louvres across it.
-  for (let i = 0; i < 6; i++) add(B.decal(-2.08 + i * 0.15, -2.02 + i * 0.15, 10.3, 12, { lift: 0.006, nz: 1, nt: 3 }), m.black);
+  // A dark engine cover with body-colour ribs across it, as on the sheet.
+  add(B.decal(-2.1, -1.5, 9.6, 12, { lift: 0.006, nz: 6, nt: 3 }), m.black);
+  for (let i = 0; i < 5; i++) add(B.decal(-2.04 + i * 0.12, -2.0 + i * 0.12, 9.8, 12, { lift: 0.009, nz: 1, nt: 3 }), m.paint);
   // Tail: a black mesh panel, the Y-shaped lamps either side, a hexagonal
   // exhaust with two pipes in the middle, a deep diffuser.
-  add(flatShape(roundRect(0, 0.6, 1.62, 0.42, 0.04), zr, -1, 0.003), m.black);
-  for (let i = 0; i < 5; i++) add(flatShape(roundRect(0, 0.45 + i * 0.07, 1.5, 0.01, 0.003), zr, -1, 0.006), m.trim);
+  // Body colour above, black mesh below with two big vents either side of the exhaust.
+  add(flatShape(roundRect(0, 0.47, 1.62, 0.3, 0.04), zr, -1, 0.003), m.black);
+  for (const s of [1, -1]) {
+    add(flatShape(roundRect(s * 0.55, 0.5, 0.42, 0.2, 0.03), zr, -1, 0.005), m.carbon);
+    for (let i = 0; i < 4; i++) add(flatShape(roundRect(s * 0.55, 0.43 + i * 0.05, 0.4, 0.008, 0.002), zr, -1, 0.007), m.trim);
+  }
+  add(flatShape(roundRect(0, 0.66, 1.62, 0.025, 0.01), zr, -1, 0.005), m.carbon);
   const tails = [];
   for (const s of [1, -1]) {
     tails.push(add(flatShape([[s * 0.4, 0.86], [s * 0.84, 0.82], [s * 0.84, 0.79], [s * 0.4, 0.83]], zr, -1, 0.008), m.tail));
@@ -668,14 +722,14 @@ function aventadoroDetails({ B, add, box, mats: m, spec, tip }) {
   }
   const hex = Array.from({ length: 6 }, (_, i) => [Math.cos(i * Math.PI / 3) * 0.2, 0.52 + Math.sin(i * Math.PI / 3) * 0.12]);
   add(flatShape(hex, zr, -1, 0.009), m.carbon);
-  add(flatShape(roundRect(0, 0.75, 0.36, 0.08, 0.01), zr, -1, 0.006), m.plate);
+  add(flatShape(roundRect(0, 0.76, 0.34, 0.08, 0.01), zr, -1, 0.006), m.plate);
   const ex = [];
   for (const x of [-0.08, 0.08]) ex.push(exhaust(add, m, x, 0.52, zr - 0.02, 0.06 * Math.min(tip, 1.25), 0.14));
   const diff = box(1.5, 0.03, 0.42, m.carbon, 0, 0.24, zr + 0.18);
   diff.rotation.x = -0.2;
   for (const x of [-0.6, -0.3, 0.3, 0.6]) box(0.02, 0.12, 0.38, m.carbon, x, 0.28, zr + 0.18);
-  // The SV's fixed wing on two stands, clear of the engine lid.
-  if (!spec.wing) {
+  // The sheet's car has no fixed wing (the wing is a part you can fit).
+  if (false) {
     const z = zr + 0.2, y = B.hood(z);
     for (const s of [1, -1]) { const st = box(0.04, 0.26, 0.1, m.carbon, s * 0.4, y + 0.11, z); st.rotation.x = 0.2; }
     const blade = box(1.86, 0.03, 0.3, m.carbon, 0, y + 0.25, z - 0.06);
@@ -803,6 +857,27 @@ function decals({ B, add, look, sh, bonnet }) {
 // drive); cockpitOffset moves the whole cockpit [up, forward] to fit.
 // Body keys are [z, value], rear to front (see body.js).
 const SHAPES = {
+  'miata-na': {
+    def: {
+      width: [[-1.98, 0.7], [-1.9, 0.78], [-1.5, 0.83], [-0.8, 0.835], [0, 0.83], [0.8, 0.835], [1.4, 0.83], [1.85, 0.78], [1.98, 0.68]],
+      sill: [[-1.98, 0.3], [-1.85, 0.21], [-1.4, 0.17], [1.5, 0.17], [1.85, 0.19], [1.98, 0.24]],
+      belt: [[-1.98, 0.74], [-1.85, 0.8], [-1.2, 0.8], [-0.3, 0.78], [0.4, 0.74], [1.0, 0.7], [1.6, 0.65], [1.85, 0.62], [1.98, 0.55]],
+      hood: [[-1.98, 0.78], [-1.88, 0.86], [-1.6, 0.89], [-1.0, 0.87], [-0.6, 0.84], [0.3, 0.8], [0.8, 0.78], [1.3, 0.72], [1.7, 0.66], [1.9, 0.62], [1.98, 0.56]],
+      roof: [[-1.0, 0.9], [-0.75, 1.07], [-0.4, 1.19], [0, 1.215], [0.3, 1.17], [0.55, 1.0], [0.8, 0.8]],
+      roofW: [[-1.0, 0.62], [-0.4, 0.6], [0.3, 0.6], [0.8, 0.72]],
+      wheels: { z: [1.13, -1.135], r: 0.36, top: 0.6, flare: [0.02, 0.03] },
+      windows: [[0.72, -0.5]], pillarsBlack: [[-0.5, -1.0]],
+      screen: [0.8, 0.3], rearGlass: [-0.8, -1.0],
+      crown: 0.03, baseW: 0.93, tuck: 0.05, sillTrim: true, fenderRise: 0.035, bulge: 0.02, roofCrown: 0.04,
+      softTop: true,
+    },
+    wheelX: 0.7, tyreWidth: 0.19,
+    rim: { style: 'five', color: '#b8bcbe', caliper: 0x2a2c2e },
+    core: [1.2, 3.0],
+    driverX: 0.37, cockpitOffset: [-0.02, -0.06], doorX: 0.84, linerY: 1.25, cabinScale: 0.9,
+    headLamp: [0.5, 0.7, 1.62], tailLamp: [0.6, 0.72, -1.96],
+    details: miataDetails,
+  },
   'skyliner-r34': {
     def: {
       width: [[-2.3, 0.79], [-2.22, 0.855], [-1.75, 0.882], [-1.0, 0.868], [0, 0.858], [0.8, 0.862], [1.35, 0.874], [1.95, 0.866], [2.2, 0.838], [2.3, 0.78]],

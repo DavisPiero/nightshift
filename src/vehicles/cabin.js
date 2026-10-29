@@ -60,7 +60,7 @@ function shellTop(B, z, x) {
 // pillars) that would poke through the roof or the glass, so it sits just
 // inside the shell on every car (the cabin is shared; the shells are not).
 function fitInside(cockpit, B) {
-  const off = cockpit.position, box = new THREE.Box3(), v = new THREE.Vector3();
+  const k = cockpit.scale.x, off = cockpit.position, box = new THREE.Box3(), v = new THREE.Vector3();
   cockpit.matrixWorld.identity(); // measure in the cockpit's own space
   for (const c of cockpit.children) {
     if (c.isLight) continue;
@@ -73,11 +73,11 @@ function fitInside(cockpit, B) {
     let over = 0;
     const cx = (box.min.x + box.max.x) / 2, hx = (box.max.x - box.min.x) * 0.35;
     for (const x of [cx - hx, cx + hx]) for (const z of [box.min.z, box.max.z]) {
-      v.set(x, box.max.y, z).add(off);
+      v.set(x, box.max.y, z).multiplyScalar(k).add(off);
       if (v.z < B.z0 || v.z > B.z1) continue;
       over = Math.max(over, v.y - (shellTop(B, v.z, v.x) - 0.015));
     }
-    if (over > 0) c.position.y -= Math.min(over, 0.06);
+    if (over > 0) c.position.y -= Math.min(over, 0.06) / k;
   }
 }
 
@@ -248,6 +248,7 @@ export function buildCabin(cockpit, { dx, sh, spec, mats, B }) {
   mark.position.y = 0.18;
   wheel.add(mark); // so you can see the wheel turn
 
+  cockpit.scale.setScalar(sh.cabinScale ?? 1); // a smaller car has a smaller cabin
   fitInside(cockpit, B);
   return { wheel, needles, dome };
 }

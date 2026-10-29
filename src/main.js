@@ -535,7 +535,7 @@ class Game {
     }
     this.placeGlare(garage);
     const fxs = this.save.settings.effects;
-    this.renderer.setLens({ blur: garage || this.state !== 'driving' ? 0 : Math.max(0, Math.min(1, (v.speed - 25) / 55)), grain: fxs.grain, aberration: fxs.lens, time: this.t || performance.now() / 1000 });
+    this.renderer.setLens({ blur: garage || this.state !== 'driving' ? 0 : Math.max(0, Math.min(1, (v.speed - 25) / 55)), aberration: fxs.lens });
     this.renderer.render(scene, this.camera);
 
     if (this.hud.debugOn) {

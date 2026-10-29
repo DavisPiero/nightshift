@@ -408,9 +408,87 @@ export const MUSTANK_GT500 = {
   paintNames: ['Race Red', 'Velocity Blue', 'Shadow Black', 'Oxford White', 'Carbonized Grey', 'Twister Orange'],
 };
 
+// Based on the 1990 MX-5 Miata (David's reference sheet): 1.6 L four-cylinder
+// (116 hp at 6500 rpm, 136 N·m at 5500), about 990 kg, rear-wheel drive,
+// five-speed gearbox, 185/60R14 tyres. The tutorial car and the first one you
+// own: light, forgiving and a little slower than the others, with grip a touch
+// below the GT-R's so it is easy to learn and still slides when asked.
+export const MIATA_NA = {
+  id: 'miata-na',
+  make: 'Mazdo',
+  model: 'MX-5 Miata',
+  code: 'NA',
+  year: 1990,
+  blurb: 'Light, open and friendly. The car to learn in: small power, big smiles.',
+
+  mass: 990,
+  wheelbase: 2.265,
+  frontWeight: 0.52,
+  cgHeight: 0.44,
+  trackWidth: 1.41,
+  halfWidth: 0.84,
+  halfLength: 1.98,
+  yawInertiaScale: 1.0,
+
+  idleRpm: 900,
+  redline: 6800,
+  limiterRpm: 7000,
+  torqueCurve: [
+    [900, 72], [2000, 108], [3000, 122], [4000, 130],
+    [5500, 136], [6500, 127], [7000, 110],
+  ],
+  throttleResponse: 12,
+  engineBraking: 70,
+  engineInertia: 0.16,
+  sound: { cylinders: 4, burble: 0.15, pitch: 1.15, sub: 0.7, rasp: 1.1 },
+
+  gearRatios: [3.14, 1.89, 1.33, 1.0, 0.81],
+  reverseRatio: 3.48,
+  finalDrive: 4.1,
+  drivetrainEfficiency: 0.86,
+  drivetrain: 'rwd',
+  shiftTime: 0.2,
+  autoUpshiftRpm: 6500,
+  autoDownshiftRpm: 2800,
+
+  wheelRadius: 0.29,
+  tireGrip: 1.02,
+  rearGripScale: 1.09,
+  slipPeak: 0.17,
+  slideGrip: 0.84,
+
+  maxSteer: 0.58,
+  highSpeedSteer: 0.12,
+  steerSpeed: 3.0,
+
+  brakeForce: 10500,
+  brakeFrontBias: 0.62,
+  handbrakeForce: 3000,
+  handbrakeRearGrip: 0.4,
+
+  dragCoefficient: 0.34,
+  frontalArea: 1.7,
+  downforce: 0.05,
+  rollingResistance: 0.015,
+  liftOffDrag: 0.6,
+
+  suspensionStiffness: 38,
+  suspensionDamping: 7,
+  rollScale: 0.0045,
+  pitchScale: 0.006,
+  squatShare: 0.6,
+  shiftKick: 0.2,
+  maxRoll: 0.06,
+  maxPitch: 0.055,
+
+  paint: 0xc4151c,
+  paints: [0xc4151c, 0xe8e6e0, 0x1d3f7a, 0x101114, 0x2a6a46, 0xd8b020],
+  paintNames: ['Classic Red', 'Crystal White', 'Mariner Blue', 'Brilliant Black', 'British Racing Green', 'Sunburst Yellow'],
+};
+
 // The cars you can pick. The R34 is hidden until its body is rebuilt (David,
 // 2026-10-26): its numbers stay, so the bench still drives it.
-export const CARS = [GTAR_R35, CHALLENJER_SRT8, AVENTADORO_SV, MUSTANK_GT500];
+export const CARS = [MIATA_NA, GTAR_R35, CHALLENJER_SRT8, AVENTADORO_SV, MUSTANK_GT500];
 export const ALL_CARS = [SKYLINER_R34, ...CARS];
 
 export function getCar(id) {
