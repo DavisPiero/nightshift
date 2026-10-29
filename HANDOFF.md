@@ -1,37 +1,27 @@
-# Hand-off: end of session 8 (2026-10-26)
+# Hand-off: end of session 10 (2026-10-30)
 
 ## Repo state
-- David's fifth notes, built on `fifth-notes`, merged into `main` and pushed (live on GitHub
-  Pages) as he asked; the branch is deleted.
-- Driving bench, AI bench (`node tools/ai-bench.mjs`) and smoke test pass.
+- Everything is merged into `main` and pushed (David: "push without asking"); no open branches.
+- Driving bench and smoke test pass (smoke run before the final docs-only commits).
+- Milestone 6 is now the **realism overhaul** (racing is parked). `AUDIT.md` lists every model and its gaps.
 
 ## Read first
-`CLAUDE.md`, `STATE.md`, then the last 20 lines of `DECISIONS.md`.
+`CLAUDE.md`, `STATE.md`, `AUDIT.md`, then the last 25 lines of `DECISIONS.md`. References: `Reference/Cars` (R35, Challenger, Aventador, Miata sheets), `Reference/Realism` (five screenshots), `Reference/User Interface/noticeboard-win98.jpg`.
 
 ## How the new pieces fit
-- Dots fix: `graphics/renderer.js` post shader no longer rounds each channel to 6 bits.
-- Low sun: `world/time-of-day.js` (sun power, `glare`); `main.js placeGlare` projects the sun
-  to the screen and `renderer.setGlare` draws core, veil, streak and ghosts, scaled by how much
-  of the sun is open sky (taps of the scene image). `graphics/reflections.js setSky` paints the
-  warm horizon and sun into the paint's reflections.
-- Cabin: `vehicles/cabin.js` builds it into the `cockpit` group, now a child of the body (it
-  leans). `fitInside` lowers roof-level parts (y > 0.9 m) up to 6 cm to stay under each car's
-  roof. The cockpit camera reads the eye from `model.body.matrixWorld`.
-- Rear engine: a car's `def.engineLid` makes `engine-bay.js` cut the lid behind the cabin,
-  hinged at the cabin end (`bay.dir`); the garage turns the car round for the Engine tab
-  (`model.engineRear`).
-- Pixel pictures: `graphics/pixel-art.js pixelSvg` (touch pedals, handbrake);
-  `ui/pixel-wheel.js` (plain script, `window.PixelWheel.mount/wake`).
-- Drive modes: `#scr-modes` in index.html, styles under "Drive: mode tiles" in main.css.
-- Parabolica: `parabolica-scene.js` town section (blocks, lanterns, flats with crowns); shop
-  palettes in `assets.js SHOP_PALETTES`; `roofKit` gives every building its roof.
-- Race AI: `race/racing-line.js`, `race/ai-driver.js`, `race/race.js`. To use in the game:
-  build a `RacingLine` when the track loads, make `AIDriver`s for each opponent, and step a
-  `Race` from `Game.update` with the player's controls; the HUD can read `race.lights`,
-  `race.order` and each car's `lap`, `lapTimes`.
+- Renderer: `graphics/renderer.js`. Medium/High (`smooth: true` in `core/config.js`) draw at 720/1080 lines with 4x MSAA, linear filtering, ACES in the post shader, no dither. Speed blur and lens fringing live in the same shader (`setLens`, switches in `EFFECTS`). Low keeps the chunky look. `textures.js setSmoothTextures` flips texture filtering.
+- Miata: `cars.js MIATA_NA`, `car-model.js SHAPES['miata-na']` + `miataDetails`, `body.js def.softTop`, `cabin.js sh.cabinScale` (cabin scaled 0.9). First and default car in `save.js`.
+- Classes: thresholds in `vehicles/stats.js` (S 850, X 950).
+- UI: zoomed heading-up minimap (`ui/hud.js`), boot text (`ui/boot-log.js`), notice board (`ui/notice.js`, `#notice`, styles at the end of `main.css`).
 
 ## Next
-1. Milestone 6: AI on the track, countdown, lap timing, results.
+1. Rebuild R35, R34 (still hidden), Challenjer, Mustank bodies and cockpits to the realism standard; check the Miata properly (pop-up lids in cockpit view, pale roof in the garage).
+2. Environment: roads, buildings, terrain, garage; headlight pools, wet roads, sun raise.
+3. Effects: ambient occlusion, exposure adaptation, lens dirt, flame/smoke/spark upgrades.
+4. Balance pass (separate commits): real-world figures are in DECISIONS.md.
+5. Racing (old Milestone 6) after that.
 
 ## Open with David
-- Confirm the guesses listed in STATE.md.
+- Send the Mustang reference sheet.
+- Guesses to confirm: the Miata's name, numbers and paints; the notice board wording; fringing strength; the Aventadoro keeping its SV name with the LP 700-4 rear; Medium as default (untested on iPad).
+- Whether to correct stats to real-world figures (it changes feel).
