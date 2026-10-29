@@ -15,7 +15,7 @@ void main() { vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }`;
 const POST_FRAG = /* glsl */`
 uniform sampler2D tScene, tBloom;
 uniform vec2 resolution;
-uniform float dither, bloom, filmic, blurK, grain, aberr, time;
+uniform float dither, bloom, filmic, blurK, aberr;
 uniform vec2 sunUv;
 uniform float glare;
 uniform vec3 glareCol;
@@ -50,7 +50,7 @@ void main() {
     // Speed blur: taps pulled toward the middle of the screen (stronger at the
     // edges, so the road ahead stays readable), with the red and blue
     // channels split a hair towards the corners.
-    vec2 ab = rd * aberr * (0.0018 + edge * 0.011);
+    vec2 ab = rd * aberr * (0.0007 + edge * 0.0045);
     c = vec3(0.0);
     float n = blurK > 0.0 ? 7.0 : 1.0;
     for (int i = 0; i < 7; i++) {
@@ -100,9 +100,6 @@ void main() {
   // fewer bits: rounding each channel on its own broke soft glows (lamp
   // halos, tail-light spill) into pink and blue dots (David, twice).
   c += bayer4(gl_FragCoord.xy) * dither / 110.0;
-  // Film grain: fine, changes every frame, strongest in the shadows.
-  float n = fract(sin(dot(gl_FragCoord.xy + time * 61.0, vec2(12.9898, 78.233))) * 43758.5453) - 0.5;
-  c += n * grain * (0.035 + (1.0 - l) * 0.05);
   gl_FragColor = vec4(clamp(c, 0.0, 1.0), 1.0);
 }`;
 
@@ -142,7 +139,7 @@ export class RetroRenderer {
     this.postCam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
     this.post = new THREE.ShaderMaterial({
       uniforms: {
-        tScene: { value: this.target.texture }, resolution: { value: new THREE.Vector2() }, dither: { value: 1 }, filmic: { value: 0 }, blurK: { value: 0 }, grain: { value: 0 }, aberr: { value: 0 }, time: { value: 0 },
+        tScene: { value: this.target.texture }, resolution: { value: new THREE.Vector2() }, dither: { value: 1 }, filmic: { value: 0 }, blurK: { value: 0 }, aberr: { value: 0 },
         sunUv: { value: new THREE.Vector2() }, glare: { value: 0 }, glareCol: { value: new THREE.Color() },
       },
       vertexShader: POST_VERT, fragmentShader: POST_FRAG, depthTest: false, depthWrite: false,
@@ -197,14 +194,12 @@ export class RetroRenderer {
     this.blurStep = [1 / bw, 1 / bh];
   }
 
-  // Speed blur, film grain and lens fringing (realistic looks only). `blur`
+  // Speed blur and lens fringing (realistic looks only). `blur`
   // 0..1 is how fast the car is going; each effect has its own switch.
-  setLens({ blur = 0, grain = false, aberration = false, time = 0 }) {
+  setLens({ blur = 0, aberration = false }) {
     const u = this.post.uniforms;
     u.blurK.value = this.lens ? blur : 0;
-    u.grain.value = this.lens && grain ? 1 : 0;
     u.aberr.value = this.lens && aberration ? 1 : 0;
-    u.time.value = time % 100;
   }
 
   // The low sun's glare: where it is on screen (0..1), how strong, its colour.

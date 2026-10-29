@@ -1,6 +1,6 @@
 # NIGHTSHIFT: state
 
-_Last updated 2026-10-28, session 9 (realism overhaul, on branch `m6-realism`, not merged)._
+_Last updated 2026-10-30, session 10 (realism overhaul continued)._
 
 ## Where we are
 - David's fifth notes are built and pushed to `main` (live), as he asked ("push it without
@@ -18,14 +18,14 @@ _Last updated 2026-10-28, session 9 (realism overhaul, on branch `m6-realism`, n
   - race AI written and benched, not shown in the game.
 - Driving bench, AI bench and smoke test pass.
 
-## Now: Milestone 6 = realism overhaul (branch `m6-realism`)
-- Done: audit (`AUDIT.md`); smooth renderer on Medium/High (default Medium); speed blur, grain, lens fringing; smooth textures; cockpit FOV and visors; bigger zoomed minimap; shorter mode tiles; boot-text loader; class thresholds.
-- Not done: redesigned car and world models (the biggest part), the Miata, the notice board (no reference image yet), exhaust flame/smoke/spark upgrades, ambient occlusion, exposure adaptation, lens dirt, headlight pools and wet roads, sun raise.
-- Next: model redesign (R34, R35, Challenjer first), then the Mustang, Aventador, Miata once the sheets arrive.
+## Now: Milestone 6 = realism overhaul (merged to `main` as it goes)
+- Done: audit (`AUDIT.md`); smooth renderer on Medium/High (default Medium); speed blur and lens fringing (no grain); cockpit FOV and visors; zoomed minimap; boot-text loader; notice board; class thresholds; the Miata (first car); the Aventadoro's rear.
+- Not done: the proper model redesign of the R34, R35, Challenjer and Mustank (only details so far), the Mustang sheet (still missing), world and environment models, exhaust flame/smoke/spark upgrades, ambient occlusion, exposure adaptation, lens dirt, headlight pools and wet roads, the sun raise.
 - Racing is parked until after this.
 
 ## Open with David
-- Send: Mustang, Aventador and Miata reference sheets, and the notice-board reference image.
+- Send: the Mustang reference sheet.
+- Guesses: the Miata's name (Mazdo), numbers and paint names; the notice board's wording; fringing strength; the R34 is still hidden.
 - Guesses to confirm (this session):
   - the new cars' names, years, colours and numbers; the Aventadoro landing in class X;
   - the handbrake lever's look; the mode tiles' pictures (track stills);

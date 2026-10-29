@@ -111,4 +111,9 @@ One line each, newest last.
 - 2026-10-28: The wheel loader is replaced by BIOS-style boot text (`ui/boot-log.js`) on the start-up and race loading screens.
 - 2026-10-28: Class thresholds raised to D<450, C 450, B 600, A 750, S 850, X 950, so S and X are rare: Aventadoro X, R35 S, R34 and Mustank A, Challenjer B. Assists were already on by default.
 - 2026-10-28: Real-world figures noted for a later balance pass (not applied, they would change the feel): R34 ~276 PS, 0-100 ~5.0 s, ~255 km/h (game 336 hp, 5.6 s, 278); Mustang GT500 ~760 hp, ~3.5 s, ~290 km/h (game 332 km/h top); R35 ~2.9 s (game 3.9 s); Aventador SV ~2.8 s, 350+ km/h (game 3.5 s, 353).
+- 2026-10-30: Film grain removed entirely (David); lens fringing cut to about 40% of its first strength.
+- 2026-10-30: The 1990 Mazdo MX-5 Miata (`miata-na`) is the first and default car: 116 hp, 990 kg, rear drive, about 9.4 s to 100 km/h, class C 516, handling a little below the R35 (6.8 against 7.5). Soft top is body `def.softTop` (cloth in the trim material); the shared cabin is scaled by `cabinScale` (0.9) for its smaller body. Pop-up headlights are shown open (the lights are on).
+- 2026-10-30: Aventadoro: rear rebuilt after David's LP 700-4 sheet (body colour over a black mesh with two big vents, a dark engine cover with ribs); the fixed SV wing is gone (the wing part still adds one). Name and numbers unchanged.
+- 2026-10-30: Notice board: three old-desktop dialog windows (David's Windows-98 reference) over the title screen at every load, each closed with its button (Enter or Esc closes all). A deliberate exception to "no window title bars" in the menus.
+- 2026-10-30: The boot text stays up at least 1.7 s so it can be read.
 

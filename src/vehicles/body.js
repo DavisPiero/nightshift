@@ -165,9 +165,11 @@ export class Body {
       const zm = (zs[k] + zs[k + 1]) / 2, c = Math.min(secs[k].c, secs[k + 1].c);
       if (j === 0) return SLOT.under;
       if (j === 1) return def.sillTrim ? SLOT.trim : SLOT.paint;
-      if (j === 8) return c > 0.5 && this.inRanges(zm, def.windows) ? SLOT.glass : (c > 0.5 && this.inRanges(zm, def.pillarsBlack) ? SLOT.trim : SLOT.paint);
-      if (j === 9) return c > 0.5 && this.inRanges(zm, def.windows) ? SLOT.trim : SLOT.paint;
-      if (j >= 10) return this.inRanges(zm, [def.screen, def.rearGlass]) ? SLOT.glass : SLOT.paint;
+      // A soft top (def.softTop) is cloth, drawn in the trim material, over the cabin.
+      const cloth = def.softTop && c > 0.5 ? SLOT.trim : SLOT.paint;
+      if (j === 8) return c > 0.5 && this.inRanges(zm, def.windows) ? SLOT.glass : (c > 0.5 && this.inRanges(zm, def.pillarsBlack) ? SLOT.trim : cloth);
+      if (j === 9) return c > 0.5 && this.inRanges(zm, def.windows) ? SLOT.trim : cloth;
+      if (j >= 10) return this.inRanges(zm, [def.screen, def.rearGlass]) ? SLOT.glass : cloth;
       return SLOT.paint;
     };
     for (const side of [1, -1]) {

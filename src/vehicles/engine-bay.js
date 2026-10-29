@@ -19,6 +19,7 @@ export function bonnetRange(B, def) {
 // Each car's engine: layout, cam cover colour, plenum colour.
 const ENGINES = {
   'skyliner-r34': { layout: 'inline', covers: 0xa01818, plenum: 0x2a2c2e }, // the famous red cam cover
+  'miata-na': { layout: 'inline', covers: 0x2a2c2e, plenum: 0x1c1d20 },
   'gtar-r35': { layout: 'v', covers: 0x1c1d20, plenum: 0x8c949a },
   'challenjer-srt8': { layout: 'v', covers: 0xd2561a, plenum: 0x1c1d20 },  // orange cam covers
   'aventadoro-sv': { layout: 'v', covers: 0x1c1d20, plenum: 0x2a2c2e },
