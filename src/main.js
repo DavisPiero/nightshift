@@ -704,7 +704,11 @@ fontReady.catch(() => {}).finally(() => {
   window.nightshift = game; // handy from the browser console
   // The world is built: fade the start-up screen once a frame is drawn.
   const boot = document.querySelector('#boot');
-  const hide = () => { boot.classList.add('done'); setTimeout(() => boot.remove(), 450); };
+  // Keep the boot text up long enough to read, then show the notice board.
+  const hide = () => setTimeout(() => {
+    boot.classList.add('done'); setTimeout(() => boot.remove(), 450);
+    if (!URL_FLAGS.device && !new URLSearchParams(location.search).has('screen')) import('./ui/notice.js').then((m) => m.showNotice());
+  }, 1700);
   if (URL_FLAGS.smoke || URL_FLAGS.shot) boot.remove();
   else requestAnimationFrame(() => requestAnimationFrame(hide));
 });
