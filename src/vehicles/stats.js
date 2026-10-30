@@ -13,8 +13,8 @@ export const classFor = (pi) => CLASSES.find(([, min]) => pi >= min)[0];
 // How each stat maps to 1..10 (raw value at 1, raw value at 10).
 const RANGES = {
   speed: [150, 350],       // top speed, km/h
-  accel: [9, 2.5],         // 0-100 km/h, s (lower is better), blended with 80-160 below
-  roll: [16, 4],           // 80-160 km/h, s: the shove once moving (power and gearing)
+  accel: [11.7, 3.25],     // 0-100 km/h, s (lower is better), blended with 80-160 below
+  roll: [24, 6],           // 80-160 km/h, s: the shove once moving (power and gearing)
   braking: [50, 28],       // 100-0 km/h, m (lower is better)
   handling: [0.8, 1.2],    // effective grip x agility (see below)
 };

@@ -120,7 +120,7 @@ export class AIDriver {
     this.stuck = ((speed < 1.5 && target > 5) || wrongWay) ? this.stuck + dt : 0;
     // Nose in a wall: back out for a moment with the wheel the other way
     // (holding the brake at a standstill reverses), then try again.
-    if (this.stuck > 0.8 && !wrongWay && this.reversing <= 0) this.reversing = 1.2;
+    if (this.stuck > 1.6 && !wrongWay && this.reversing <= 0) this.reversing = 1.2;
     if (this.reversing > 0) {
       this.reversing -= dt;
       c.throttle = 0; c.brake = 1; c.steer = -c.steer;
