@@ -6,12 +6,10 @@ const WINDOWS = [
   {
     id: 'news', title: 'What’s new', icon: 'info', pos: 'a',
     lines: [
-      'A new first car: the 1990 Mazdo MX-5 Miata. Light, open and easy to learn in.',
+      'Four cars rebuilt from detailed models, outside and in: the GT-Ar Aimgane Type 2, the Challenjer SRT Super Stok, the Aventadoro SVJ and the 2012 Mustank Shelbi.',
+      'Every one has its real dashboard, seats and doors from the driver’s seat.',
+      'The wheels are their own now, and the steering wheel turns.',
       'Realistic graphics: smooth edges, filmic light, speed blur and lens fringing (Settings > Graphics).',
-      'The Aventadoro’s rear is rebuilt from a new sheet.',
-      'A bigger, zoomed minimap that turns with the car.',
-      'Cockpit view is wider and the sun visors are gone.',
-      'Classes are harder to reach: S and X are rare now.',
     ],
     button: 'Oh, thanks',
   },

@@ -1,8 +1,9 @@
-// The cars, built from code. Each body is drawn from profile curves (see
-// body.js) so it is smooth and curved, not a stack of boxes; lamps, grilles
-// and vents are laid on the surface. Paint is clear-coated and reflects the
-// lights around the car (src/graphics/reflections.js), so even black paint
-// shows its shape. No badges or logos.
+// The cars. A car with a capture (captured.js, made by tools/capture-car.mjs)
+// is built from its real surfaces; the others are drawn from profile curves
+// (see body.js), with lamps, grilles and vents laid on the surface. Paint is
+// clear-coated and reflects the lights around the car
+// (src/graphics/reflections.js), so even black paint shows its shape. No
+// badges or logos.
 //
 // The car faces +z, its left side is +x. The body leans on its springs
 // around a point near axle height, so it tips a little but never dips into
@@ -15,6 +16,7 @@ import { Tex } from '../graphics/textures.js';
 import { Body, SLOT, flatShape, roundRect } from './body.js';
 import { bonnetRange, buildEngineBay } from './engine-bay.js';
 import { buildCabin } from './cabin.js';
+import { captures, capturedParts, projectDecal } from './captured.js';
 import { FINISHES, RIDE, checkLook } from './looks.js';
 
 const ROLL_CENTRE = 0.42; // m above the road
@@ -60,8 +62,11 @@ function wideDef(def) {
 export function buildCar(spec, look = spec.paint, { simple = false } = {}) {
   const sh = SHAPES[spec.id] || SHAPES['skyliner-r34'];
   look = checkLook(typeof look === 'number' ? { paint: look } : look, spec);
-  const wide = spec.kit === 'wide';
-  const B = wide ? (sh.wideBody ??= new Body(wideDef(sh.def))) : (sh.body ??= new Body(sh.def));
+  const cap = captures(spec.id); // the car's captured surfaces, if it has them (captured.js)
+  const wide = spec.kit === 'wide' && !cap;
+  if (cap) sh.capDef ??= cap.def;
+  const B = cap ? (sh.capBody ??= new Body(cap.def)) : wide ? (sh.wideBody ??= new Body(wideDef(sh.def))) : (sh.body ??= new Body(sh.def));
+  const def = cap ? cap.def : sh.def;
   const drop = RIDE[look.ride].drop;
   const root = new THREE.Group();
   root.name = spec.id;
@@ -94,8 +99,8 @@ export function buildCar(spec, look = spec.paint, { simple = false } = {}) {
   // The body shell: one smooth mesh, paint / trim / underside / glass.
   const shellMats = [];
   shellMats[SLOT.paint] = paint; shellMats[SLOT.trim] = trim; shellMats[SLOT.under] = under; shellMats[SLOT.glass] = glass;
-  const bonnet = simple ? null : bonnetRange(B, sh.def); // its own panel, so it can open
-  body.add(new THREE.Mesh(B.geometry({ bonnet }), shellMats));
+  const bonnet = simple ? null : cap ? cap.lid : bonnetRange(B, def); // its own panel, so it can open
+  if (!cap) body.add(new THREE.Mesh(B.geometry({ bonnet }), shellMats));
 
   const add = (geo, mat, parent = body) => { const m = new THREE.Mesh(geo, mat); parent.add(m); return m; };
   const box = (w, h, d, mat, x, y, z, parent = body) => {
@@ -104,22 +109,43 @@ export function buildCar(spec, look = spec.paint, { simple = false } = {}) {
     return m;
   };
   // Solid core so nothing shows through the wheel arches.
-  box(sh.core[0], 0.4, sh.core[1], black, 0, 0.44, sh.core[2] ?? 0);
+  if (!cap) box(sh.core[0], 0.4, sh.core[1], black, 0, 0.44, sh.core[2] ?? 0);
 
   const mats = { paint, trim, black, carbon, chrome, plate, headlight, lampInner, lens, tail, tailRing, reverseLight, amber, glass };
   const tip = 1 + ((spec.exhaustVolume ?? 1) - 1) * 0.7; // louder exhausts, bigger tips
-  const { exhausts } = sh.details({ B, box, add, body, mats, spec, tip });
-  bodyKit({ B, box, spec, mats, sh });
-  if (spec.wing === 'gt') gtWing({ B, box, mats });
-  if (look.decal !== 'none') decals({ B, add, look, sh, bonnet });
+  let exhausts;
+  if (cap) {
+    // Captured cars carry their own lamps, mirrors, grilles and exhausts. They
+    // go in a group of their own: already one mesh per part, nothing to merge.
+    Object.assign(mats, { metal: new THREE.MeshStandardMaterial({ color: 0x8a8e92, roughness: 0.35, metalness: 0.9 }), under: under });
+    const shell = new THREE.Group();
+    body.add(shell);
+    for (const m of capturedParts(cap, simple ? 1 : 0, mats, 'body')) shell.add(m);
+    if (simple) {
+      for (const m of capturedParts(cap, 1, mats, 'lid')) shell.add(m);
+      if (mats.lampF) mats.lampF.emissiveIntensity = 0.05; // parked: lights off
+      if (mats.lampR) mats.lampR.emissiveIntensity = 0.1;
+    }
+    exhausts = (cap.exhausts || []).map(([x, y, z]) => new THREE.Vector3(x, y, z));
+  } else ({ exhausts } = sh.details({ B, box, add, body, mats, spec, tip }));
+  if (!cap || !cap.ownWing) {
+    if (!cap) bodyKit({ B, box, spec, mats, sh });
+    if (spec.wing === 'gt') gtWing({ B, box, mats });
+  }
+  if (look.decal !== 'none') (cap ? capturedDecals : decals)({ B, add, look, sh, bonnet, cap });
 
   // The bonnet and engine bay. Anything laid on top of the bonnet (vents,
   // scoops, stripes) moves to the bonnet so it lifts with it.
   let bay = null;
   if (bonnet) {
-    bay = buildEngineBay({ B, def: sh.def, spec, mats });
+    bay = buildEngineBay({ B, def, spec, mats, lid: cap ? cap.lid : null });
     body.add(bay.bay, bay.hinge);
+    const lid = cap ? capturedParts(cap, 0, mats, 'lid') : [];
+    // Its underside, seen when it lifts: the same panel, dark, facing inwards.
+    if (cap) { const inside = new THREE.MeshStandardMaterial({ color: 0x1a1c1e, roughness: 0.8, side: THREE.BackSide }); for (const m of [...lid]) lid.push(new THREE.Mesh(m.geometry, inside)); }
+    for (const m of lid) body.add(m);
     body.updateMatrixWorld(true);
+    for (const m of lid) bay.hinge.attach(m); // stays where it is, but lifts with the hinge
     const c = new THREE.Vector3();
     for (const m of [...body.children]) {
       if (!m.isMesh) continue;
@@ -131,9 +157,13 @@ export function buildCar(spec, look = spec.paint, { simple = false } = {}) {
 
   // --- Cockpit. The driver sits at driverX. ---
   const dx = sh.driverX;
-  cockpit.position.set(0, sh.cockpitOffset[0], sh.cockpitOffset[1]);
   let steeringWheel = new THREE.Group(), needles = [], dome = null;
-  if (!simple) ({ wheel: steeringWheel, needles, dome } = buildCabin(cockpit, { dx, sh, spec, mats, B }));
+  if (cap) {
+    if (!simple) ({ steeringWheel, needles, dome } = capturedCabin(cockpit, cap, mats));
+  } else {
+    cockpit.position.set(0, sh.cockpitOffset[0], sh.cockpitOffset[1]);
+    if (!simple) ({ wheel: steeringWheel, needles, dome } = buildCabin(cockpit, { dx, sh, spec, mats, B }));
+  }
 
   // Wheels: tyre, a rim face with open spokes, and a brake disc and calliper
   // behind it (they steer but do not spin).
@@ -151,15 +181,33 @@ export function buildCar(spec, look = spec.paint, { simple = false } = {}) {
   const faceGeo = new THREE.CircleGeometry(WR * 0.76, 22).rotateY(Math.PI / 2);
   const barrelGeo = new THREE.CylinderGeometry(WR * 0.74, WR * 0.74, TW * 0.9, 18, 1, true).rotateZ(Math.PI / 2);
   const discGeo = new THREE.CircleGeometry(WR * 0.6 * big, 18).rotateY(Math.PI / 2);
+  const rimTint = cap && look.rimColour !== null ? new THREE.MeshStandardMaterial({ color: look.rimColour, metalness: 0.75, roughness: 0.3 }) : null;
   const wheels = [];
-  const [WZf, WZr] = sh.def.wheels.z, WX = sh.wheelX + (wide ? 0.045 : 0);
-  for (const [x, z, front] of [[WX, WZf, true], [-WX, WZf, true], [WX, WZr, false], [-WX, WZr, false]]) {
+  const [WZf, WZr] = def.wheels.z, WX = sh.wheelX + (wide ? 0.045 : 0);
+  const capWheels = !!cap && !simple && !look.rim; // a rim picked in the garage uses the drawn wheel
+  const wheelSpots = cap ? [[cap.wheels[0].c[0], cap.wheels[0].c[2], true], [-cap.wheels[0].c[0], cap.wheels[0].c[2], true], [cap.wheels[2].c[0], cap.wheels[2].c[2], false], [-cap.wheels[2].c[0], cap.wheels[2].c[2], false]]
+    : [[WX, WZf, true], [-WX, WZf, true], [WX, WZr, false], [-WX, WZr, false]];
+  for (const [x, z, front] of wheelSpots) {
     const out = Math.sign(x);
     const steer = new THREE.Group();
-    steer.position.set(x, WR, z);
+    const wr = cap ? cap.wheels[front ? 0 : 2].r : WR;
+    steer.position.set(x, wr, z);
     root.add(steer);
     const spin = new THREE.Group();
     steer.add(spin);
+    if (capWheels) {
+      // The captured wheel: the left one of its axle, turned round for the
+      // right. Spinning parts on `spin`, the brake on `steer`.
+      const axle = front ? 'F' : 'R';
+      const wmats = { ...mats, tyre: wallMat, caliper: caliperMat, disc: discMat };
+      if (look.rimColour !== null) wmats.rim = rimTint;
+      const place = (parent) => (m) => { if (out < 0) m.rotation.y = Math.PI; parent.add(m); };
+      capturedParts(cap, 0, wmats, `spin${axle}`).forEach(place(spin));
+      capturedParts(cap, 0, wmats, `hub${axle}`).forEach(place(steer));
+      wheels.push({ steer, spin, front });
+      continue;
+    }
+    if (cap) spin.scale.setScalar(wr / WR);
     spin.add(new THREE.Mesh(treadGeo, tyreMat));
     for (const s of [1, -1]) {
       const w = new THREE.Mesh(sideGeo, wallMat);
@@ -198,7 +246,7 @@ export function buildCar(spec, look = spec.paint, { simple = false } = {}) {
     sprites.push(s);
     return s;
   };
-  const [hx, hy, hz] = sh.headLamp, [tx, ty, tz] = sh.tailLamp;
+  const [hx, hy, hz] = cap?.headLamp ?? sh.headLamp, [tx, ty, tz] = cap?.tailLamp ?? sh.tailLamp;
   const headGlows = simple ? [] : [sprite(0xfff0c8, 0.9, hx, hy, hz), sprite(0xfff0c8, 0.9, -hx, hy, hz)];
   const tailGlows = simple ? [] : [-tx, tx].map((x) => sprite(0xff2010, 0.7, x, ty, tz));
 
@@ -252,10 +300,10 @@ export function buildCar(spec, look = spec.paint, { simple = false } = {}) {
   const tach = needles[0], speedo = needles[1];
   return {
     root, body, sway, cockpit, steeringWheel, wheels, exhausts,
-    engineRear: !!sh.def.engineLid,
+    engineRear: !!def.engineLid,
     // Where the driver's eyes are, in the body's space (so they lean and
     // drop with it).
-    cockpitEye: new THREE.Vector3(dx * (sh.cabinScale ?? 1), 1.17 * (sh.cabinScale ?? 1) + sh.cockpitOffset[0], -0.08 * (sh.cabinScale ?? 1) + sh.cockpitOffset[1]),
+    cockpitEye: cap ? new THREE.Vector3(...cap.eye) : new THREE.Vector3(dx * (sh.cabinScale ?? 1), 1.17 * (sh.cabinScale ?? 1) + sh.cockpitOffset[0], -0.08 * (sh.cabinScale ?? 1) + sh.cockpitOffset[1]),
     headGlows,
     setPaint(color) { paint.color.set(color); },
     // Lift the bonnet (the garage's Engine tab). `now`: no animation.
@@ -311,6 +359,8 @@ export function buildCar(spec, look = spec.paint, { simple = false } = {}) {
       }
       const brake = v.braking > 0.05 && v.speed > 0.2;
       tail.color.setHex(brake ? 0xff3020 : lightsOn ? 0x8a0d08 : 0x3a0806);
+      if (mats.lampR) mats.lampR.emissiveIntensity = brake ? 2.2 : lightsOn ? 0.7 : 0.12;
+      if (mats.lampF) mats.lampF.emissiveIntensity = lightsOn ? 1.3 : 0.08;
       for (const g of tailGlows) { g.material.opacity = brake ? 1 : 0.4; g.scale.setScalar(brake ? 1.1 : 0.6); }
       if (brakeLamp) brakeLamp.intensity = lightsOn ? (brake ? 6 : 0.8) : 0;
       reverseLight.color.setHex(v.gearbox.gear === -1 ? 0xffffff : 0x777777);
@@ -858,6 +908,75 @@ function decals({ B, add, look, sh, bonnet }) {
       add(B.decal(z0, z0 + 0.2, 3.4, 5.6, { lift: 0.007, nz: 3, nt: 6, uv: true }), mat);
     }
   }
+}
+
+// Decals on a captured body, projected straight on (see captured.js).
+function capturedDecals({ add, look, cap }) {
+  const def = cap.def, [wf, wr] = def.wheels.z, r = def.wheels.r;
+  const number = look.decal === 'number', kanji = look.decal === 'kanji';
+  const map = number ? Tex.roundel(look.decalColour) : kanji ? Tex.sticker('走り屋') : stripeTexture(look.decal);
+  map.wrapS = map.wrapT = THREE.ClampToEdgeWrapping;
+  const mat = new THREE.MeshStandardMaterial({ map, transparent: true, alphaTest: 0.4, roughness: 0.35, metalness: 0.1, color: number ? 0xffffff : look.decalColour, polygonOffset: true, polygonOffsetFactor: -2, depthWrite: false });
+  if (look.decal === 'stripes') {
+    // Twin stripes over everything that faces up, front to back.
+    const test = (x, y, z, nx, ny) => Math.abs(x) < 0.42 && ny > 0.4 && y > 0.7;
+    add(projectDecal(cap, test, (x) => [x / 0.84 + 0.5, 0.5]), mat);
+    add(projectDecal(cap, test, (x) => [x / 0.84 + 0.5, 0.5], 0.004, 'lid'), mat); // lifts with the bonnet
+  } else if (look.decal === 'side') {
+    const y0 = 0.5, h = 0.2;
+    add(projectDecal(cap, (x, y, z, nx) => Math.abs(nx) > 0.4 && y > y0 - 0.05 && y < y0 + h + 0.05, (x, y) => [0.5, (y - y0) / h]), mat);
+  } else {
+    const zc = number ? (wf - r + (wr + r)) / 2 + 0.25 : wr + r + 0.18;
+    const size = number ? 0.48 : 0.34, yc = 0.62;
+    for (const s of [1, -1]) {
+      add(projectDecal(cap, (x, y, z, nx) => x * s > 0.3 && nx * s > 0.4 && Math.abs(z - zc) < size * 0.6 && Math.abs(y - yc) < size * 0.6,
+        (x, y, z) => [0.5 + (s > 0 ? -1 : 1) * (z - zc) / size, (y - yc) / size + 0.5]), mat);
+    }
+  }
+}
+
+// White bands on clear: u across the car (twin stripes) or v up the side.
+const stripeTextures = {};
+function stripeTexture(kind) {
+  if (stripeTextures[kind]) return stripeTextures[kind];
+  const c = document.createElement('canvas');
+  c.width = c.height = 128;
+  const g = c.getContext('2d');
+  g.fillStyle = '#fff';
+  if (kind === 'stripes') { g.fillRect(14, 0, 42, 128); g.fillRect(72, 0, 42, 128); } else g.fillRect(0, 44, 128, 40);
+  return (stripeTextures[kind] = new THREE.CanvasTexture(c));
+}
+
+// A captured cabin: the source's own interior, a steering wheel that turns,
+// and the dome light. The interior is part of the shell's meshes (group
+// 'body'); only the wheel is apart, on a pivot at the column.
+function capturedCabin(cockpit, cap, mats) {
+  const steeringWheel = new THREE.Group();
+  if (cap.steering) {
+    const { c, axis } = cap.steering;
+    const pivot = new THREE.Group();
+    pivot.position.set(...c);
+    pivot.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), new THREE.Vector3(...axis));
+    pivot.add(steeringWheel);
+    cockpit.add(pivot);
+    const inverse = pivot.quaternion.clone().invert();
+    for (const m of capturedParts(cap, 0, mats, 'steering')) {
+      m.position.set(...c).negate().applyQuaternion(inverse);
+      m.quaternion.copy(inverse);
+      steeringWheel.add(m);
+    }
+  }
+  // A plain padded cover on the hub, where the real car has its badge.
+  if (cap.steering?.padR) {
+    const pad = new THREE.Mesh(new THREE.CylinderGeometry(cap.steering.padR, cap.steering.padR * 1.04, 0.016, 28).rotateX(-Math.PI / 2),
+      new THREE.MeshStandardMaterial({ color: 0x17181a, roughness: 0.62 }));
+    pad.position.z = -cap.steering.hub - 0.006;
+    steeringWheel.add(pad);
+  }
+  const dome = new THREE.PointLight(0xffe6c0, 0, 1.9, 1.4);
+  dome.position.set(0, 1.15, 0);
+  cockpit.add(dome);
+  return { steeringWheel, needles: [], dome };
 }
 
 // Each car's shape. The driver sits at driverX (negative = right-hand
