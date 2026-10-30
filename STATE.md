@@ -1,6 +1,6 @@
 # NIGHTSHIFT: state
 
-_Last updated 2026-10-30, session 10 (realism overhaul continued)._
+_Last updated 2026-10-30, session 11 (Mustank pass)._
 
 ## Where we are
 - David's fifth notes are built and pushed to `main` (live), as he asked ("push it without
@@ -20,7 +20,7 @@ _Last updated 2026-10-30, session 10 (realism overhaul continued)._
 
 ## Now: Milestone 6 = realism overhaul (merged to `main` as it goes)
 - Done: audit (`AUDIT.md`); smooth renderer on Medium/High (default Medium); speed blur and lens fringing (no grain); cockpit FOV and visors; zoomed minimap; boot-text loader; notice board; class thresholds; the Miata (first car); the Aventadoro's rear.
-- Session 11 (branch `m6-redesign`, not merged): Mustank body pass from the sheet.
+- Session 11: Mustank body pass from David's GT500 sheet (shape, own wing, fender vent, black stripes). Merged to `main` and pushed.
 - Not done: the proper model redesign of the R34, R35, Challenjer and Mustank (only details so far), the Mustang sheet (still missing), world and environment models, exhaust flame/smoke/spark upgrades, ambient occlusion, exposure adaptation, lens dirt, headlight pools and wet roads, the sun raise.
 - Racing is parked until after this.
 
