@@ -129,5 +129,4 @@ One line each, newest last.
 - 2026-10-30: Lens dirt (painted in code, only shows where bloom crosses it) and faint blue reflections (the bright parts mirrored through the screen's middle at three sizes). One switch: Settings > Graphics > Lens dirt. Fringing cut about 30% more.
 - 2026-10-30: Motion blur starts at 140 km/h, is full at 280, curve eased at the low end, 60% of the old strength. The old line starting at 25 km/h was wrong: the code ran on m/s (90 to 288 km/h). Its Settings switch was also not connected; it is now.
 - 2026-10-30: In the cockpit a mask drawn from the car's solid parts keeps the cabin sharp and stops blur taps pulling the dash into the view outside. The same mask stops cabin mirrors and screens flaring the lens.
-
 - 2026-10-31: David signed off the speed and effects block. The blue lens spots and hard white flare are too strong in the garage (seen in a shot after sign-off); David: soften them next round.
