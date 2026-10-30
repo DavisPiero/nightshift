@@ -340,6 +340,7 @@ export const MUSTANK_GT500 = {
   make: 'Fard',
   model: 'Mustank Shelbi GT-500',
   code: 'S550',
+  stripes: 0x111214,          // the factory black twin stripes (sheet)
   year: 2020,
   blurb: 'A supercharged V8 muscle car with a twin-clutch. The most power here.',
 

@@ -766,7 +766,8 @@ function mustankDetails({ B, add, box, mats: m, spec, tip }) {
   for (let i = 0; i < 5; i++) add(B.decal(1.3 + i * 0.1, 1.33 + i * 0.1, 11.2, 12, { lift: 0.009, nz: 1, nt: 2 }), m.trim);
   for (const s of [1, -1]) add(B.decal(1.65, 1.98, 9.3, 9.95, { lift: 0.006, sides: [s], nz: 2, nt: 1 }), m.black);
   // Sides: a vent behind the front wheel, a handle, black sills.
-  add(B.decal(0.86, 1.02, 5.0, 6.0, { lift: 0.006, nz: 1, nt: 2 }), m.black);
+  add(B.decal(0.86, 1.12, 5.2, 6.2, { lift: 0.006, nz: 3, nt: 2 }), m.black);
+  for (let i = 0; i < 3; i++) add(B.decal(0.9 + i * 0.075, 0.93 + i * 0.075, 5.25, 6.15, { lift: 0.009, nz: 1, nt: 1 }), m.trim);
   add(B.decal(0.1, 0.24, 5.55, 5.75, { lift: 0.006, nz: 1, nt: 1 }), m.chrome);
   for (const s of [1, -1]) box(0.05, 0.07, 2.3, m.trim, s * 0.94, 0.22, 0.1);
   // Tail: three upright bars of light each side in black housings, a black
@@ -783,12 +784,18 @@ function mustankDetails({ B, add, box, mats: m, spec, tip }) {
   diff.rotation.x = -0.15;
   const ex = [];
   for (const x of [-0.7, -0.56, 0.56, 0.7]) ex.push(exhaust(add, m, x, 0.35, zr - 0.02, 0.048 * Math.min(tip, 1.25), 0.16));
-  // A ducktail with a small lip wing on short stands.
+  // The GT500's own fixed wing: a carbon blade on two stands near the deck
+  // edge, with small endplates, spanning nearly the full width (sheet).
   if (!spec.wing) {
-    const z = zr + 0.16, y = B.hood(z);
-    for (const s of [1, -1]) box(0.04, 0.08, 0.1, m.black, s * 0.5, y + 0.03, z);
-    const lipw = box(1.5, 0.025, 0.18, m.paint, 0, y + 0.08, z - 0.03);
-    lipw.rotation.x = 0.12;
+    const z = zr + 0.28, y = B.hood(z);
+    for (const s of [1, -1]) {
+      const st = box(0.035, 0.2, 0.1, m.carbon, s * 0.52, y + 0.09, z + 0.02);
+      st.rotation.x = 0.2;
+    }
+    const blade = box(1.78, 0.022, 0.3, m.carbon, 0, y + 0.2, z - 0.04);
+    blade.rotation.x = 0.14;
+    box(1.78, 0.045, 0.014, m.carbon, 0, y + 0.215, z - 0.19).rotation.x = 0.14;
+    for (const s of [1, -1]) box(0.012, 0.1, 0.34, m.carbon, s * 0.89, y + 0.2, z - 0.04);
   }
   mirror(add, m, B, 0.84, 1.05);
   return { exhausts: ex, tails };
@@ -961,16 +968,18 @@ const SHAPES = {
   },
   'mustank-gt500': {
     def: {
-      width: [[-2.41, 0.82], [-2.33, 0.9], [-2.0, 0.95], [-1.25, 0.962], [0, 0.93], [1.2, 0.95], [1.9, 0.94], [2.25, 0.88], [2.41, 0.78]],
-      sill: [[-2.41, 0.36], [-2.25, 0.25], [-1.8, 0.2], [1.9, 0.19], [2.3, 0.2], [2.41, 0.24]],
-      belt: [[-2.41, 0.93], [-2.25, 0.98], [-1.6, 0.98], [-0.6, 0.95], [0.6, 0.92], [1.5, 0.9], [2.2, 0.85], [2.41, 0.78]],
-      hood: [[-2.41, 0.98], [-2.3, 1.04], [-1.9, 1.05], [-1.55, 1.05], [0.9, 1.0], [1.6, 0.98], [2.2, 0.93], [2.35, 0.86], [2.41, 0.78]],
-      roof: [[-1.75, 1.05], [-1.4, 1.15], [-0.9, 1.3], [-0.45, 1.37], [0.1, 1.37], [0.45, 1.3], [0.75, 1.15], [1.0, 1.02]],
-      roofW: [[-1.75, 0.76], [-1.0, 0.66], [-0.2, 0.64], [0.4, 0.66], [1.0, 0.8]],
-      wheels: { z: [1.47, -1.25], r: 0.44, top: 0.8, flare: [0.02, 0.035] },
-      windows: [[0.9, -0.35], [-0.45, -0.95]], pillarsBlack: [[-0.35, -0.45]],
-      screen: [1.0, 0.4], rearGlass: [-0.95, -1.75],
-      crown: 0.05, baseW: 0.92, tuck: 0.05, sillTrim: true, fenderRise: 0.02, bulge: 0.02, roofCrown: 0.03,
+      // After David's GT500 sheet (2026-10-30): long low bonnet, short deck, a
+      // fastback roof set well back, broad hips, a nose that dips to a lip.
+      width: [[-2.41, 0.8], [-2.33, 0.9], [-2.0, 0.965], [-1.25, 0.985], [-0.2, 0.95], [0.9, 0.955], [1.6, 0.96], [2.1, 0.93], [2.3, 0.86], [2.41, 0.76]],
+      sill: [[-2.41, 0.4], [-2.28, 0.27], [-1.8, 0.2], [1.9, 0.19], [2.3, 0.17], [2.41, 0.2]],
+      belt: [[-2.41, 1.04], [-2.3, 1.06], [-1.7, 1.05], [-0.6, 1.0], [0.6, 0.97], [1.5, 0.93], [2.2, 0.86], [2.41, 0.76]],
+      hood: [[-2.41, 1.04], [-2.3, 1.08], [-1.9, 1.09], [-1.65, 1.07], [0.95, 1.03], [1.5, 0.99], [2.0, 0.92], [2.3, 0.84], [2.41, 0.7]],
+      roof: [[-1.8, 1.08], [-1.5, 1.17], [-1.0, 1.3], [-0.45, 1.375], [0, 1.385], [0.35, 1.34], [0.7, 1.2], [1.05, 1.03]],
+      roofW: [[-1.8, 0.76], [-1.0, 0.68], [-0.2, 0.66], [0.4, 0.68], [1.05, 0.82]],
+      wheels: { z: [1.47, -1.25], r: 0.44, top: 0.8, flare: [0.03, 0.05] },
+      windows: [[0.9, -0.2], [-0.3, -1.25]], pillarsBlack: [[-0.2, -0.3]],
+      screen: [1.05, 0.38], rearGlass: [-1.25, -1.8],
+      crown: 0.05, baseW: 0.91, tuck: 0.05, sillTrim: true, fenderRise: 0.03, bulge: 0.025, roofCrown: 0.03,
     },
     wheelX: 0.83, tyreWidth: 0.29,
     rim: { style: 'five', color: '#1c1d1f', caliper: 0xb01818 },

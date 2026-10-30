@@ -117,3 +117,4 @@ One line each, newest last.
 - 2026-10-30: Notice board: three old-desktop dialog windows (David's Windows-98 reference) over the title screen at every load, each closed with its button (Enter or Esc closes all). A deliberate exception to "no window title bars" in the menus.
 - 2026-10-30: The boot text stays up at least 1.7 s so it can be read.
 
+- 2026-10-30: Mustank reshaped after David's GT500 sheet (`Reference/Cars/mustang-gt500-sheet.webp`): lower nose, long bonnet, roof set back with a raked screen, one long side window, broad hips; plus the car's own fixed carbon wing (replaces the ducktail), fender vent, and black twin stripes as its default look (`stripes` on the car spec). Physics untouched. Still rough: the nose is a flat face, the side is plain; R35, Challenjer, R34 and all cockpits not yet redone.

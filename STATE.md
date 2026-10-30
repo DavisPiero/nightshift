@@ -20,11 +20,12 @@ _Last updated 2026-10-30, session 10 (realism overhaul continued)._
 
 ## Now: Milestone 6 = realism overhaul (merged to `main` as it goes)
 - Done: audit (`AUDIT.md`); smooth renderer on Medium/High (default Medium); speed blur and lens fringing (no grain); cockpit FOV and visors; zoomed minimap; boot-text loader; notice board; class thresholds; the Miata (first car); the Aventadoro's rear.
+- Session 11 (branch `m6-redesign`, not merged): Mustank body pass from the sheet.
 - Not done: the proper model redesign of the R34, R35, Challenjer and Mustank (only details so far), the Mustang sheet (still missing), world and environment models, exhaust flame/smoke/spark upgrades, ambient occlusion, exposure adaptation, lens dirt, headlight pools and wet roads, the sun raise.
 - Racing is parked until after this.
 
 ## Open with David
-- Send: the Mustang reference sheet.
+- Sent (done): the Mustang sheet.
 - Guesses: the Miata's name (Mazdo), numbers and paint names; the notice board's wording; fringing strength; the R34 is still hidden.
 - Guesses to confirm (this session):
   - the new cars' names, years, colours and numbers; the Aventadoro landing in class X;
