@@ -1,25 +1,27 @@
-# Hand-off: end of session 11 (2026-10-30)
+# Hand-off: end of session 12 (2026-10-30)
 
 ## Repo state
-- Everything is merged into `main` and pushed ("push it"); no open branches. Driving bench passes; the game loads headless with no errors. The 7-minute smoke test was not run this session (only the Mustank's looks changed).
-- Session 11 did one thing: the Mustank's body, from `Reference/Cars/mustang-gt500-sheet.webp` (reshape in `car-model.js SHAPES['mustank-gt500']`, own wing and fender vent in `mustankDetails`, black stripes as its default look via `stripes` on the car spec and `looks.js defaultLook`).
+- Everything is merged into `main` and pushed ("push without asking"); no open branches. Driving bench and smoke test pass.
+- Session 12: the four GLB cars are in the game, captured rather than drawn. David's answers: rename the cars to match the GLBs, credit the authors in the README, "use the models how you want", do all the models.
+
+## How captured cars work
+- `tools/car-recipes.mjs`: one recipe per car (which material is paint, glass, lamps; what is dropped; axle positions; where the steering wheel and eye are; emblems to erase).
+- `tools/capture-car.mjs`: GLB to `assets/cars/<id>.bin` and `assets/cars/tex/`. Needs `npm install` and `GLB/` (git-ignored). The game needs neither.
+- `src/vehicles/captured.js` loads them at start-up (main.js waits for `carsReady`). `buildCar` uses them when a capture exists, otherwise the old curve body.
+- `node tools/turnaround.mjs <id>` and `node tools/turnaround.mjs cockpit <id>` show a car; both save in `review/turn/`.
+- A new car: add the GLB, write a recipe (`findSteering: true` lists steering wheel candidates), add its id to `IDS` in `captured.js`.
 
 ## Read first
-`CLAUDE.md`, `STATE.md`, `AUDIT.md`, the last 10 lines of `DECISIONS.md`. Sheets in `Reference/Cars` (R35, Challenger, Aventador, Miata, Mustang).
-
-## How to look at a car headlessly
-`tools/shot.mjs` with `--js`: set `nightshift.fixedTurn=0`, brighten the garage lights, hide `.screen`, call `nightshift.orbitDrag(0,0)` then set `nightshift.orbit = {yaw,pitch,dist}`. (The scratch helper was deleted; worth turning into `tools/turnaround.mjs`.) Note the garage is dark; judge shape with the lights raised.
-
-## Next (in this order)
-1. Mustank: nose is a flat tall face, sides plain, cockpit not redone.
-2. R35 and Challenjer: bodies and cockpits to the Miata standard (R35 and Challenjer sheets exist).
-3. R34: no sheet; build from knowledge, show David, unhide it (`ALL_CARS` in `cars.js`).
-4. Effects: ambient occlusion (baked on Medium, real on High), exposure adaptation, lens dirt, flame/smoke/spark, headlight pools, wet roads, higher sun.
-5. World: start with Underground roads, buildings, trees; show David before other tracks.
-6. Stat corrections: a separate balance pass (figures in DECISIONS.md).
+`CLAUDE.md`, `STATE.md`, the last 10 lines of `DECISIONS.md`. David's Visual Realism brief is in the session 12 kickoff; its remaining parts are listed in STATE.md, with the recommendations he has seen:
+- Acceleration: about 30% longer to 100 km/h, cut fading with speed so top speeds hold, rating scale moved by the same amount so classes stay.
+- Motion blur: the code runs on m/s (90 to 288 km/h, not 25 to 80 as the log said). Start at 140, full at 280, about 60% strength, cabin masked out.
+- Bloom: the scene target is 8-bit, so bright lights clip; it needs a half-float target first. Bloom is High only today. Real convolution on High on computers, a matched cheaper version on Medium.
+- Mountain Edge: height is for looks only, physics stays flat; closed loop.
+- Parabolica: same road, surroundings replaced.
+- UI: overturns the "no window title bars" rule in CLAUDE.md and SPEC.md; rewrite those with it.
 
 ## Open with David
-- Stats: apply real-world figures where far off (R35 0-100, Mustang power and top speed), or leave? Not answered.
-- Order of work (cars, effects, world) assumed, not confirmed. Is "sun raise" a higher sun at sunrise/sunset?
-- R34 reference sheet, if he has one.
-- Older guesses: Miata's name/numbers/paints, notice board wording, fringing strength, Aventadoro keeping its SV name, Medium default on iPad, black stripes as the Mustank's default.
+- Does anything about the four cars need changing? First thing to ask.
+- Near-miss names, left-hand R35, hub pads, Mustang interior darkness (guesses).
+- An iPad run with the new cars.
+- Older guesses in STATE.md.

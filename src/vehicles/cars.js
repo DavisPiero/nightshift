@@ -1,5 +1,6 @@
 // Every car in the game. Names are close cousins of real cars (no real
-// badges or logos); the shapes are low-poly takes on the real thing.
+// badges or logos). The numbers here are physics; how a car looks is in
+// car-model.js and, for captured cars, assets/cars.
 // Every number is a starting value for tuning, not a rule. Upgrades will
 // later produce a modified copy of a spec; physics only ever reads it.
 
@@ -102,10 +103,10 @@ export const SKYLINER_R34 = {
 export const CHALLENJER_SRT8 = {
   id: 'challenjer-srt8',
   make: 'Dodga',
-  model: 'Challenjer SRT8',
+  model: 'Challenjer SRT Super Stok',
   code: 'LC',
-  year: 2009,
-  blurb: 'A 6.1-litre V8 muscle car. Big shove, big weight, big sound.',
+  year: 2020,
+  blurb: 'A wide-arched V8 muscle car. Big shove, big weight, big sound.',
 
   mass: 1885,
   wheelbase: 2.946,
@@ -180,7 +181,7 @@ export const CHALLENJER_SRT8 = {
 export const GTAR_R35 = {
   id: 'gtar-r35',
   make: 'Nissani',
-  model: 'GT-Ar',
+  model: 'GT-Ar Aimgane Type 2',
   code: 'R35',
   year: 2017,
   blurb: 'Twin-turbo V6 and four-wheel drive. Fast everywhere, calm at the limit.',
@@ -260,9 +261,9 @@ export const GTAR_R35 = {
 export const AVENTADORO_SV = {
   id: 'aventadoro-sv',
   make: 'Lamborgino',
-  model: 'Aventadoro SV',
+  model: 'Aventadoro SVJ',
   code: 'LP750',
-  year: 2016,
+  year: 2019,
   blurb: 'A V12 behind your head and a wing on the back. Loud, wide, very fast.',
 
   mass: 1700,
@@ -341,7 +342,7 @@ export const MUSTANK_GT500 = {
   model: 'Mustank Shelbi GT-500',
   code: 'S550',
   stripes: 0x111214,          // the factory black twin stripes (sheet)
-  year: 2020,
+  year: 2012,
   blurb: 'A supercharged V8 muscle car with a twin-clutch. The most power here.',
 
   mass: 1916,

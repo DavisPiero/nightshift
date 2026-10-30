@@ -3,6 +3,7 @@
 // ?shot&mute plus your query, waits, optionally runs some JavaScript in the
 // page, and saves PNGs.
 //   node tools/shot.mjs "screen=garage&car=gtar-r35" out.png [--wait 4] [--size 1280x720] [--js "code"]
+// A job's `page` loads that file from the project instead of the game.
 // Several shots in one go: pass a JSON list as the only argument:
 //   node tools/shot.mjs '[{"q":"screen=main","out":"a.png"},{"q":"device=computer","out":"b.png","wait":6}]'
 
@@ -82,7 +83,7 @@ await send('Page.enable', {}, sessionId);
 for (const job of jobs) {
   const [w, h] = (job.size || '1280x720').split('x').map(Number);
   await send('Emulation.setDeviceMetricsOverride', { width: w, height: h, deviceScaleFactor: 1, mobile: false }, sessionId);
-  await send('Page.navigate', { url: `http://127.0.0.1:${port}/index.html?shot&mute&${job.q || ''}` }, sessionId);
+  await send('Page.navigate', { url: job.page ? `http://127.0.0.1:${port}/${job.page}` : `http://127.0.0.1:${port}/index.html?shot&mute&${job.q || ''}` }, sessionId);
   await sleep((job.wait ?? 4) * 1000);
   if (job.js) {
     const r = await send('Runtime.evaluate', { expression: job.js, awaitPromise: true, returnByValue: true }, sessionId);

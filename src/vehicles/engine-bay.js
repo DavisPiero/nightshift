@@ -26,8 +26,8 @@ const ENGINES = {
   'mustank-gt500': { layout: 'v', covers: 0x1c1d20, plenum: 0x2a3a8a },     // the blue supercharger lid
 };
 
-export function buildEngineBay({ B, def, spec, mats }) {
-  const [z0, z1] = bonnetRange(B, def);
+export function buildEngineBay({ B, def, spec, mats, lid = null }) {
+  const [z0, z1] = lid || bonnetRange(B, def); // a captured car brings its own panel
   const zc = (z0 + z1) / 2, len = z1 - z0;
   const ex = (z) => B.width(z) * 0.86; // where the bonnet meets the fenders
   const top = (z) => B.hood(z) - 0.03;  // keep everything under the closed bonnet
@@ -183,8 +183,8 @@ export function buildEngineBay({ B, def, spec, mats }) {
   hinge.position.set(0, B.hood(hz), hz);
   const geo = B.bonnetGeometry(z0, z1);
   geo.translate(0, -B.hood(hz), -hz);
-  hinge.add(new THREE.Mesh(geo, mats.paint));
-  hinge.add(new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ color: 0x1a1c1e, roughness: 0.8, side: THREE.BackSide })));
+  if (!lid) hinge.add(new THREE.Mesh(geo, mats.paint));
+  if (!lid) hinge.add(new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ color: 0x1a1c1e, roughness: 0.8, side: THREE.BackSide })));
 
   return { bay, hinge, slots, range: [z0, z1], dir: rear ? -1 : 1 };
 }

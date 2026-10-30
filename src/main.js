@@ -19,6 +19,7 @@ import { CAMERA_FEEL } from './cameras/cameras.js';
 import { FeelPanel } from './ui/feel-panel.js';
 import { GamepadSource } from './input/gamepad.js';
 import { buildCar } from './vehicles/car-model.js';
+import { carsReady } from './vehicles/captured.js';
 import { getTrack, trackWeathers } from './world/tracks.js';
 import { buildGarage } from './world/garage.js';
 import { Reflections } from './graphics/reflections.js';
@@ -697,7 +698,7 @@ window.addEventListener('error', (e) => {
 // after a moment without it if it cannot load (offline).
 const fontReady = URL_FLAGS.smoke ? Promise.resolve()
   : Promise.race([document.fonts?.load('20px "Jersey 10"') ?? Promise.resolve(), new Promise((r) => setTimeout(r, 1500))]);
-fontReady.catch(() => {}).finally(() => {
+fontReady.catch(() => {}).then(() => carsReady).finally(() => {
   if (URL_FLAGS.library) { document.querySelector('#boot')?.remove(); import('./ui/library.js').then((m) => m.startLibrary(URL_FLAGS)); return; }
   const game = new Game();
   if (URL_FLAGS.smoke) game.smoke = new SmokeTest();

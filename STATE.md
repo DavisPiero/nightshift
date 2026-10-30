@@ -1,6 +1,6 @@
 # NIGHTSHIFT: state
 
-_Last updated 2026-10-30, session 11 (Mustank pass)._
+_Last updated 2026-10-30, session 12 (cars captured from GLBs)._
 
 ## Where we are
 - David's fifth notes are built and pushed to `main` (live), as he asked ("push it without
@@ -19,15 +19,16 @@ _Last updated 2026-10-30, session 11 (Mustank pass)._
 - Driving bench, AI bench and smoke test pass.
 
 ## Now: Milestone 6 = realism overhaul (merged to `main` as it goes)
-- Done: audit (`AUDIT.md`); smooth renderer on Medium/High (default Medium); speed blur and lens fringing (no grain); cockpit FOV and visors; zoomed minimap; boot-text loader; notice board; class thresholds; the Miata (first car); the Aventadoro's rear.
-- Session 11: Mustank body pass from David's GT500 sheet (shape, own wing, fender vent, black stripes). Merged to `main` and pushed.
-- Not done: the proper model redesign of the R34, R35, Challenjer and Mustank (only details so far), the Mustang sheet (still missing), world and environment models, exhaust flame/smoke/spark upgrades, ambient occlusion, exposure adaptation, lens dirt, headlight pools and wet roads, the sun raise.
+- Session 12: four cars rebuilt from David's GLBs and renamed to match: GT-Ar Aimgane Type 2, Challenjer SRT Super Stok, Aventadoro SVJ, 2012 Mustank Shelbi. Real bodies, real interiors, own wheels, turning steering wheels. Authors credited in the README. Physics untouched.
+- Next, from David's Visual Realism brief, in this order: (1) slower acceleration and post effects (convolution bloom, lens dirt and blue reflections, motion blur with a cockpit mask, less fringing); (2) Parabolica Street remade with blossom; (3) the Mountain Edge track; (4) old-Microsoft UI.
+- Also not done: Miata and R34 still on the old curve bodies (no GLB), exhaust flame/smoke/spark upgrades, ambient occlusion, exposure adaptation, headlight pools and wet roads, the sun raise.
 - Racing is parked until after this.
 
 ## Open with David
 - Sent (done): the Mustang sheet.
 - Guesses: the Miata's name (Mazdo), numbers and paint names; the notice board's wording; fringing strength; the R34 is still hidden.
-- Guesses to confirm (this session):
+- Guesses to confirm (session 12): the new near-miss names (Aimgane, Super Stok, SVJ); R35 now left-hand drive; the plain pad on each steering hub; the Mustang's interior darkened to 42%.
+- Guesses to confirm (session 10):
   - the new cars' names, years, colours and numbers; the Aventadoro landing in class X;
   - the handbrake lever's look; the mode tiles' pictures (track stills);
   - Parabolica's lamps turning gold (they were white by an earlier decision);
@@ -36,6 +37,7 @@ _Last updated 2026-10-30, session 11 (Mustank pass)._
 - Older guesses still open: the menu look, engine sounds, the minimap's size, the tips' wording.
 
 ## Known rough edges
+- Captured cars: dials do not move; body kit parts change only the numbers on them; bonnet undersides are plain; the old engine bay sits under the bonnet. No iPad test yet of the bigger cars (82k to 142k triangles).
 - Touch and controllers are untested on real devices.
 - The new cars are first passes: the Aventadoro's bonnet ducts are dark slabs, the engine bay
   under its rear lid is the front-engine layout turned round.
