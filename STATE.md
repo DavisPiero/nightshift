@@ -1,6 +1,6 @@
 # NIGHTSHIFT: state
 
-_Last updated 2026-10-30, session 12 (cars captured from GLBs)._
+_Last updated 2026-10-30, session 12 (cars captured; speed and effects on branch `m6-speed-fx`)._
 
 ## Where we are
 - David's fifth notes are built and pushed to `main` (live), as he asked ("push it without
@@ -20,13 +20,15 @@ _Last updated 2026-10-30, session 12 (cars captured from GLBs)._
 
 ## Now: Milestone 6 = realism overhaul (merged to `main` as it goes)
 - Session 12: four cars rebuilt from David's GLBs and renamed to match: GT-Ar Aimgane Type 2, Challenjer SRT Super Stok, Aventadoro SVJ, 2012 Mustank Shelbi. Real bodies, real interiors, own wheels, turning steering wheels. Authors credited in the README. Physics untouched.
-- Next, from David's Visual Realism brief, in this order: (1) slower acceleration and post effects (convolution bloom, lens dirt and blue reflections, motion blur with a cockpit mask, less fringing); (2) Parabolica Street remade with blossom; (3) the Mountain Edge track; (4) old-Microsoft UI.
+- Built, waiting for David's sign-off on `m6-speed-fx`: slower acceleration, convolution bloom, lens dirt and blue reflections, motion blur with a cockpit mask, less fringing.
+- Next, from David's Visual Realism brief, in this order: (1) Parabolica Street remade with blossom; (2) the Mountain Edge track; (3) old-Microsoft UI.
 - Also not done: Miata and R34 still on the old curve bodies (no GLB), exhaust flame/smoke/spark upgrades, ambient occlusion, exposure adaptation, headlight pools and wet roads, the sun raise.
 - Racing is parked until after this.
 
 ## Open with David
 - Sent (done): the Mustang sheet.
 - Guesses: the Miata's name (Mazdo), numbers and paint names; the notice board's wording; fringing strength; the R34 is still hidden.
+- Guesses to confirm (speed and effects): the amount of slowing; bloom, dirt and blue reflection strengths; blur starting at 140 km/h.
 - Guesses to confirm (session 12): the new near-miss names (Aimgane, Super Stok, SVJ); R35 now left-hand drive; the plain pad on each steering hub; the Mustang's interior darkened to 42%.
 - Guesses to confirm (session 10):
   - the new cars' names, years, colours and numbers; the Aventadoro landing in class X;

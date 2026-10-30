@@ -93,7 +93,7 @@ check(to100.t > 4.5 && to100.t < 7.5, '0-100 should be 4.5-7.5 s');
   console.log(`  body: roll ${d(roll)}° in a hard corner, dive ${d(dive)}° braking, squat ${d(squat)}° launching`);
   check(roll < 0.065, 'roll under ~3.5°');
   check(dive > 0.035 && dive < 0.07, 'brake dive should be visible: 2-4°');
-  check(squat > 0.012 && squat < 0.05, 'launch squat should be visible: 0.7-3°');
+  check(squat > 0.007 && squat < 0.05, 'launch squat should be visible: 0.4-3°');
 }
 
 {

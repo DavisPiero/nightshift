@@ -166,6 +166,14 @@ export class Vehicle {
       // Pull away gently from a standstill instead of stalling.
       if (coupled < s.idleRpm * 1.5) engineTorque = Math.max(engineTorque, this.throttle * full);
       driveForce = engineTorque * ratio * s.drivetrainEfficiency / s.wheelRadius;
+      // Gentler power delivery (David, 2026-10-30): each car's drive is cut
+      // at low and middle speeds (accelScale, set for its 0-100 time). The cut fades as air drag catches up with the
+      // engine, so top speeds do not change.
+      if (driveForce > 0) {
+        const air = 0.5 * AIR * s.dragCoefficient * s.frontalArea * speed * speed;
+        const k = clamp((air / driveForce - 0.12) / 0.3, 0, 1);
+        driveForce *= 1 - (1 - (s.accelScale ?? 1)) * (1 - k * k * (3 - 2 * k));
+      }
       if (vLong < -0.5 && !reversing) driveForce = Math.max(driveForce, 0);
     }
     if (reversing) driveForce = -driveForce;
@@ -235,7 +243,6 @@ export class Vehicle {
     // drivetrain, tyres). Physics alone undersells it, so add a little more.
     const coasting = drive < 0.05 && brake < 0.05 && !c.handbrake;
     const liftOff = coasting ? s.liftOffDrag * s.mass * clamp(Math.abs(vLong) / 3, 0, 1) : 0;
-
     const cosD = Math.cos(delta), sinD = Math.sin(delta);
     let fLong = fRearLong + fFrontLong * cosD - latF * sinD - Math.sign(vLong) * liftOff;
     let fLat = latR + latF * cosD + fFrontLong * sinD;

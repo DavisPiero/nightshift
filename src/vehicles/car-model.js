@@ -358,9 +358,10 @@ export function buildCar(spec, look = spec.paint, { simple = false } = {}) {
         speedo.rotation.z = 2.3 - Math.min(1, Math.abs(v.speedForward) * 3.6 / 300) * 4.6;
       }
       const brake = v.braking > 0.05 && v.speed > 0.2;
-      tail.color.setHex(brake ? 0xff3020 : lightsOn ? 0x8a0d08 : 0x3a0806);
-      if (mats.lampR) mats.lampR.emissiveIntensity = brake ? 2.2 : lightsOn ? 0.7 : 0.12;
-      if (mats.lampF) mats.lampF.emissiveIntensity = lightsOn ? 1.3 : 0.08;
+      // Brake lights and headlamps are brighter than white, for the bloom.
+      if (brake) tail.color.setRGB(3.2, 0.1, 0.05); else tail.color.setHex(lightsOn ? 0x8a0d08 : 0x3a0806);
+      if (mats.lampR) mats.lampR.emissiveIntensity = brake ? 3.5 : lightsOn ? 0.7 : 0.12;
+      if (mats.lampF) mats.lampF.emissiveIntensity = lightsOn ? 2.6 : 0.08;
       for (const g of tailGlows) { g.material.opacity = brake ? 1 : 0.4; g.scale.setScalar(brake ? 1.1 : 0.6); }
       if (brakeLamp) brakeLamp.intensity = lightsOn ? (brake ? 6 : 0.8) : 0;
       reverseLight.color.setHex(v.gearbox.gear === -1 ? 0xffffff : 0x777777);

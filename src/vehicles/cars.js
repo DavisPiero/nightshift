@@ -6,6 +6,7 @@
 
 export const SKYLINER_R34 = {
   id: 'skyliner-r34',
+  accelScale: 0.7,            // gentler power delivery (see vehicle.js)
   make: 'Nissani',
   model: 'Skyliner GT-R',
   code: 'R34',
@@ -102,6 +103,7 @@ export const SKYLINER_R34 = {
 // out when you lean on the torque.
 export const CHALLENJER_SRT8 = {
   id: 'challenjer-srt8',
+  accelScale: 0.68,            // gentler power delivery (see vehicle.js)
   make: 'Dodga',
   model: 'Challenjer SRT Super Stok',
   code: 'LC',
@@ -180,6 +182,7 @@ export const CHALLENJER_SRT8 = {
 // stable; it still slides if you ask it to.
 export const GTAR_R35 = {
   id: 'gtar-r35',
+  accelScale: 0.75,            // gentler power delivery (see vehicle.js)
   make: 'Nissani',
   model: 'GT-Ar Aimgane Type 2',
   code: 'R35',
@@ -260,6 +263,7 @@ export const GTAR_R35 = {
 // gear changes thump. Huge grip, a big fixed wing.
 export const AVENTADORO_SV = {
   id: 'aventadoro-sv',
+  accelScale: 0.76,            // gentler power delivery (see vehicle.js)
   make: 'Lamborgino',
   model: 'Aventadoro SVJ',
   code: 'LP750',
@@ -338,6 +342,7 @@ export const AVENTADORO_SV = {
 // light the rear tyres in every gear.
 export const MUSTANK_GT500 = {
   id: 'mustank-gt500',
+  accelScale: 0.53,            // gentler power delivery (see vehicle.js)
   make: 'Fard',
   model: 'Mustank Shelbi GT-500',
   code: 'S550',
@@ -417,6 +422,7 @@ export const MUSTANK_GT500 = {
 // below the GT-R's so it is easy to learn and still slides when asked.
 export const MIATA_NA = {
   id: 'miata-na',
+  accelScale: 0.78,            // gentler power delivery (see vehicle.js)
   make: 'Mazdo',
   model: 'MX-5 Miata',
   code: 'NA',
