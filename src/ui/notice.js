@@ -6,11 +6,10 @@ const WINDOWS = [
   {
     id: 'news', title: 'What’s new', icon: 'info', pos: 'a',
     lines: [
-      'Four cars rebuilt from detailed models, outside and in: the GT-Ar Aimgane Type 2, the Challenjer SRT Super Stok, the Aventadoro SVJ and the 2012 Mustank Shelbi.',
-      'Every one has its real dashboard, seats and doors from the driver’s seat.',
-      'The wheels are their own now, and the steering wheel turns.',
-      'Cars pull away more gradually now; top speeds are the same.',
-      'New light: bloom, lens dirt, and motion blur that leaves the cockpit sharp (Settings > Graphics).',
+      'The Mazdo MX-5 Miata is rebuilt from scratch, outside and in, with working pop-up headlamps and moving dials.',
+      'Garage rims are real 3D wheels now, on every car. Each car keeps its own tyres and brakes.',
+      'The Miata’s body kits and wing are real parts.',
+      'The menus and the driving display look like old Windows now.',
     ],
     button: 'Oh, thanks',
   },
@@ -21,7 +20,7 @@ const WINDOWS = [
   },
   {
     id: 'soon', title: 'You got mail', icon: 'mail', pos: 'c',
-    lines: ['Racing against the AI is next.'],
+    lines: ['New maps and scenery are next.'],
     button: 'Oh, thanks',
   },
 ];

@@ -408,15 +408,18 @@ export class RetroRenderer {
   // Speed blur, lens fringing, bloom and lens dirt (realistic looks only).
   // `blur` 0..1 is how strong the speed blur is; each has its own switch.
   // `cabin`: the car's root in the cockpit view, to keep the cabin sharp.
-  setLens({ blur = 0, aberration = false, bloom = true, dirt = true, cabin = null }) {
+  // `soft` turns the lens down: lamps close to a shiny car in the garage
+  // would otherwise flare hard and throw blue spots on the floor.
+  setLens({ blur = 0, aberration = false, bloom = true, dirt = true, cabin = null, soft = 1 }) {
     const u = this.post.uniforms;
     u.blurK.value = this.lens ? blur : 0;
     u.aberr.value = this.lens && aberration ? 1 : 0;
     const on = this.bloomOn && bloom;
     this.bloomLive = on;
-    u.bloom.value = on ? (this.bloomMode === 'fft' ? 0.14 : 0.55) : 0;
-    u.fft.value = on && this.bloomMode === 'fft' ? 1.7 : 0;
-    u.lensK.value = on && dirt ? 1 : 0;
+    const glow = 0.45 + 0.55 * soft;
+    u.bloom.value = on ? (this.bloomMode === 'fft' ? 0.14 : 0.55) * glow : 0;
+    u.fft.value = on && this.bloomMode === 'fft' ? 1.7 * glow : 0;
+    u.lensK.value = on && dirt ? soft : 0;
     this.cabin = this.lens && (blur > 0 || on) ? cabin : null;
   }
 

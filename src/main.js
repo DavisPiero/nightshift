@@ -539,7 +539,7 @@ class Game {
     // Speed blur starts at 140 km/h, is full at 280, and never gets heavy.
     const fast = Math.max(0, Math.min(1, (v.speed * 3.6 - 140) / 140));
     const blur = fxs.motionBlur === false || garage || this.state !== 'driving' ? 0 : fast ** 1.5 * 0.6;
-    this.renderer.setLens({ blur, aberration: fxs.lens, bloom: fxs.bloom !== false, dirt: fxs.lensDirt !== false, cabin: this.cameras.mode === 'cockpit' ? this.model.root : null });
+    this.renderer.setLens({ blur, aberration: fxs.lens, bloom: fxs.bloom !== false, dirt: fxs.lensDirt !== false, cabin: this.cameras.mode === 'cockpit' ? this.model.root : null, soft: garage ? 0.25 : 1 });
     this.renderer.render(scene, this.camera);
 
     if (this.hud.debugOn) {
