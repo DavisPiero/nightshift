@@ -166,3 +166,4 @@ One line each, newest last.
 - 2026-10-31: Story art is pixel art made in code: real game scenes drawn at 480x270 and baked to 64 colours with an ordered dither; faces painted as shapes. No drawing by hand and nothing bought in.
 - 2026-10-31: Shop and car pick use the same card; pictures rendered straight from the 3D scene with no post effects, on no background.
 - 2026-10-31: The Multiplayer tile and the Drive screen are gone. "F1" is called Formula on screen (real brand; David agreed). Back on track: R, or the pause menu.
+- 2026-11-01: David signed off session 15 (the career) and it is live on main.

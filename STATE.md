@@ -1,6 +1,6 @@
 # NIGHTSHIFT: state
 
-_Last updated 2026-10-31, end of session 15. The career is merged and live: `main` is the live site, nothing is on a branch._
+_Last updated 2026-10-31, end of session 15. Signed off by David. The career is merged and live: `main` is the live site, nothing is on a branch._
 
 ## Where we are
 The game is a career now. Street is complete: 24 events, the story to level 100, eight-car races on four difficulties, CR, XP, the shop, a looks-only garage, the new teal look, slightly pixelated Medium and High. Then "to be continued".
