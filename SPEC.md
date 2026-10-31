@@ -10,7 +10,7 @@
    lift-off. Never a mosquito.
 4. **Night atmosphere, neon Japan.** Each track has its own light: amber lamps round the
    harbour, turquoise strips in the Tokyo tunnels. Fog, rain, red tail lights, Japanese signs
-   and road markings. Low-poly and pixel, like an obscure early-2000s console racer.
+   and road markings. Realistic on Medium and High; chunky pixels on Low.
 5. **Menus that feel like a game.** See "Look of the menus" below. Lists on the left, the
    thing you pick on the right, the primary button bottom right; every button has its sound.
 6. **Cars worth looking at.** Each car is recognisably its real cousin from any angle, and its
@@ -54,7 +54,7 @@ David's Windows 98 reference (2026-10-31; replaces the street-racer look).
    layouts, the Underground track, rebuilt car bodies and a third car (R35), paint
    reflections, the garage room. **Done, signed off 2026-10-26.**
 5. Night circuit: a second, full track.
-6. Realism overhaul (M6, started 2026-10-28), then racing: checkpoints, countdown, lap timing, results. Restart already exists.
+6. Realism overhaul (M6, started 2026-10-28; GLB cars done, 2026-10-31), then racing: checkpoints, countdown, lap timing, results. Restart already exists.
 7. Garage extras: in-game currency and prices for parts (later).
 8. Saving and settings: the rest (most of it is done in 3).
 9. Polish and release.

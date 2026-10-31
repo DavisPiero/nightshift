@@ -1,5 +1,12 @@
 # Changelog
 
+## GLB cars (2026-10-31)
+- Cars come from GLBs at full detail: compressed, with lighter copies for iPads and parked cars.
+- Five cars: Subaro Impreza WRX STi Coupe (first car), Nissani Skyliner GT-R, Dodga Challenjer,
+  1969 Fard Mustank Touring Car (with the 2012 car's cabin), Lamborgino Countash 5000 QV.
+- Gone: the Miata, the GT-Ar and the Aventadoro. Old saves move to the Impreza.
+- The round rev dial is back at the bottom centre; the map has no frame and its corners fade.
+
 ## 0.7.0 (unreleased): David's fourth notes
 - New menu look after the Street-Spec logo: a chrome, italic NIGHTSHIFT with a pink 夜勤
   stamp, italic titles, dark glass panels with thin frames, a vignette, no window title bars.
