@@ -5,11 +5,10 @@
 import { DEFAULT_KEYS } from '../input/keyboard.js';
 import { DEFAULT_TOUCH } from '../input/touch.js';
 import { DEFAULT_EFFECTS } from '../core/config.js';
-import { checkLook, defaultLook } from '../vehicles/looks.js';
+import { checkLook } from '../vehicles/looks.js';
 
 const KEY = 'nightshift.save';
-export const SAVE_VERSION = 5;
-export const MAX_BUILDS = 3;
+export const SAVE_VERSION = 6;
 
 export function defaultSave() {
   return {
@@ -37,9 +36,17 @@ export function defaultSave() {
     garage: {
       selected: 'impreza-gc8',
       owned: ['impreza-gc8'],
-      cars: {},                  // per car id: { active, builds: [{ name, parts, look }] }
+      cars: {},                  // per car id: { look }
     },
-    lastRace: { track: 'starter', weather: 'clear', time: 'night' },
+    career: {
+      cr: 0,                     // money
+      xp: 0,                     // experience; the level comes from it (career.js)
+      difficulty: 'normal',      // the last difficulty picked
+      done: {},                  // per event id: best place
+      tracks: ['starter'],       // tracks played, so open in Race
+      seen: [],                  // story scenes already shown
+    },
+    lastRace: { track: 'starter', weather: 'clear', time: 'night', laps: 3, difficulty: 'normal', rivals: 7 },
     bestLaps: {},
   };
 }
@@ -91,6 +98,18 @@ export function loadSave() {
       delete save.garage.cars[gone];
       delete save.settings.feel[gone];
     }
+    // Version 6 is the career (David, 2026-10-31): everyone starts again with
+    // the Impreza. Builds and parts are gone; each car keeps the look of the
+    // build it was racing, for when you buy it.
+    if (data.version < SAVE_VERSION) {
+      for (const [id, c] of Object.entries(save.garage.cars)) {
+        const b = c?.builds?.[c.active] || c?.builds?.[0];
+        save.garage.cars[id] = { look: c?.look || b?.look || {} };
+      }
+      save.garage.selected = 'impreza-gc8';
+      save.garage.owned = ['impreza-gc8'];
+      save.lastRace.track = 'starter';
+    }
     // The touch camera and pause buttons moved to the top left (the minimap
     // took the top right); move them in saves that still had them there.
     const lay = save.settings.touch.layout;
@@ -110,32 +129,13 @@ export function loadSave() {
   }
 }
 
-// A car's garage entry, made or repaired as needed: its builds (each with a
-// name, parts and a complete look) and which one is raced.
-export function garageCar(save, car) {
+// A car's look, made or repaired as needed. Repaired in place, so the garage
+// can keep editing the same object.
+export function carLook(save, car) {
   const cars = save.garage.cars;
-  let c = cars[car.id];
-  if (!c || !Array.isArray(c.builds) || !c.builds.length) c = cars[car.id] = { active: 0, builds: [newBuild(car, 'My build')] };
-  // Repaired in place, so the garage can keep editing the same objects.
-  c.builds = c.builds.slice(0, MAX_BUILDS).map((b, i) => {
-    if (!b || typeof b !== 'object') b = {};
-    if (!(typeof b.name === 'string' && b.name.trim())) b.name = `Build ${i + 1}`;
-    b.name = b.name.slice(0, 20);
-    if (!b.parts || typeof b.parts !== 'object') b.parts = {};
-    b.look = Object.assign(b.look && typeof b.look === 'object' ? b.look : {}, checkLook(b.look, car));
-    return b;
-  });
-  if (!(c.active >= 0 && c.active < c.builds.length)) c.active = 0;
-  return c;
-}
-
-export function newBuild(car, name) {
-  return { name, parts: {}, look: defaultLook(car) };
-}
-
-export function activeBuild(save, car) {
-  const c = garageCar(save, car);
-  return c.builds[c.active];
+  const c = cars[car.id] && typeof cars[car.id] === 'object' ? cars[car.id] : (cars[car.id] = {});
+  c.look = Object.assign(c.look && typeof c.look === 'object' ? c.look : {}, checkLook(c.look, car));
+  return c.look;
 }
 
 export function writeSave(save) {

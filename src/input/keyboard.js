@@ -11,6 +11,7 @@ export const DEFAULT_KEYS = {
   gearUp: ['KeyE', ''],
   gearDown: ['KeyQ', ''],
   camera: ['KeyC', ''],
+  reset: ['KeyR', ''],
   pause: ['KeyP', ''],
 };
 
@@ -18,11 +19,11 @@ export const DEFAULT_KEYS = {
 export const KEY_LABELS = {
   throttle: 'Accelerate', brake: 'Brake / reverse', left: 'Steer left', right: 'Steer right',
   handbrake: 'Handbrake', gearUp: 'Gear up (manual)', gearDown: 'Gear down (manual)',
-  camera: 'Change camera', pause: 'Pause',
+  camera: 'Change camera', reset: 'Back on track', pause: 'Pause',
 };
 
 const FIXED = { Escape: 'pause', F3: 'debug', F4: 'feel' };
-const ACTIONS = ['camera', 'pause', 'debug', 'feel'];
+const ACTIONS = ['camera', 'reset', 'pause', 'debug', 'feel'];
 
 // "KeyW" -> "W", "ArrowUp" -> "Up", "Space" -> "Space".
 export function keyName(code) {

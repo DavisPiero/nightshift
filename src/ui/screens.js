@@ -1,18 +1,24 @@
-// Menu screens: first-visit platform choice, main menu (Drive, Garage,
-// Settings), track pick, car pick, race settings (weather and time),
-// garage, pause.
+// Menu screens: first-visit platform choice, home (Career, Race, Shop, Garage,
+// the gear for Settings), track pick, car pick, race settings, results, pause.
 // Plain DOM. Screens stack, so Back (or Escape) always returns to where you
 // came from, e.g. Settings opened from the pause menu goes back to it.
 
-import { CARS, getCar } from '../vehicles/cars.js';
-import { carStats } from '../vehicles/stats.js';
+import { getCar } from '../vehicles/cars.js';
 import { TRACKS, trackWeathers } from '../world/tracks.js';
 import { WEATHER } from '../physics/weather.js';
 import { TIMES, trackTimes } from '../world/time-of-day.js';
 import { Settings } from './settings.js';
 import { fillStats } from './stats-view.js';
 import { Garage } from './garage.js';
+import { Shop } from './shop.js';
+import { CareerScreen } from './career-screen.js';
+import { Cutscene } from './cutscene.js';
+import { carCard } from './car-cards.js';
 import { TIPS } from './tips.js';
+import { clock } from './hud.js';
+import { DIFFICULTY } from '../race/difficulty.js';
+import { levelInfo, eventPay, racePay, bank, cleared, cr, CLEARS, EVENTS } from '../career/career.js';
+import { carStats } from '../vehicles/stats.js';
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -29,15 +35,21 @@ export class Screens {
     for (const b of document.querySelectorAll('[data-back]')) b.addEventListener('click', () => this.back());
 
     $('#pause-resume').addEventListener('click', () => game.resume());
+    $('#pause-track').addEventListener('click', () => { game.backOnTrack(); game.resume(); });
     $('#pause-restart').addEventListener('click', () => game.restart());
     $('#pause-settings').addEventListener('click', () => this.open('settings'));
     $('#pause-main').addEventListener('click', () => game.toMain());
     $('#pause-button').addEventListener('click', () => game.pauseGame());
     $('#race-go').addEventListener('click', () => this.raceLoad());
     $('#tracks-go').addEventListener('click', () => this.open('setup'));
-    $('#setup-go').addEventListener('click', () => this.open('race'));
+    $('#setup-go').addEventListener('click', () => { if (this.afterCar === 'back') this.back(); else this.open('race'); });
+    $('#res-go').addEventListener('click', () => this.resultsDone());
+    $('#res-again').addEventListener('click', () => { this.closeAll(); game.restart(); });
 
     this.garage = new Garage(game, this);
+    this.shop = new Shop(game, this);
+    this.career = new CareerScreen(game, this);
+    this.cutscene = new Cutscene(game);
     this.menuSounds();
     // The race loading screen has the same boot text as the start-up screen.
     window.BootLog?.mount($('#race-load .rl-wheel'));
@@ -46,7 +58,7 @@ export class Screens {
     window.addEventListener('keydown', (e) => {
       const top = this.top;
       if (!top || game.state === 'driving' || e.nsCaptured) return;
-      if (e.code === 'Escape' && top !== 'pause' && top !== 'platform' && top !== 'main') {
+      if (e.code === 'Escape' && top !== 'pause' && top !== 'platform' && top !== 'main' && top !== 'results') {
         e.preventDefault();
         if (top === 'garage' && this.garage.tab) this.garage.close(); // a pop-up closes first
         else this.back();
@@ -64,10 +76,40 @@ export class Screens {
       }
     });
 
-    this.pick = { track: game.trackInfo.id, weather: game.save.lastRace.weather, time: game.timeId, car: game.carSpec.id };
+    const last = game.save.lastRace;
+    this.pick = { track: game.trackInfo.id, weather: last.weather, time: game.timeId, car: game.carSpec.id, laps: last.laps, rivals: last.rivals, difficulty: last.difficulty };
     this.buildTracks();
-    this.buildCars();
     this.buildConditions();
+  }
+
+  // A small window with buttons: [label, action, main?].
+  window(title, text, buttons) {
+    const root = $('#dialog');
+    root.innerHTML = `<section class="nw nw-mid"><header><span>${title}</span></header><div class="nb"><p>${text}</p></div><footer></footer></section>`;
+    const foot = root.querySelector('footer');
+    const close = () => { root.hidden = true; window.removeEventListener('keydown', key, true); };
+    const key = (e) => { if (e.key === 'Escape' || e.key === 'Enter') { e.preventDefault(); e.stopPropagation(); e.nsCaptured = true; close(); if (e.key === 'Enter') buttons[0][1]?.(); } };
+    for (const [label, act, main] of buttons) {
+      const b = document.createElement('button');
+      b.className = `nok${main ? ' pri' : ''}`;
+      b.textContent = label;
+      b.addEventListener('click', () => { close(); act?.(); });
+      foot.appendChild(b);
+    }
+    root.hidden = false;
+    window.addEventListener('keydown', key, true);
+  }
+
+  story(id, done) { this.cutscene.play(id, done); }
+
+  // Money and level, top right on the menus.
+  wallet() {
+    const c = this.game.save.career, i = levelInfo(c.xp);
+    $('#w-level').textContent = i.level;
+    $('#w-xp').style.width = `${Math.round(i.share * 100)}%`;
+    $('#w-cr').textContent = cr(c.cr);
+    const next = this.career.next(), done = EVENTS.every((e) => cleared(c, e));
+    $('#tile-career').textContent = done ? 'To be continued' : c.seen.includes('intro') ? `Next: ${next.name}` : 'Start your story';
   }
 
   // Every button makes a sound that says what kind of thing it did (see
@@ -77,12 +119,11 @@ export class Screens {
     const kindOf = (b) => {
       if (b.dataset.sound) return b.dataset.sound;
       if (b.matches('[data-back], .back')) return 'back';
-      if (b.id === 'race-go') return 'race';
-      if (b.matches('#tracks-go, #setup-go, #scr-main .pri, [data-platform]')) return 'confirm';
+      if (b.id === 'race-go' || b.id === 'career-go') return 'race';
+      if (b.matches('#tracks-go, #setup-go, #career-go, #res-go, .tile, [data-platform]')) return 'confirm';
       if (b.id === 'garage-close') return 'close';
       if (b.matches('.grail .tab')) return b.classList.contains('on') ? 'close' : 'tab';
       if (b.matches('.swatch')) return 'paint';
-      if (b.matches('#garage-list .item.opt')) return 'fit';
       if (b.matches('.tabs .tab, .seg .btn, .key, .row .btn')) return 'toggle';
       return 'select';
     };
@@ -124,15 +165,28 @@ export class Screens {
     this.showEl(this.top);
   }
 
-  closeAll() { this.reset(null); }
+  closeAll() { this.reset(null); $('#wallet').hidden = true; }
+
+  // A car that is not yours cannot stay picked (it can on a test address).
+  showOwnedCar() {
+    const g = this.game.save.garage;
+    if (!new URLSearchParams(location.search).has('car') && !g.owned.includes(this.pick.car)) this.pickCar(g.owned[0]);
+  }
+
+  unlocked(id) { return this.game.save.career.tracks.includes(id); }
 
   showEl(name) {
     const el = this.el(name);
-    if (name === 'tracks') this.fillTracks();
+    if (name === 'tracks') { this.afterCar = null; if (!this.unlocked(this.pick.track) && !new URLSearchParams(location.search).has('track')) this.pick.track = 'starter'; this.game.loadTrack(this.pick.track); this.buildTracks(); this.fillTracks(); }
     if (name === 'setup') { this.buildCars(); this.fillSetup(); }
     if (name === 'race') this.fillRace(true);
     if (name === 'garage') this.garage.open();
     else this.game.garageTab = null;
+    if (name === 'shop') this.shop.open();
+    if (name === 'career') this.career.open();
+    if (name === 'main') this.showOwnedCar();
+    this.wallet();
+    $('#wallet').hidden = !['main', 'career', 'shop', 'garage', 'tracks', 'setup', 'race'].includes(name);
     if (name === 'settings') this.settings.open();
     if (name === 'pause') el.style.zIndex = 8;
     el.hidden = false;
@@ -164,13 +218,16 @@ export class Screens {
 
   // Loading into a race: a still of the track, the wheel bottom left, a tip.
   // The race is set up behind it, and it stays at least long enough to read.
-  raceLoad() {
-    const pick = { ...this.pick };
+  raceLoad(given) {
+    const pick = given || { ...this.pick };
     const t = TRACKS.find((x) => x.id === pick.track) || TRACKS[0];
+    const career = this.game.save.career;
+    if (!career.tracks.includes(t.id)) career.tracks.push(t.id); // playing a track unlocks it for Race
     const el = $('#race-load');
     el.querySelector('.rl-still').style.backgroundImage = `url(assets/loading/${t.id}.jpg)`;
-    el.querySelector('.rl-name').textContent = t.name;
-    el.querySelector('.rl-sub').textContent = `${(t.path.length / 1000).toFixed(2)} km · ${TIMES[pick.time].clock} ${TIMES[pick.time].name} · ${WEATHER[pick.weather].name}`;
+    el.querySelector('.rl-k').textContent = pick.event ? t.name : 'Next race';
+    el.querySelector('.rl-name').textContent = pick.event?.name || t.name;
+    el.querySelector('.rl-sub').textContent = `${pick.rivals ? `${pick.laps} laps · ${DIFFICULTY[pick.difficulty].name} · ` : ''}${(t.path.length / 1000).toFixed(2)} km · ${TIMES[pick.time].clock} ${TIMES[pick.time].name} · ${WEATHER[pick.weather].name}`;
     this.tip = ((this.tip ?? Math.floor(Math.random() * TIPS.length)) + 1) % TIPS.length;
     el.querySelector('.rl-tt').textContent = TIPS[this.tip];
     el.classList.remove('done');
@@ -189,6 +246,43 @@ export class Screens {
     }));
   }
 
+  // --- after a race: the order, the pay, what opened up ---
+  results(race, setup) {
+    const game = this.game, career = game.save.career, r = race.player, e = setup.event;
+    const beatMax = !e?.beat || r.place < race.cars.find((c) => c.rival).place;
+    let pay, clearedNow = false;
+    if (e) {
+      const first = !cleared(career, e);
+      clearedNow = first && r.place <= CLEARS && beatMax;
+      pay = eventPay(e, r.place, setup.difficulty, first && beatMax);
+      if (clearedNow || (cleared(career, e) && r.place < career.done[e.id])) career.done[e.id] = r.place;
+      if (clearedNow) this.career.pick = null; // on to the next race
+    } else pay = racePay(setup.laps, setup.pi, r.place, setup.difficulty, setup.rivals);
+    const got = bank(career, pay);
+    game.saveNow();
+    this.after = clearedNow && e.after && !career.seen.includes(e.after) ? e.after : null;
+    this.resultsEvent = e;
+
+    $('#res-title').textContent = e ? e.name : 'Results';
+    const list = $('#res-list');
+    list.innerHTML = race.results().map((c) => `<div class="res-row${c.player ? ' me' : ''}"><span class="p">${c.place}</span><span class="n">${c.name}</span><span class="c">${c.car || ''}</span><span class="t">${clock(c.time)}</span><span class="b">${Number.isFinite(c.best) ? clock(c.best) : '-'}</span></div>`).join('');
+    const i = levelInfo(career.xp);
+    const note = !e ? '' : clearedNow ? '<p class="res-ok">Race cleared</p>' : e.beat && !beatMax && r.place <= CLEARS ? '<p class="res-no">You have to beat Max</p>' : r.place > CLEARS && !cleared(career, e) ? `<p class="res-no">Top ${CLEARS} to clear it</p>` : '';
+    $('#res-pay').innerHTML = `<p class="res-place">P${r.place}<small>of ${race.cars.length}</small></p>${note}`
+      + `<dl><dt>Money</dt><dd>+ ${cr(got.cr)}</dd><dt>XP</dt><dd>+ ${got.xp}</dd></dl>`
+      + `<div class="res-level"><span>Level ${i.level}</span><span class="w-bar"><i style="width:${Math.round(i.share * 100)}%"></i></span></div>`
+      + (got.levelAfter > got.levelBefore ? `<p class="res-ok">Level up!</p>` : '');
+    this.reset('results');
+    $('#wallet').hidden = true;
+    game.audio.ui('cash');
+  }
+
+  resultsDone() {
+    const scene = this.after, e = this.resultsEvent;
+    const leave = () => this.game.toMain(e ? 'career' : 'tracks');
+    if (scene) this.story(scene, leave); else leave();
+  }
+
   // --- Drive: tracks. A list of long rectangles; picking one loads it so
   // it flies past behind the menu, with its details on the right. ---
   buildTracks() {
@@ -198,8 +292,9 @@ export class Screens {
       const b = document.createElement('button');
       b.className = 'btn item';
       b.dataset.track = t.id;
+      b.disabled = !this.unlocked(t.id);
       b.innerHTML = `<span class="num">${String(n + 1).padStart(2, '0')}</span><canvas width="72" height="40"></canvas>`
-        + `<span class="txt"><span class="name">${t.name}</span><span class="sub">${(t.path.length / 1000).toFixed(2)} KM · ${t.corners} corners</span></span>`;
+        + `<span class="txt"><span class="name">${t.name}</span><span class="sub">${b.disabled ? 'Play it in the career to unlock it' : `${(t.path.length / 1000).toFixed(2)} KM · ${t.corners} corners`}</span></span>`;
       drawMap(b.querySelector('canvas'), t, 3);
       const choose = () => { if (this.pick.track !== t.id) { this.pick.track = t.id; this.game.loadTrack(t.id); this.fillTracks(); } };
       b.addEventListener('click', choose);
@@ -224,22 +319,16 @@ export class Screens {
     drawMap(el.querySelector('canvas'), t, 4);
   }
 
-  // --- Drive: cars and weather ---
+  // --- pick a car: the cards you own ---
   buildCars() {
-    const list = $('#car-list');
+    const list = $('#car-list'), owned = this.game.save.garage.owned;
     list.innerHTML = '';
-    CARS.forEach((c) => {
-      const b = document.createElement('button');
-      b.className = 'btn item car';
-      b.dataset.car = c.id;
-      const r = carStats(this.game.specFor(c.id));
-      b.innerHTML = `<span class="cls cls-${r.cls}">${r.cls}</span><span class="txt"><span class="name">${c.make} ${c.model}</span>`
-        + `<span class="sub">${c.year} · ${c.code}</span></span><span class="meta">${r.pi}</span>`;
-      const choose = () => { if (this.pick.car !== c.id) { this.pickCar(c.id); this.fillSetup(); } };
-      b.addEventListener('click', choose);
-      b.addEventListener('focus', choose);
+    for (const id of owned) {
+      const c = getCar(id);
+      const b = carCard(c, { owned: true, on: id === this.pick.car });
+      b.addEventListener('click', () => { if (this.pick.car !== id) { this.pickCar(id); this.buildCars(); this.fillSetup(); } });
       list.appendChild(b);
-    });
+    }
   }
 
   // Race settings: weather and time as tiles. Picking one shows it on the
@@ -266,12 +355,25 @@ export class Screens {
       b.addEventListener('click', () => { this.pick.time = id; this.fillRace(); this.game.previewTime(id); });
       times.appendChild(b);
     }
+    const choice = (where, key, opts) => {
+      const box = $(where);
+      box.innerHTML = '';
+      for (const [v, label, info] of opts) {
+        const b = document.createElement('button');
+        b.className = 'btn';
+        b.dataset.v = v;
+        b.title = info || '';
+        b.textContent = label;
+        b.addEventListener('click', () => { this.pick[key] = v; this.fillRace(); });
+        box.appendChild(b);
+      }
+    };
+    choice('#laps-list', 'laps', [1, 3, 5, 10].map((n) => [n, String(n)]));
+    choice('#rivals-list', 'rivals', [[0, 'None', 'Just you and the road'], [3, '3'], [7, '7']]);
+    choice('#diff-list', 'difficulty', Object.entries(DIFFICULTY).map(([id, d]) => [id, d.name, d.info]));
   }
 
   fillSetup() {
-    const t = TRACKS.find((x) => x.id === this.pick.track) || TRACKS[0];
-    $('#setup-title').textContent = t.name;
-    for (const b of document.querySelectorAll('#car-list .item')) b.classList.toggle('on', b.dataset.car === this.pick.car);
     const car = getCar(this.pick.car);
     $('#setup-car-year').textContent = `${car.year} · ${car.code}`;
     $('#setup-car-name').textContent = `${car.make} ${car.model}`;
@@ -293,18 +395,23 @@ export class Screens {
       b.hidden = !times.includes(b.dataset.time);
       b.classList.toggle('on', b.dataset.time === this.pick.time);
     }
+    for (const [where, key] of [['#laps-list', 'laps'], ['#rivals-list', 'rivals'], ['#diff-list', 'difficulty']]) {
+      for (const b of document.querySelectorAll(`${where} .btn`)) b.classList.toggle('on', b.dataset.v === String(this.pick[key]));
+    }
     $('#weather-note').textContent = WEATHER[this.pick.weather].note;
     if (entering) { this.game.previewTime(this.pick.time); this.game.previewWeather(this.pick.weather); }
     const car = getCar(this.pick.car), r = carStats(this.game.specFor(car.id));
+    const rivals = this.pick.rivals ? `${this.pick.rivals} on ${DIFFICULTY[this.pick.difficulty].name}, ${this.pick.laps} lap${this.pick.laps > 1 ? 's' : ''}` : 'Free drive';
     const el = $('#race-info');
     el.innerHTML = `<div class="ttl"><span>Race</span></div>`
       + `<canvas width="240" height="150"></canvas>`
       + `<div class="info-name"><span class="name">${t.name}</span></div>`
       + `<dl><dt>Car</dt><dd>${car.make} ${car.model}</dd><dt>Class</dt><dd><span class="cls cls-${r.cls} mini">${r.cls}</span> ${r.pi}</dd>`
-      + `<dt>Weather</dt><dd>${WEATHER[this.pick.weather].name}</dd><dt>Time</dt><dd>${TIMES[this.pick.time].clock} · ${TIMES[this.pick.time].name}</dd></dl>`;
+      + `<dt>Rivals</dt><dd>${rivals}</dd><dt>Weather</dt><dd>${WEATHER[this.pick.weather].name}</dd><dt>Time</dt><dd>${TIMES[this.pick.time].clock} · ${TIMES[this.pick.time].name}</dd></dl>`;
     drawMap(el.querySelector('canvas'), t, 4);
   }
 
+  drawMap(canvas, t, line) { drawMap(canvas, t, line); }
 }
 
 // Track outline for the card, drawn small and scaled up with square pixels.

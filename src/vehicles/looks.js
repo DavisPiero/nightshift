@@ -1,7 +1,6 @@
-// How a car looks, apart from its parts: paint colour and finish, a decal,
-// the wheels and the ride height. A build (see save.js) holds one `look`.
-// Ride height is the one look that touches the physics: a lower car has a
-// lower centre of gravity (see tuning.js). Everything else is paint.
+// How a car looks: paint colour and finish, a decal, the wheels and the ride
+// height. Each car you own keeps one `look` (see save.js). Looks never change
+// how a car drives: the only way to go faster is a faster car.
 
 // Paint colours anyone can pick, as well as each car's own factory colours.
 export const PALETTE = [
@@ -41,11 +40,11 @@ export const RIMS = {
 export const RIM_COLOURS = [[null, 'Stock'], [0xc8ccd0, 'Silver'], [0x2a2b2d, 'Black'], [0xb89a4a, 'Bronze'], [0xe8e8e4, 'White'], [0xd8261e, 'Red']];
 export const CALIPER_COLOURS = [[null, 'Stock'], [0xb01818, 'Red'], [0xc89a2a, 'Gold'], [0x1a6ad8, 'Blue'], [0x3ff0e8, 'Turquoise'], [0x2a2b2d, 'Black']];
 
-// Ride height: how far the body drops (m). Slammed needs coilovers.
+// Ride height: how far the body drops (m).
 export const RIDE = {
   stock:   { name: 'Stock', drop: 0 },
   low:     { name: 'Low', drop: 0.03, info: '3 cm down' },
-  slammed: { name: 'Slammed', drop: 0.06, info: '6 cm down, needs coilovers' },
+  slammed: { name: 'Slammed', drop: 0.06, info: '6 cm down' },
 };
 
 // A look with every field filled in. null colours mean "the car's own".
