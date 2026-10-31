@@ -8,7 +8,7 @@ import { DEFAULT_EFFECTS } from '../core/config.js';
 import { checkLook, defaultLook } from '../vehicles/looks.js';
 
 const KEY = 'nightshift.save';
-export const SAVE_VERSION = 4;
+export const SAVE_VERSION = 5;
 export const MAX_BUILDS = 3;
 
 export function defaultSave() {
@@ -84,11 +84,13 @@ export function loadSave() {
         save.garage.cars[id] = { active: 0, builds: [{ name: 'My build', parts: c.upgrades || {}, look: typeof c.paint === 'number' ? { paint: c.paint } : {} }] };
       }
     }
-    // The Miata is gone (David, 2026-10-31): the Impreza is the starter now.
-    if (save.garage.selected === 'miata-na') save.garage.selected = 'impreza-gc8';
-    save.garage.owned = [...new Set(save.garage.owned.map((id) => (id === 'miata-na' ? 'impreza-gc8' : id)))];
-    delete save.garage.cars['miata-na'];
-    delete save.settings.feel['miata-na'];
+    // Cars that have left the game (David, 2026-10-31): the Impreza takes over.
+    for (const gone of ['miata-na', 'gtar-r35', 'aventadoro-sv']) {
+      if (save.garage.selected === gone) save.garage.selected = 'impreza-gc8';
+      save.garage.owned = [...new Set(save.garage.owned.map((id) => (id === gone ? 'impreza-gc8' : id)))];
+      delete save.garage.cars[gone];
+      delete save.settings.feel[gone];
+    }
     // The touch camera and pause buttons moved to the top left (the minimap
     // took the top right); move them in saves that still had them there.
     const lay = save.settings.touch.layout;

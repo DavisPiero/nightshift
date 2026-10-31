@@ -9,30 +9,6 @@
 
 export const RECIPES = [
   {
-    id: 'gtar-r35', glb: '2017_nissan_aimgain_gt_r35_gt-r_type_2.glb', axles: [1.39, -1.39], ownWing: true, steering: [0.371, 0.873, 0.214], badgeR: 0.06, padR: 0.066, eye: [0.37, 1.12, -0.34], ratio: { paint: 0.85 }, exhausts: [[-0.63, 0.38, -2.46], [0.63, 0.38, -2.46]],
-    credit: '"2017 Nissan Aimgain GT R35 GT-R Type 2" by Outlaw Games, CC BY-NC 4.0',
-    rules: [
-      [/Badge/, 'drop'],
-      [/ManufacturerPlate/, 'plate'],
-      [/^material\|/, 'rim', { ratio: 0.05 }],
-      [/^phong5\|/, 'rim'],
-      [/Wheel1A/, 'wheel-sort'],
-      [/^phong3\|/, 'rim'],
-      [/Callipers/, 'caliper'],
-      [/EngineA/, 'drop'],
-      [/Coloured|PaintTNR/, 'paint'],
-      [/Window/, 'glass'],
-      [/^phong2\|/, 'tail'],
-      [/LightE/, 'light', { ends: true, tailMinY: 0.6 }],
-      [/SpecularTint/, 'chrome'],
-      [/glass_surr|Base_Material/, 'under'],
-      [/Carbon1/, 'carbon'],
-      [/InteriorTilling/, 'trim'],
-      [/Interior/, 'asis', { ratio: 0.7 }],
-    ],
-    bonnet: { z: [0.5, 2.6], y: 0.55 },
-  },
-  {
     id: 'challenjer-srt8', glb: '2020_dodge_challenger_srt_super_stock.glb', axles: [1.52, -1.43], steering: [0.38, 0.907, 0.327], eye: [0.38, 1.16, -0.24], ratio: { trim: 0.6 }, exhausts: [[-0.6, 0.33, -2.52], [0.6, 0.33, -2.52]],
     credit: '"2020 Dodge Challenger SRT Super Stock" by Outlaw Games, CC BY-NC 4.0',
     rules: [
@@ -52,28 +28,6 @@ export const RECIPES = [
       [/Interio/, 'asis', { ratio: 0.55 }],
     ],
     bonnet: { z: [0.5, 2.8], y: 0.7 },
-  },
-  {
-    id: 'aventadoro-sv', glb: 'lamborghini_aventador_lp750-4_sv.glb', axles: [1.36, -1.34], ownWing: true, engineRear: true, steering: [0.375, 0.712, 0.503], badgeR: 0.055, padR: 0.06, eye: [0.37, 0.95, -0.02], ratio: { trim: 0.5, carbon: 0.4, paint: 0.85 }, exhausts: [[-0.17, 0.75, -2.27], [0.17, 0.75, -2.27]],
-    credit: '"2019 Lamborghini Aventador SVJ" by Ddiaz Design, CC BY 4.0',
-    rules: [
-      [/Badge/, 'drop'],
-      [/ManufacturerPlate/, 'plate'],
-      [/Wheel2A/, 'wheel-sort'],
-      [/Calliper|PAINT_BLACK.*Calliper|Calliper.*PAINT_BLACK/, 'caliper'],
-      [/EngineA/, 'engine', { group: 'body', ratio: 0.3 }],
-      [/RED_PAINT/, 'paint'],
-      [/PAINT_BLACK/, 'trim'],
-      [/PLASTIC/, 'trim'],
-      [/Window/, 'glass'],
-      [/RED_GLASS/, 'tail'],
-      [/ORANGE_GLASS/, 'amber'],
-      [/LightA/, 'light', { ends: true }],
-      [/Base_Material/, 'under'],
-      [/Carbon1/, 'carbon'],
-      [/Interior|SeatBelt/, 'asis', { ratio: 0.55 }],
-    ],
-    bonnet: { z: [-2.6, 0.2], y: 0.7 },
   },
   {
     id: 'skyliner-r34', glb: 'Nissan Skyline.glb', axles: [1.34, -1.33], ownWing: true, steering: [-0.359, 0.829, 0.285], badgeR: 0.07, padR: 0.075, eye: [-0.37, 1.1, -0.3], exhausts: [[0.55, 0.3, -2.3]],
@@ -104,7 +58,7 @@ export const RECIPES = [
     },
   },
   {
-    id: 'mustank-gt500', glb: 'Ford Mustang.glb', axles: [1.47, -1.25], ownWing: true, steering: [0.324, 0.767, 0.435], steeringAt: { c: [0.324, 0.81, 0.2], axis: [0, 0.3, 0.954] }, eye: [0.33, 1.0, -0.14], exhausts: [[-0.6, 0.3, -2.3], [0.6, 0.3, -2.3]],
+    id: 'mustank-gt500', glb: 'Ford Mustang.glb', axles: [1.47, -1.25], ownWing: true, steering: [0.346, 0.78, 0.274], badgeR: 0.05, padR: 0.056, eye: [0.33, 1.02, -0.3], exhausts: [[-0.6, 0.3, -2.3], [0.6, 0.3, -2.3]],
     identity: { make: 'Ford', model: 'Mustang fastback touring car, #18', year: 1969, sure: 'high', from: 'file title and shape; not a Shelby GT500' },
     credit: '"Ford Mustang John Bowe 1969" by vecarz, CC BY 4.0',
     rules: [
@@ -123,6 +77,8 @@ export const RECIPES = [
       [/^interior/, 'asis'],
     ],
     bonnet: { z: [0.78, 2.0], y: 0.6, x: 0.7 },
+    donor: { glb: 'ford_mustang_shelby_2012.glb', axles: [1.47, -1.25], tyre: /^Pneu/, take: /^Interior/, skip: /Interior_HP/, tint: 0.3, scale: [0.93, 0.86, 1], keep: { y: [0, 1.04], z: [-1.3, 1] } },
+    cabinOut: { x: [-0.72, 0.72], y: [0.15, 1.24], z: [-0.95, 0.62] },
     panels: {
       wing: { y: [0.9, 1.3], z: [-2.35, -1.75] },
       bumperF: { cut: true, z: [2.05, 2.5], y: [0, 0.55] }, bumperR: { cut: true, z: [-2.4, -1.95], y: [0, 0.55] },
@@ -150,7 +106,7 @@ export const RECIPES = [
   },
   {
     id: 'impreza-gc8', glb: 'Subaru Impreza.glb', axles: [1.26, -1.26], ownWing: true, autoWheels: true, eye: [-0.36, 1.08, -0.3], exhausts: [[0.45, 0.3, -2.15]],
-    steeringAt: { c: [-0.36, 0.76, 0.42], axis: [0, 0.36, 0.933] },
+    steeringFit: true,
     identity: { make: 'Subaru', model: 'Impreza WRX STi two-door (GC8)', year: null, sure: 'medium', from: 'badges, wheels and shape; late 1990s, exact year and version unknown' },
     credit: 'Subaru Impreza WRX STi: author and licence unknown',
     rules: [

@@ -1,8 +1,8 @@
 # NIGHTSHIFT
 
 Casual night-time street racing in the browser. Low-poly, foggy, neon-Japan, early-2000s
-console style. Drive a Mazdo MX-5 Miata, a Nissani GT-Ar Aimgane Type 2, a Dodga Challenjer
-SRT Super Stok, a Lamborgino Aventadoro SVJ or a Fard Mustank Shelbi GT-500 round the Starter Track (a harbour estate at night), the
+console style. Drive a Subaro Impreza WRX STi Coupe, a Nissani Skyliner GT-R, a Dodga Challenjer
+SRT Super Stok, a 1969 Fard Mustank Touring Car or a Lamborgino Countash 5000 QV round the Starter Track (a harbour estate at night), the
 Underground (Tokyo expressway tunnels) or Parabolica Street (a Monza-shaped Tokyo ring road),
 in clear weather, rain, fog or snow, at sunset, night or dawn. Plays on a computer
 with a keyboard, or on an iPad with touch controls.
@@ -34,12 +34,8 @@ Car bodies and cabins are captured from these 3D models (badges and logos remove
 the game's own materials, see `tools/capture-car.mjs`). All are from Sketchfab, used under Creative
 Commons licences. Thank you to the authors.
 
-- [2017 Nissan Aimgain GT R35 GT-R Type 2](https://sketchfab.com/3d-models/2017-nissan-aimgain-gt-r35-gt-r-type-2-883cf78fadef4d698e50d2c1ae3f59c2)
-  by [Outlaw Games](https://sketchfab.com/Outlaw_Games), [CC BY-NC 4.0](http://creativecommons.org/licenses/by-nc/4.0/)
 - [2020 Dodge Challenger SRT Super Stock](https://sketchfab.com/3d-models/2020-dodge-challenger-srt-super-stock-aa90fb46c153459bbf50def4040a0a34)
   by [Outlaw Games](https://sketchfab.com/Outlaw_Games), [CC BY-NC 4.0](http://creativecommons.org/licenses/by-nc/4.0/)
-- [2019 Lamborghini Aventador SVJ](https://sketchfab.com/3d-models/2019-lamborghini-aventador-svj-1910d24bbad34fdda0c4fe30f01b3cc1)
-  by [Ddiaz Design](https://sketchfab.com/ddiaz-design), [CC BY 4.0](http://creativecommons.org/licenses/by/4.0/)
 - **Nissan Skyline R34 GT-R (2002)**
   by [Ddiaz Design](https://sketchfab.com/ddiaz-design), [CC BY 4.0](http://creativecommons.org/licenses/by/4.0/)
 - **Ford Mustang John Bowe 1969** and **Lamborghini Countach 5000QV**
@@ -51,7 +47,7 @@ Commons licences. Thank you to the authors.
 ./tools/smoke.sh
 ```
 
-Loads the game headless four times (computer in clear weather, iPad in the rain, the R35
+Loads the game headless four times (computer in clear weather, iPad in the rain, the Countash
 in the Underground, Parabolica Street in snow at dawn), lets a bot drive, then runs the
 physics bench (`node tools/drive-bench.mjs`).
 

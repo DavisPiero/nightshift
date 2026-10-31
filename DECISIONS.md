@@ -147,3 +147,7 @@ One line each, newest last.
 - 2026-10-31: The Impreza is entry level by choice: 146 hp, not the real car's 280, tuned to the old starter's class C and 12.2 s to 100. Rear-biased four-wheel drive like the R35. The Mustank Touring Car keeps the old car's numbers, so the 1969 car has its power.
 - 2026-10-31: Panels are recipe boxes: whole islands where the file keeps them apart (Impreza, Countach), a cut along the box where the body is one skin (Skyline, Mustang). Each panel is its own named mesh.
 - 2026-10-31: David signed off Phase 1 and it went live on main. Told the Subaru's source is unknown and that it stays in git history, he chose to push it with the rest.
+- 2026-10-31: The R35 and the Aventadoro are gone (David); old saves move to the Impreza (save version 5). Five cars now. Their GLBs stay in GLB/.
+- 2026-10-31: The Mustank has the old 2012 car's cabin, taken straight from that GLB by a recipe `donor` and scaled to fit (93% wide, 86% tall, nothing above 1.04 m); `cabinOut` removes the racer's own cabin and cage. A modern dash in a 1969 body, by David's choice.
+- 2026-10-31: `steeringFit` measures a wheel's axis and centre from its own shape. The Impreza's hand-written axis leaned the wrong way, which is why its wheel swung off the dash.
+- 2026-10-31: The HUD's round rev dial is back, bottom centre on every device, in the grey, green and red of the desktop look; smaller than before (198 px) so it doesn't hide the car. The map has no frame, its corners fade out, and it shows about 270 m. Overturns the two HUD windows.

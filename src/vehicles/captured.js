@@ -10,7 +10,7 @@
 import * as THREE from 'three';
 import { MeshoptDecoder } from '../../vendor/meshopt_decoder.js';
 
-const IDS = ['impreza-gc8', 'skyliner-r34', 'challenjer-srt8', 'mustank-gt500', 'gtar-r35', 'countach-qv', 'aventadoro-sv'];
+const IDS = ['impreza-gc8', 'skyliner-r34', 'challenjer-srt8', 'mustank-gt500', 'countach-qv'];
 const POS_SCALE = 1 / 8000;
 const CARS = new Map();
 
