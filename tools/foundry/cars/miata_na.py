@@ -220,6 +220,7 @@ def build(bp, trace):
     for o in popups:
         o.name = 'pop'
 
+    build_kits(skin, bp)
     F.wheel_set(rim_six, bp['wheelRadius'], .19, 1.41, (zf, zr))
     for o in [body, lid] + pops:
         F.smooth_from(o, ref, {'paint'})
@@ -271,6 +272,45 @@ def seat(cx):
         rings.append([tuple(p + np.array((a, 0, 0)) + side * b) for a, b in sec(k, d, s)])
     out.append(F.fix_normals(F.loft('seat', rings, 'seat')))
     return out
+
+
+def build_kits(skin, bp):
+    # Parts the garage can fit. Each is its own group in the car file.
+    pl = pchip(PLAN)
+    # Street: a lip, skirts and a rear valance, in paint.
+    lip = [(x, .225, z) for x, z in [(-.72, 1.56), (-.62, 1.74), (-.42, 1.87), (0, 1.925), (.42, 1.87), (.62, 1.74), (.72, 1.56)]]
+    F.bar_path('paint', lip, F.rrect(.09, .028, .012), 'paint').name = 'kitstreet'
+    for s in (1, -1):
+        F.bar_path('paint', [(s * .815, .205, .8), (s * .825, .2, 0), (s * .815, .205, -.8)], F.rrect(.06, .1, .025), 'paint').name = 'kitstreet'
+    val = [(x, .285, z) for x, z in [(-.7, -1.6), (-.6, -1.78), (-.4, -1.9), (0, -1.945), (.4, -1.9), (.6, -1.78), (.7, -1.6)]]
+    F.bar_path('trim', val, F.rrect(.09, .05, .02), 'trim').name = 'kitstreet'
+    for x in (-.24, -.08, .08, .24):
+        F.bar_path('trim', [(x, .28, -1.86), (x, .235, -1.96)], F.rrect(.012, .05, .004), 'trim').name = 'kitstreet'
+    # Widebody: blisters round all four arches, and sills to join them.
+    for z in bp['axles']:
+        for s in (1, -1):
+            rings = []
+            N = 48
+            for i in range(N + 1):
+                t = i / N
+                a = math.radians(-8 + 196 * t)
+                r = .345
+                y = .285 + r * math.sin(a)
+                zz = z + r * math.cos(a)
+                y0 = max(y, .24)
+                hit, _ = skin.side(zz, y0, s)
+                x0 = abs(hit[0]) if hit is not None else .82
+                k = sstep(0, .08, t) * sstep(1, .92, t)
+                ra, rz = math.sin(a), math.cos(a)
+                ring = []
+                for dr, dx in ((-.002, -.03), (-.002, .04), (.012, .052), (.05, .042), (.1, .018), (.15, -.006), (.15, -.04)):
+                    px = s * (x0 + dx * max(k, .15))
+                    ring.append((px, .285 + (r + dr) * ra, z + (r + dr) * rz))
+                rings.append(ring)
+            o = F.loft('paint', rings, 'paint', caps=True)
+            F.fix_normals(o).name = 'kitwide'
+    for s in (1, -1):
+        F.bar_path('paint', [(s * .835, .23, .78), (s * .845, .225, 0), (s * .835, .23, -.78)], F.rrect(.05, .09, .02), 'paint').name = 'kitwide'
 
 
 def build_cabin(extras):

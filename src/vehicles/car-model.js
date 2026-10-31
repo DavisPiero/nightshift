@@ -138,7 +138,8 @@ export function buildCar(spec, look = spec.paint, { simple = false } = {}) {
   } else ({ exhausts } = sh.details({ B, box, add, body, mats, spec, tip }));
   if (!cap || !cap.ownWing) {
     if (!cap) bodyKit({ B, box, spec, mats, sh });
-    if (spec.wing === 'gt') gtWing({ B, box, mats });
+    else if (cap.kits && !simple && spec.kit) for (const m of capturedParts(cap, 0, mats, spec.kit === 'wide' ? 'kitWide' : 'kitStreet')) body.add(m);
+    if (spec.wing === 'gt') gtWing({ B, box, mats }, cap?.kits ? 0.74 : 1);
   }
   if (look.decal !== 'none') (cap ? capturedDecals : decals)({ B, add, look, sh, bonnet, cap });
 
@@ -201,7 +202,7 @@ export function buildCar(spec, look = spec.paint, { simple = false } = {}) {
     const out = Math.sign(x);
     const steer = new THREE.Group();
     const wr = cap ? cap.wheels[front ? 0 : 2].r : WR;
-    steer.position.set(x, wr, z);
+    steer.position.set(x + (cap?.kits && spec.kit === 'wide' ? Math.sign(x) * 0.035 : 0), wr, z);
     root.add(steer);
     const spin = new THREE.Group();
     steer.add(spin);
@@ -887,17 +888,17 @@ function bodyKit({ B, box, spec, mats: m, sh }) {
 }
 
 // A big GT wing on swan-neck stands, with endplates.
-function gtWing({ B, box, mats: m }) {
-  const z = B.z0 + 0.3, y = B.hood(z);
+function gtWing({ B, box, mats: m }, k = 1) {
+  const z = B.z0 + 0.3, y = B.hood(z), W = 1.72 * (k < 1 ? 0.92 : 1);
   for (const s of [1, -1]) {
-    const st = box(0.03, 0.34, 0.12, m.carbon, s * 0.45, y + 0.17, z + 0.04);
+    const st = box(0.03, 0.34 * k, 0.12, m.carbon, s * 0.45, y + 0.17 * k, z + 0.04);
     st.rotation.x = 0.25;
   }
-  const blade = box(1.72, 0.025, 0.32, m.carbon, 0, y + 0.36, z - 0.06);
+  const blade = box(W, 0.025, 0.32 * k, m.carbon, 0, y + 0.36 * k, z - 0.06);
   blade.rotation.x = 0.12;
-  const gurney = box(1.72, 0.05, 0.015, m.carbon, 0, y + 0.37, z - 0.23);
+  const gurney = box(W, 0.05, 0.015, m.carbon, 0, y + 0.37 * k, z - 0.06 - 0.17 * k);
   gurney.rotation.x = 0.12;
-  for (const s of [1, -1]) box(0.012, 0.12, 0.36, m.carbon, s * 0.86, y + 0.35, z - 0.06);
+  for (const s of [1, -1]) box(0.012, 0.12 * k, 0.36 * k, m.carbon, s * W / 2, y + 0.35 * k, z - 0.06);
 }
 
 // Decals laid on the body: twin stripes over the top, a side stripe, a race

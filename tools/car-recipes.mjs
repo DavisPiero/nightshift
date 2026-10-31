@@ -12,13 +12,16 @@ export const RECIPES = [
     // Made by the foundry (tools/foundry), not bought in: its GLB is built from
     // the reference sheet, so a recipe here is just the slot names.
     id: 'miata-na', glb: 'miata-na.glb', axles: [1.13, -1.135], eye: [0.37, 1.0, -0.26], ratio: { paint: 1 }, steeringAt: { c: [0.37, 0.79, 0.215], axis: [0, 0.36, 0.933] }, exhausts: [[-0.49, 0.245, -1.99]],
-    dials: { c: [0.37, 0.835, 0.342], r: 0.058, gap: 0.135 }, popups: { pivot: [0.745, 1.45], lift: 0.785 }, headLamp: [0.475, 0.78, 1.72],
+    dials: { c: [0.37, 0.835, 0.342], r: 0.058, gap: 0.135 }, popups: { pivot: [0.745, 1.45], lift: 0.785 }, headLamp: [0.475, 0.78, 1.72], kits: true,
     credit: 'Built by the NIGHTSHIFT foundry from the reference sheet',
     rules: [
       [/^paint\|pop/, 'paint', { group: 'pop', double: true }],
       [/^black\|pop/, 'black', { group: 'pop' }],
       [/^trim\|pop/, 'trim', { group: 'pop' }],
       [/^light\|/, 'light', { group: 'pop', ends: true }],
+      [/^paint\|kitstreet/, 'paint', { group: 'kitStreet' }],
+      [/^trim\|kitstreet/, 'trim', { group: 'kitStreet' }],
+      [/^paint\|kitwide/, 'paint', { group: 'kitWide' }],
       [/^steer/, 'asis', { group: 'steering' }],
       [/^tyre/, 'tyre', { ratio: 0.6 }],
       [/^rim/, 'rim', { ratio: 1 }],
@@ -33,7 +36,7 @@ export const RECIPES = [
       [/^(under|bay)/, 'under'],
       [/^tail\|/, 'tail'],
       [/^amber/, 'amber'],
-      [/^plate/, 'plate'],
+      [/^plate\|/, 'plate'],
     ],
     bonnet: { z: [0.5, 1.85], y: 0.6 },
   },

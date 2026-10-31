@@ -19,7 +19,7 @@ def score(path, length):
     t = json.load(open(path))
     verts, polys = [], []
     for o in bpy.data.objects:
-        if o.type != 'MESH':
+        if o.type != 'MESH' or o.name.startswith('kit'):
             continue
         base = len(verts)
         verts += [v.co.copy() for v in o.data.vertices]
