@@ -22,6 +22,13 @@ import { carStats } from '../vehicles/stats.js';
 
 const $ = (sel) => document.querySelector(sel);
 
+// The sessions on the race settings screen.
+const MODES = {
+  race: { name: 'Race', go: 'Race', note: 'Laps against rivals, for money and XP.' },
+  trial: { name: 'Time Trial', go: 'Start', note: 'Endless laps against a ghost of your best one.' },
+  practice: { name: 'Practice', go: 'Drive', note: 'Just you and the road. No clock, no rivals.' },
+};
+
 export class Screens {
   constructor(game) {
     this.game = game;
@@ -77,7 +84,7 @@ export class Screens {
     });
 
     const last = game.save.lastRace;
-    this.pick = { track: game.trackInfo.id, weather: last.weather, time: game.timeId, car: game.carSpec.id, laps: last.laps, rivals: last.rivals, difficulty: last.difficulty };
+    this.pick = { track: game.trackInfo.id, weather: last.weather, time: game.timeId, car: game.carSpec.id, mode: last.rivals ? last.mode : 'practice', laps: last.laps, rivals: last.rivals || 7, difficulty: last.difficulty };
     this.buildTracks();
     this.buildConditions();
   }
@@ -225,9 +232,10 @@ export class Screens {
     if (!career.tracks.includes(t.id)) career.tracks.push(t.id); // playing a track unlocks it for Race
     const el = $('#race-load');
     el.querySelector('.rl-still').style.backgroundImage = `url(assets/loading/${t.id}.jpg)`;
-    el.querySelector('.rl-k').textContent = pick.event ? t.name : 'Next race';
     el.querySelector('.rl-name').textContent = pick.event?.name || t.name;
-    el.querySelector('.rl-sub').textContent = `${pick.rivals ? `${pick.laps} laps · ${DIFFICULTY[pick.difficulty].name} · ` : ''}${(t.path.length / 1000).toFixed(2)} km · ${TIMES[pick.time].clock} ${TIMES[pick.time].name} · ${WEATHER[pick.weather].name}`;
+    const racing = (pick.mode || 'race') === 'race';
+    el.querySelector('.rl-k').textContent = pick.event ? t.name : racing ? 'Next race' : MODES[pick.mode].name;
+    el.querySelector('.rl-sub').textContent = `${racing ? `${pick.laps} laps · ${DIFFICULTY[pick.difficulty].name} · ` : ''}${(t.path.length / 1000).toFixed(2)} km · ${TIMES[pick.time].clock} ${TIMES[pick.time].name} · ${WEATHER[pick.weather].name}`;
     this.tip = ((this.tip ?? Math.floor(Math.random() * TIPS.length)) + 1) % TIPS.length;
     el.querySelector('.rl-tt').textContent = TIPS[this.tip];
     el.classList.remove('done');
@@ -368,8 +376,19 @@ export class Screens {
         box.appendChild(b);
       }
     };
+    // Race, Time Trial or Practice: a dropdown, its settings underneath.
+    const drop = $('#mode-drop'), modes = $('#mode-list');
+    const openDrop = (on) => { modes.hidden = !on; drop.setAttribute('aria-expanded', on); };
+    drop.addEventListener('click', () => openDrop(modes.hidden));
+    for (const [id, m] of Object.entries(MODES)) {
+      const b = document.createElement('button');
+      b.className = 'btn';
+      b.textContent = m.name;
+      b.addEventListener('click', () => { this.pick.mode = id; openDrop(false); this.fillRace(); drop.focus({ preventScroll: true }); });
+      modes.appendChild(b);
+    }
     choice('#laps-list', 'laps', [1, 3, 5, 10].map((n) => [n, String(n)]));
-    choice('#rivals-list', 'rivals', [[0, 'None', 'Just you and the road'], [3, '3'], [7, '7']]);
+    choice('#rivals-list', 'rivals', [[3, '3'], [7, '7']]);
     choice('#diff-list', 'difficulty', Object.entries(DIFFICULTY).map(([id, d]) => [id, d.name, d.info]));
   }
 
@@ -399,15 +418,21 @@ export class Screens {
       for (const b of document.querySelectorAll(`${where} .btn`)) b.classList.toggle('on', b.dataset.v === String(this.pick[key]));
     }
     $('#weather-note').textContent = WEATHER[this.pick.weather].note;
+    const mode = this.pick.mode, racing = mode === 'race';
+    $('#mode-name').textContent = MODES[mode].name;
+    $('#race-only').hidden = !racing;
+    $('#race-go').textContent = MODES[mode].go;
+    const bestLap = this.game.save.bestLaps[`${t.id}:${this.pick.car}`];
+    $('#mode-note').textContent = mode === 'trial' ? `${MODES.trial.note} ${bestLap ? `Your best here in this car: ${clock(bestLap.time)}.` : 'No lap set here in this car yet.'}` : MODES[mode].note;
     if (entering) { this.game.previewTime(this.pick.time); this.game.previewWeather(this.pick.weather); }
     const car = getCar(this.pick.car), r = carStats(this.game.specFor(car.id));
-    const rivals = this.pick.rivals ? `${this.pick.rivals} on ${DIFFICULTY[this.pick.difficulty].name}, ${this.pick.laps} lap${this.pick.laps > 1 ? 's' : ''}` : 'Free drive';
+    const rivals = racing ? `${this.pick.rivals} on ${DIFFICULTY[this.pick.difficulty].name}, ${this.pick.laps} lap${this.pick.laps > 1 ? 's' : ''}` : MODES[mode].name;
     const el = $('#race-info');
-    el.innerHTML = `<div class="ttl"><span>Race</span></div>`
+    el.innerHTML = `<div class="ttl"><span>${MODES[mode].name}</span></div>`
       + `<canvas width="240" height="150"></canvas>`
       + `<div class="info-name"><span class="name">${t.name}</span></div>`
       + `<dl><dt>Car</dt><dd>${car.make} ${car.model}</dd><dt>Class</dt><dd><span class="cls cls-${r.cls} mini">${r.cls}</span> ${r.pi}</dd>`
-      + `<dt>Rivals</dt><dd>${rivals}</dd><dt>Weather</dt><dd>${WEATHER[this.pick.weather].name}</dd><dt>Time</dt><dd>${TIMES[this.pick.time].clock} · ${TIMES[this.pick.time].name}</dd></dl>`;
+      + `<dt>${racing ? 'Rivals' : 'Session'}</dt><dd>${rivals}</dd><dt>Weather</dt><dd>${WEATHER[this.pick.weather].name}</dd><dt>Time</dt><dd>${TIMES[this.pick.time].clock} · ${TIMES[this.pick.time].name}</dd></dl>`;
     drawMap(el.querySelector('canvas'), t, 4);
   }
 

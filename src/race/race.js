@@ -74,12 +74,14 @@ export class Race {
       c.driver.catchUp = 1 + d * (d > 0 ? this.band.push : this.band.slow);
     }
     const others = this.cars.map((c) => ({ x: c.vehicle.x, z: c.vehicle.z, speed: c.vehicle.speed, index: c.index, offset: c.offset }));
+    this.slipstream(others);
     this.cars.forEach((c, n) => {
       const v = c.vehicle;
       let ctl;
       if (c.driver) ctl = c.driver.drive(v, c, others.filter((_, m) => m !== n), dt);
       else ctl = playerControls || { steer: 0, throttle: 0, brake: 0, handbrake: false };
       if (held) ctl = { ...ctl, steer: 0, throttle: 0, brake: 0.4 }; // held on the line (a harder brake would select reverse)
+      else if (c.driver && !c.done && this.t < c.driver.launch) ctl = { ...ctl, steer: 0, throttle: 0, brake: 0 }; // still reacting to the lights
       if (c.done && c.driver) c.driver.catchUp = 0.6; // a cool-down lap after the flag
       v.step(dt, ctl);
       const r = keepOnTrack(v, this.track, c.index);
@@ -98,6 +100,23 @@ export class Race {
     }
     this.knocks();
     this.rank();
+  }
+
+  // Tucked in behind another car the air is easier: less drag the closer you
+  // are, up to 30 m back. The player gets it too.
+  slipstream(all) {
+    const n = this.track.count;
+    this.cars.forEach((c, k) => {
+      let best = 0;
+      all.forEach((o, m) => {
+        if (m === k) return;
+        let gap = o.index - c.index;
+        if (gap < 0) gap += n;
+        if (gap > 30 || Math.abs(o.offset - c.offset) > 1.5 || o.speed < 15) return;
+        best = Math.max(best, 1 - gap / 30);
+      });
+      c.vehicle.draft = best;
+    });
   }
 
   // Track how far round each car is, and count laps at the start line.
@@ -153,14 +172,6 @@ export class Race {
     c.index = i; c.offset = o; c.resets++;
     if (c.driver) c.driver.stuck = 0;
     applyWeather(c.vehicle, this.weather);
-  }
-
-  // The car just ahead of or behind c, and the gap in seconds (roughly: the
-  // road between them at the speed c is going).
-  gap(c, step) {
-    const o = this.order[c.place - 1 + step];
-    if (!o) return null;
-    return { name: o.name, seconds: Math.abs(o.covered - c.covered) / Math.max(12, c.vehicle.speed) };
   }
 
   // For a results screen: place, name, total time, best lap. Anyone still on

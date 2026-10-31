@@ -14,7 +14,7 @@ import { SCENES } from '../src/career/story.js';
 
 let failed = 0;
 const check = (ok, label) => { if (!ok) { failed++; console.log('  FAIL: ' + label); } };
-const lap = { starter: 75, underground: 90, parabolica: 115 }; // seconds, from the AI bench
+const lap = { starter: 48, underground: 56, parabolica: 115 }; // seconds, from the AI bench
 
 // Every event must make sense on its track, and every story scene must exist.
 for (const e of EVENTS) {

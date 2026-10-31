@@ -44,7 +44,8 @@ export class Settings {
     this.seg('Speed in', [['kmh', 'km/h'], ['mph', 'mph']], () => s.units, (v) => { s.units = v; });
     this.seg('Camera', [['chase', 'Chase'], ['cockpit', 'Cockpit']], () => s.camera, (v) => { s.camera = v; });
     this.seg('Chase camera', [[0.8, 'Near'], [1, 'Normal'], [1.25, 'Far']], () => s.chaseDistance, (v) => { s.chaseDistance = v; });
-    this.seg('Camera shake', onOff, () => s.shake, (v) => { s.shake = v; }, 'A little shake at speed and on bumps.');
+    this.seg('Map zoom', [[350, 'Near'], [500, 'Normal'], [800, 'Far']], () => s.mapRange, (v) => { s.mapRange = v; }, 'How much road the map shows.');
+    this.seg('Camera shake', onOff, () => s.shake, (v) => { s.shake = v; }, 'The camera and the car shake at speed and on knocks.');
   }
 
   graphics() {

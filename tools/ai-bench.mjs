@@ -82,5 +82,34 @@ for (const def of [STARTER_TRACK, PARABOLICA_TRACK]) {
     }
   }
 }
+// The hunter: a car driven at the limit (about as well as a good player can),
+// starting where the player starts on each difficulty. Arlo on Hard, seven
+// cars: "I overtook all of them in one lap". Places gained on lap one and where
+// it finished, over four grids.
+for (const def of [STARTER_TRACK, UNDERGROUND_TRACK]) {
+  console.log(`${def.name}: the hunter from the player's grid slot, level 510`);
+  const track = new TrackPath(def), line = new RacingLine(track);
+  for (const [id, d] of Object.entries(DIFFICULTY)) {
+    const gains = [], ends = [];
+    let resets = 0;
+    for (const seed of [11, 22, 33, 44]) {
+      const field = pickField({ count: 7, pi: 510, difficulty: id, seed });
+      const cars = field.map((r, n) => ({ id: r.id, name: r.name, vehicle: new Vehicle(r.spec), driver: makeDriver(line, r, id, 1, seed + n) }));
+      const spec = tunedSpec(CARS[0], 510);
+      cars.splice(d.start - 1, 0, { id: 'hunter', name: 'Hunter', vehicle: new Vehicle(spec), driver: new AIDriver(line, spec, { name: 'Hunter', pace: 1, aggression: 0.9, consistency: 1 }, { seed, skill: { pace: 1, grip: 0.93, brake: 1.25, mistakes: 0, spread: 1 } }) });
+      const race = new Race(track, line, cars, { laps: 3, band: d.band });
+      race.grid(def.start);
+      race.go();
+      const h = race.cars.find((c) => c.id === 'hunter');
+      h.isPlayer = true; race.player = h;
+      let t = 0, lap1 = 0;
+      while (t < 400 && !race.cars.every((c) => c.done)) { race.step(DT); t += DT; if (!lap1 && h.lap >= 1) lap1 = h.place; }
+      gains.push(d.start - lap1); ends.push(h.place);
+      resets += race.cars.reduce((a, c) => a + c.resets, 0);
+    }
+    console.log(`  ${d.name.padEnd(10)} starts P${d.start}: places gained on lap one ${gains.join(', ')}; finished ${ends.join(', ')}; put back ${resets}`);
+    if (id === 'hard') check(gains.every((g) => g < 7), 'on Hard nobody should pass the whole field in one lap');
+  }
+}
 if (failed) { console.log(`\n${failed} check(s) failed`); process.exit(1); }
 console.log('\nAll AI checks passed.');

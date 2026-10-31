@@ -6,7 +6,7 @@ import { CARS } from '../vehicles/cars.js';
 import { buildSpec } from '../vehicles/tuning.js';
 import { carStats } from '../vehicles/stats.js';
 import { getDifficulty } from './difficulty.js';
-import { AIDriver, DRIVERS, MAX } from './ai-driver.js';
+import { AIDriver, DRIVERS, MAX, STYLES } from './ai-driver.js';
 import { PALETTE, defaultLook } from '../vehicles/looks.js';
 
 const tuned = new Map();
@@ -39,8 +39,10 @@ export function pickField({ count, pi, difficulty, rival = false, seed = 1 }) {
   const rand = () => ((s = (s * 1664525 + 1013904223) >>> 0) / 4294967296);
   const shuffle = (a) => { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(rand() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
   const d = getDifficulty(difficulty);
-  const people = shuffle([...DRIVERS]).slice(0, count);
-  if (rival) people[0] = MAX;
+  const styles = ['aggressive', 'defensive', 'speeder'];
+  // Each rival gets a driving style at random; nobody is told which. Max is always aggressive.
+  const people = shuffle([...DRIVERS]).slice(0, count).map((p) => ({ ...p, style: styles[Math.floor(rand() * 3)] }));
+  if (rival) people[0] = { ...MAX, style: 'aggressive' };
   people.sort((a, b) => b.pace - a.pace);
   const bodies = [];
   while (bodies.length < count) bodies.push(...shuffle([...CARS]));
@@ -48,7 +50,7 @@ export function pickField({ count, pi, difficulty, rival = false, seed = 1 }) {
     const car = bodies[n];
     const spread = (count > 1 ? 0.5 - n / (count - 1) : 0) * 40; // the front of the grid a little quicker
     const base = tunedSpec(car, pi + spread + (persona.rival ? 15 : 0));
-    const spec = d.edge === 1 ? base : { ...base, tireGrip: base.tireGrip * d.edge };
+    const spec = { ...base, tireGrip: base.tireGrip * d.edge, torqueScale: (base.torqueScale ?? 1) * STYLES[persona.style].power };
     const look = { ...defaultLook(car), paint: persona.rival ? 0x111214 : PALETTE[Math.floor(rand() * PALETTE.length)][0], finish: rand() < 0.5 ? 'gloss' : 'metallic', decal: persona.rival ? 'stripes' : 'none', decalColour: 0xc81414 }; // Max: black with red stripes
     return { id: persona.name, name: persona.name, car: `${car.make} ${car.model}`, spec, persona, look };
   });

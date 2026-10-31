@@ -57,14 +57,17 @@
   <div id="hud" hidden>
     <canvas id="tach" width="132" height="132"></canvas>
     <canvas id="minimap" width="150" height="150"></canvas>
-    <div id="race-hud" hidden>
-      <div class="rh-strip">
-        <div class="rh-cell rh-place"><b id="rh-pos">1</b><span id="rh-of">/8</span></div>
-        <div class="rh-cell"><span>Lap</span><b id="rh-lap">1/3</b></div>
-        <div class="rh-cell"><span>Time</span><b id="rh-time">0:00.0</b></div>
-        <div class="rh-cell"><span>Best</span><b id="rh-best">--:--.-</b></div>
-      </div>
-      <div class="rh-gaps"><div id="rh-ahead" class="rh-gap" hidden></div><div id="rh-behind" class="rh-gap" hidden></div></div>
+    <div id="race-hud" class="tw" hidden>
+      <div class="tw-head"><span>Lap <b id="rh-lap">1/3</b></span><span id="rh-time">0:00.0</span></div>
+      <ol id="tw-rows"></ol>
+      <div class="tw-foot"><span>Your best</span><b id="rh-best">--:--.-</b></div>
+    </div>
+    <div id="trial-hud" class="tw" hidden>
+      <div class="tw-head"><span>Time Trial</span></div>
+      <div class="tt-clock" id="tt-time">0:00.0</div>
+      <div class="tt-delta" id="tt-delta"></div>
+      <dl class="tt-rows"><dt>Last</dt><dd id="tt-last">--:--.-</dd><dt>Best</dt><dd id="tt-best">--:--.-</dd></dl>
+      <div class="tt-new" id="tt-new" hidden>New best lap</div>
     </div>
     <div id="race-big"></div>
     <div id="race-wrong" hidden>Wrong way</div>
@@ -175,19 +178,27 @@
   <section id="scr-race" class="screen select" hidden>
     <header class="bar"><button class="btn back" data-back>Back</button><h2>Race settings<span class="jp">レース設定</span></h2></header>
     <div class="side-list pnl">
-      <div class="ttl"><span>Conditions</span></div>
+      <div class="ttl"><span>Session</span></div>
       <div class="list">
+        <h3 class="grp">Mode</h3>
+        <div class="drop">
+          <button id="mode-drop" class="btn" aria-haspopup="true" aria-expanded="false"><span id="mode-name">Race</span><i class="caret"></i></button>
+          <div id="mode-list" class="drop-list" hidden></div>
+        </div>
+        <p id="mode-note" class="muted small"></p>
+        <div id="race-only">
+          <h3 class="grp">Laps</h3>
+          <div id="laps-list" class="choices four"></div>
+          <h3 class="grp">Rivals</h3>
+          <div id="rivals-list" class="choices"></div>
+          <h3 class="grp">Difficulty</h3>
+          <div id="diff-list" class="choices four"></div>
+        </div>
         <h3 class="grp">Weather</h3>
         <div id="weather-list" class="choices"></div>
         <p id="weather-note" class="muted small"></p>
         <h3 class="grp">Time</h3>
         <div id="time-list" class="choices"></div>
-        <h3 class="grp">Laps</h3>
-        <div id="laps-list" class="choices four"></div>
-        <h3 class="grp">Rivals</h3>
-        <div id="rivals-list" class="choices"></div>
-        <h3 class="grp">Difficulty</h3>
-        <div id="diff-list" class="choices four"></div>
       </div>
     </div>
     <aside id="race-info" class="info pnl"></aside>
