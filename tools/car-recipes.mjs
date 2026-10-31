@@ -9,6 +9,34 @@
 
 export const RECIPES = [
   {
+    // Made by the foundry (tools/foundry), not bought in: its GLB is built from
+    // the reference sheet, so a recipe here is just the slot names.
+    id: 'miata-na', glb: 'miata-na.glb', axles: [1.13, -1.135], eye: [0.37, 1.04, -0.22], ratio: { paint: 1 }, exhausts: [[-0.49, 0.245, -1.99]],
+    popups: { pivot: [0.745, 1.45], lift: 0.785 }, headLamp: [0.475, 0.78, 1.72],
+    credit: 'Built by the NIGHTSHIFT foundry from the reference sheet',
+    rules: [
+      [/^paint\|pop/, 'paint', { group: 'pop', double: true }],
+      [/^black\|pop/, 'black', { group: 'pop' }],
+      [/^trim\|pop/, 'trim', { group: 'pop' }],
+      [/^light\|/, 'light', { group: 'pop', ends: true }],
+      [/^tyre/, 'tyre', { ratio: 0.6 }],
+      [/^rim/, 'rim', { ratio: 1 }],
+      [/^metal/, 'metal', { group: 'spin', ratio: 1 }],
+      [/^disc/, 'disc'],
+      [/^caliper/, 'caliper'],
+      [/^paint/, 'paint'],
+      [/^glass/, 'glass'],
+      [/^chrome/, 'chrome'],
+      [/^trim/, 'trim'],
+      [/^black/, 'black'],
+      [/^(under|bay)/, 'under'],
+      [/^tail\|/, 'tail'],
+      [/^amber/, 'amber'],
+      [/^plate/, 'plate'],
+    ],
+    bonnet: { z: [0.5, 1.85], y: 0.6 },
+  },
+  {
     id: 'gtar-r35', glb: '2017_nissan_aimgain_gt_r35_gt-r_type_2.glb', axles: [1.39, -1.39], ownWing: true, steering: [0.371, 0.873, 0.214], badgeR: 0.06, padR: 0.066, eye: [0.37, 1.12, -0.34], ratio: { paint: 0.85 }, exhausts: [[-0.63, 0.38, -2.46], [0.63, 0.38, -2.46]],
     credit: '"2017 Nissan Aimgain GT R35 GT-R Type 2" by Outlaw Games, CC BY-NC 4.0',
     rules: [

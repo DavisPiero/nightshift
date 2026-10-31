@@ -113,7 +113,7 @@ export function buildCar(spec, look = spec.paint, { simple = false } = {}) {
 
   const mats = { paint, trim, black, carbon, chrome, plate, headlight, lampInner, lens, tail, tailRing, reverseLight, amber, glass };
   const tip = 1 + ((spec.exhaustVolume ?? 1) - 1) * 0.7; // louder exhausts, bigger tips
-  let exhausts;
+  let exhausts, popups = null;
   if (cap) {
     // Captured cars carry their own lamps, mirrors, grilles and exhausts. They
     // go in a group of their own: already one mesh per part, nothing to merge.
@@ -127,6 +127,13 @@ export function buildCar(spec, look = spec.paint, { simple = false } = {}) {
       if (mats.lampR) mats.lampR.emissiveIntensity = 0.1;
     }
     exhausts = (cap.exhausts || []).map(([x, y, z]) => new THREE.Vector3(x, y, z));
+    // Pop-up headlamps: lids, housings and lamps on one hinge across the car.
+    if (cap.popups) {
+      popups = new THREE.Group();
+      popups.position.set(0, ...cap.popups.pivot);
+      for (const m of capturedParts(cap, simple ? 1 : 0, mats, 'pop')) { m.position.set(0, -cap.popups.pivot[0], -cap.popups.pivot[1]); popups.add(m); }
+      body.add(popups);
+    }
   } else ({ exhausts } = sh.details({ B, box, add, body, mats, spec, tip }));
   if (!cap || !cap.ownWing) {
     if (!cap) bodyKit({ B, box, spec, mats, sh });
@@ -146,6 +153,7 @@ export function buildCar(spec, look = spec.paint, { simple = false } = {}) {
     for (const m of lid) body.add(m);
     body.updateMatrixWorld(true);
     for (const m of lid) bay.hinge.attach(m); // stays where it is, but lifts with the hinge
+    if (popups) bay.hinge.attach(popups);
     const c = new THREE.Vector3();
     for (const m of [...body.children]) {
       if (!m.isMesh) continue;
@@ -295,7 +303,7 @@ export function buildCar(spec, look = spec.paint, { simple = false } = {}) {
   for (const b of beams) b.castShadow = false;
 
   let glowOn = true, beamsOn = true, inside = false, lightsOn = true;
-  let bonnetOpen = false, bonnetAngle = 0;
+  let bonnetOpen = false, bonnetAngle = 0, popAngle = 0;
   const drops = []; // parts dropping into the engine bay
   const tach = needles[0], speedo = needles[1];
   return {
@@ -345,6 +353,10 @@ export function buildCar(spec, look = spec.paint, { simple = false } = {}) {
           d.g.scale.setScalar(0.7 + 0.3 * Math.min(1, ease));
           if (k >= 1) { d.g.position.y = 0; d.g.scale.setScalar(1); drops.splice(i, 1); }
         }
+      }
+      if (popups) {
+        popAngle += ((lightsOn ? cap.popups.lift : 0) - popAngle) * Math.min(1, dt * 4);
+        popups.rotation.x = -popAngle;
       }
       for (const w of wheels) {
         if (w.front) w.steer.rotation.y = v.steerAngle;

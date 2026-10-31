@@ -447,7 +447,7 @@ function capture(R) {
 
   // 8. Simplify and write.
   mkdirSync(join(OUT, 'tex'), { recursive: true });
-  const header = { id: R.id, source: R.credit, def, lid, wheels: wheelAt, steering, eye: R.eye, needles: R.needles, exhausts: R.exhausts, ownWing: !!R.ownWing, engineRear: !!R.engineRear, parts: [] };
+  const header = { id: R.id, source: R.credit, def, lid, wheels: wheelAt, steering, eye: R.eye, needles: R.needles, exhausts: R.exhausts, popups: R.popups, headLamp: R.headLamp, ownWing: !!R.ownWing, engineRear: !!R.engineRear, parts: [] };
   const blobs = [];
   let offset = 0, total = 0;
   const push = (arr) => { const pad = (4 - (offset % 4)) % 4; if (pad) { blobs.push(Buffer.alloc(pad)); offset += pad; } const b = Buffer.from(arr.buffer, arr.byteOffset, arr.byteLength); blobs.push(b); const at = offset; offset += b.length; return at; };
@@ -477,7 +477,7 @@ function capture(R) {
     header.parts.push(info);
     total += q.tris;
   };
-  const lod1 = (p) => (p.group === 'body' || p.group === 'lid') && !NO_LOD1.has(p.slot);
+  const lod1 = (p) => (p.group === 'body' || p.group === 'lid' || p.group === 'pop') && !NO_LOD1.has(p.slot);
   let lodTotal = 0;
   for (const part of parts.values()) {
     write(part, 0);

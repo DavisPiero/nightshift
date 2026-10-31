@@ -1,0 +1,11 @@
+{
+  "id": "miata-na",
+  "sheet": "Reference/Cars/miata-sheet.webp",
+  "length": 3.97, "height": 1.235, "width": 1.675, "axles": [1.13, -1.135], "wheelRadius": 0.29,
+  "views": {
+    "side":  { "box": [460, 95, 940, 262], "nose": "left" },
+    "top":   { "box": [15, 40, 455, 240], "nose": "left" },
+    "front": { "box": [960, 90, 1200, 260] },
+    "rear":  { "box": [1245, 85, 1505, 260] }
+  }
+}

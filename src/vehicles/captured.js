@@ -9,7 +9,7 @@
 
 import * as THREE from 'three';
 
-const IDS = ['gtar-r35', 'challenjer-srt8', 'aventadoro-sv', 'mustank-gt500'];
+const IDS = ['gtar-r35', 'challenjer-srt8', 'aventadoro-sv', 'mustank-gt500', 'miata-na'];
 const POS_SCALE = 1 / 8000;
 const CARS = new Map();
 
@@ -43,7 +43,7 @@ async function load(id) {
     box.getCenter(v);
     return [v.x, v.y, v.z];
   };
-  head.headLamp = middle(['lightF']) ?? [0.6, 0.72, head.def.width.at(-1)[0] - 0.1];
+  head.headLamp ??= middle(['lightF']) ?? [0.6, 0.72, head.def.width.at(-1)[0] - 0.1];
   head.tailLamp = middle(['tail', 'lightR']) ?? [0.6, 0.9, head.def.width[0][0] + 0.05];
   CARS.set(id, head);
 }
