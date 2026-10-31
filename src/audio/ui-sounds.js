@@ -73,6 +73,19 @@ export function playUi(ctx, out, noise, kind) {
       tone(ctx, out, { type: 'square', f0: 1200 * r, dur: 0.018, peak: 0.05, lp: 2500 });
       tone(ctx, out, { type: 'square', f0: 1600 * r, t: 0.03, dur: 0.018, peak: 0.04, lp: 2500 });
       break;
+    case 'count':
+      tone(ctx, out, { f0: 440, dur: 0.16, peak: 0.1, lp: 2400 });
+      break;
+    case 'go':
+      tone(ctx, out, { f0: 880, dur: 0.5, peak: 0.12, lp: 3000 });
+      break;
+    case 'flag':
+      for (const [i, f] of [523, 659, 784, 1047].entries()) tone(ctx, out, { f0: f, t: i * 0.09, dur: 0.14, peak: 0.08, lp: 3500 });
+      break;
+    case 'cash':
+      for (const [i, f] of [1319, 1760, 2093].entries()) tone(ctx, out, { type: 'triangle', f0: f * r, t: i * 0.06, dur: 0.1, peak: 0.08 });
+      hiss(ctx, out, noise, { t: 0.02, dur: 0.05, peak: 0.05, f0: 6000, q: 4 });
+      break;
     case 'nope':
       tone(ctx, out, { type: 'square', f0: 140, dur: 0.12, peak: 0.06, lp: 600 });
       break;

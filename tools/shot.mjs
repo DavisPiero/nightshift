@@ -3,7 +3,8 @@
 // ?shot&mute plus your query, waits, optionally runs some JavaScript in the
 // page, and saves PNGs.
 //   node tools/shot.mjs "screen=garage&car=countach-qv" out.png [--wait 4] [--size 1280x720] [--js "code"]
-// A job's `page` loads that file from the project instead of the game.
+// A job's `page` loads that file from the project instead of the game. A job's
+// `saveData` writes the data: URL its JavaScript returned to that file.
 // Several shots in one go: pass a JSON list as the only argument:
 //   node tools/shot.mjs '[{"q":"screen=main","out":"a.png"},{"q":"device=computer","out":"b.png","wait":6}]'
 
@@ -88,6 +89,7 @@ for (const job of jobs) {
   if (job.js) {
     const r = await send('Runtime.evaluate', { expression: job.js, awaitPromise: true, returnByValue: true }, sessionId);
     if (r.result?.exceptionDetails) logs.push('JS: ' + r.result.exceptionDetails.exception?.description);
+    else if (job.saveData) writeFileSync(job.saveData, Buffer.from(String(r.result?.result?.value).split(',')[1], 'base64')); // the JavaScript returned a data: URL
     else if (r.result?.result?.value !== undefined) logs.push('JS -> ' + JSON.stringify(r.result.result.value));
     await sleep((job.after ?? 1.5) * 1000);
   }

@@ -1,8 +1,7 @@
 // An AI driver. Each physics step it looks at its own car, the racing line
 // and the cars round it, and returns the same control state a player makes
 // (steer, throttle, brake, handbrake), so the physics never knows who is
-// driving. Not used in the game yet: it is the ground work for races
-// against AI (Milestone 6), proved by tools/ai-bench.mjs.
+// driving. Proved by tools/ai-bench.mjs.
 //
 // How it drives:
 //  - Steering: "pure pursuit". It picks a point on the line some way ahead
@@ -18,6 +17,8 @@
 //    soon it dives for a gap), `consistency` (how rarely it brakes late).
 //  - Catch-up: the race can nudge pace up or down a few percent (rubber
 //    band) so the pack stays together for a casual game.
+//  - Skill: the difficulty (difficulty.js) scales pace, how much of the
+//    tyres it dares to use, and how often it makes mistakes.
 //
 // No Three.js; pure numbers.
 
@@ -31,18 +32,24 @@ export const DRIVERS = [
   { name: 'Sora', pace: 0.91, aggression: 0.35, consistency: 0.92 },
   { name: 'Haru', pace: 0.89, aggression: 0.6, consistency: 0.8 },
   { name: 'Yuki', pace: 0.87, aggression: 0.4, consistency: 0.85 },
+  { name: 'Dee', pace: 0.95, aggression: 0.75, consistency: 0.85 },
+  { name: 'Marco', pace: 0.9, aggression: 0.55, consistency: 0.9 },
 ];
+
+// The rival of the story. Quick, clean and he never lets you past easily.
+export const MAX = { name: 'Max', pace: 1, aggression: 0.9, consistency: 0.98, rival: true };
 
 export class AIDriver {
   // line: a RacingLine. spec: the car's numbers (cars.js, after parts).
   // weatherGrip: the weather's grip scale (physics/weather.js).
-  constructor(line, spec, persona = DRIVERS[0], { weatherGrip = 1, seed = 1 } = {}) {
+  constructor(line, spec, persona = DRIVERS[0], { weatherGrip = 1, seed = 1, skill = {} } = {}) {
     this.line = line;
     this.spec = spec;
     this.persona = persona;
+    this.skill = { pace: 1, grip: 0.78, brake: 1, mistakes: 1, ...skill };
     this.speeds = line.speeds({
-      grip: spec.tireGrip * weatherGrip * 0.78, // under the limit: the tyres give less than the number says once sliding
-      brake: 6.5 * weatherGrip,
+      grip: spec.tireGrip * weatherGrip * this.skill.grip, // under the limit: the tyres give less than the number says once sliding
+      brake: 6.5 * weatherGrip * this.skill.brake,
       top: 95,
       downforce: spec.downforce || 0,
     });
@@ -102,9 +109,9 @@ export class AIDriver {
     c.steer = clamp(-wheel / lock, -1, 1);
 
     // --- Speed ---
-    if (this.lapse <= 0 && this.rand() < (1 - p.consistency) * 0.04 * dt) this.lapse = 1.5; // brakes late into the next corner
+    if (this.lapse <= 0 && this.rand() < (1 - p.consistency) * 0.04 * this.skill.mistakes * dt) this.lapse = 1.5; // brakes late into the next corner
     this.lapse -= dt;
-    const pace = p.pace * this.catchUp * (this.lapse > 0 ? 1.08 : 1);
+    const pace = p.pace * this.skill.pace * this.catchUp * (this.lapse > 0 ? 1.08 : 1);
     let target = this.speeds[track.wrap(i + 3 + Math.round(speed * 0.15))] * pace;
     if (follow) target = Math.min(target, Math.max(4, follow.o.speed - 0.5 + follow.gap * 0.15));
     const over = speed - target;

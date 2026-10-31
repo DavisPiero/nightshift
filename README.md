@@ -1,7 +1,7 @@
 # NIGHTSHIFT
 
-Casual night-time street racing in the browser. Low-poly, foggy, neon-Japan, early-2000s
-console style. Drive a Subaro Impreza WRX STi Coupe, a Nissani Skyliner GT-R, a Dodga Challenjer
+Casual night-time street racing in the browser, with a career: start on the docks in a borrowed
+Impreza, race eight-car grids for money, buy your way up. Foggy, neon-Japan, a little bit pixelated. Drive a Subaro Impreza WRX STi Coupe, a Nissani Skyliner GT-R, a Dodga Challenjer
 SRT Super Stok, a 1969 Fard Mustank Touring Car or a Lamborgino Countash 5000 QV round the Starter Track (a harbour estate at night), the
 Underground (Tokyo expressway tunnels) or Parabolica Street (a Monza-shaped Tokyo ring road),
 in clear weather, rain, fog or snow, at sunset, night or dawn. Plays on a computer
@@ -18,7 +18,7 @@ Play: https://davispiero.github.io/nightshift/
 Then open http://localhost:8793 (it opens by itself). Add `?mute` to the address for no sound,
 `?device=computer` or `?device=touch` to skip the menus and drive, `?weather=rain`, `fog` or
 `snow` to pick the weather, `?time=sunset` or `dawn` for the time of day, `?track=underground` or
-`?track=parabolica` for the other tracks, `?debug` for the F3 panel.
+`?track=parabolica` for the other tracks, `?race` with `?device` for a race against seven AI cars, `?debug` for the F3 panel.
 
 `?library` opens the asset library: every prop the tracks are built from, one at a time
 (drag to turn, scroll to zoom, arrow keys to step, L for a work light).

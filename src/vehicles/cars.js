@@ -407,9 +407,19 @@ export const COUNTACH_QV = {
   paintNames: ['Rosso', 'Bianco', 'Nero', 'Giallo'],
 };
 
-// The cars you can pick.
+// The cars in the game. tier: the stage of the career it belongs to. price:
+// CR in the shop (the Impreza is Johnny's loan, so it is free).
 export const CARS = [IMPREZA_GC8, SKYLINER_R34, CHALLENJER_SRT8, MUSTANK_GT500, COUNTACH_QV];
 export const ALL_CARS = CARS;
+const PRICES = { 'impreza-gc8': 0, 'challenjer-srt8': 15000, 'skyliner-r34': 30000, 'mustank-gt500': 55000, 'countach-qv': 100000 };
+for (const c of CARS) { c.tier = 'street'; c.price = PRICES[c.id]; }
+
+// The stages of the career, and the level each one opens at.
+export const TIERS = [
+  { id: 'street', name: 'Street', level: 0 },
+  { id: 'gt3', name: 'GT3', level: 100 },
+  { id: 'formula', name: 'Formula', level: 150 },
+];
 
 export function getCar(id) {
   return CARS.find((c) => c.id === id) || CARS[0];

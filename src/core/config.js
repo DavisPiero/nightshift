@@ -3,12 +3,13 @@
 
 export const GRAPHICS = {
   low:    { renderHeight: 360, shadows: false, lampLights: 4, drawDistance: 170, dither: true },
-  // Medium and High are the realistic looks: drawn near the screen's own
-  // resolution, smooth edges (4x multisampling), filmic tone mapping, no dither.
-  medium: { renderHeight: 720, shadows: false, lampLights: 6, drawDistance: 220, dither: false, smooth: true, bloom: 'chain' },
+  // Medium and High are the realistic looks, a little bit pixelated (David,
+  // 2026-10-31): physically based and filmic, but drawn at a lower resolution
+  // and scaled up with square pixels.
+  medium: { renderHeight: 480, shadows: false, lampLights: 6, drawDistance: 220, dither: false, smooth: true, pixel: true, bloom: 'chain' },
   // High also gets finer clouds, the full lens convolution for its bloom and
   // more real lamp lights.
-  high:   { renderHeight: 1080, shadows: true,  lampLights: 10, drawDistance: 280, dither: false, skyDetail: true, bloom: 'fft', smooth: true },
+  high:   { renderHeight: 600, shadows: true,  lampLights: 10, drawDistance: 280, dither: false, skyDetail: true, bloom: 'fft', smooth: true, pixel: true },
 };
 
 // Medium by default (the realistic look); Low keeps the old chunky-pixel look and is the fast option.
@@ -40,7 +41,8 @@ export const DEFAULT_EFFECTS = {
 // URL switches for testing: ?mute silences sound, ?device=computer|touch
 // skips the menus and drives straight away, ?weather=rain|fog picks the
 // weather, ?time=sunset|night|dawn the time of day, ?track=underground picks the track, ?car=<id> the car,
-// ?screen=tracks|setup|garage opens a menu screen, ?library opens the asset
+// ?race races seven AI cars (with ?device), &difficulty=easy|normal|hard|impossible,
+// ?screen=tracks|setup|garage|shop|career opens a menu screen, ?library opens the asset
 // library (&asset=<id> picks one, &worklight lights it up), ?smoke runs the automatic
 // load-and-drive check and ?shot runs the loop on a timer for headless
 // screenshots (tools/shot.sh).
@@ -51,6 +53,8 @@ export const URL_FLAGS = {
   weather: params.get('weather'),
   time: params.get('time'),
   smoke: params.has('smoke'),
+  race: params.has('race'),
+  difficulty: params.get('difficulty'),
   debug: params.has('debug'),
   track: params.get('track'),
   car: params.get('car'),

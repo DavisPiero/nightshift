@@ -152,3 +152,17 @@ One line each, newest last.
 - 2026-10-31: `steeringFit` measures a wheel's axis and centre from its own shape. The Impreza's hand-written axis leaned the wrong way, which is why its wheel swung off the dash.
 - 2026-10-31: The HUD's round rev dial is back, bottom centre on every device, in the grey, green and red of the desktop look; smaller than before (198 px) so it doesn't hide the car. The map has no frame, its corners fade out, and it shows about 270 m. Overturns the two HUD windows.
 - 2026-10-31: Mustank cockpit corrected: the racer's wheel and column also go (they outran the first removal box), the 2012 car's A-pillar gauge pod is cut away, and the racer's rear-view mirror stays.
+- 2026-10-31: The game is now a career (David): Street 0-100, GT3 100-150, Formula 150-200 and on. Overturns "Career greyed out" and "cruising first". Free driving stays as Race with no rivals.
+- 2026-10-31: GT3 and Formula have no cars, and David chose not to bring the R35 or Aventador back: the shop tabs stay locked, the story ends at level 100 with "to be continued".
+- 2026-10-31: Performance parts scrapped (David), with builds, the dyno and kits. The garage is looks only and ride height no longer touches physics. One look per car. Overturns the parts work of Milestone 4.
+- 2026-10-31: Old saves start the career again with the Impreza and keep their settings and each car's look (save version 6).
+- 2026-10-31: Medium and High are a little pixelated (David): drawn at 480 and 600 lines, scaled with square pixels, realistic materials kept. Overturns near-screen resolution.
+- 2026-10-31: UI is a mix (David): the Microsoft desktop's bevels and fonts with his racing-game references' layout and colour. Yellow marks what is picked; pink stays the main action only.
+- 2026-10-31: Rivals use all five car bodies, tuned to the level (power and grip), so a grid looks varied at any level. In Race they match your car. In the career they race at the event's level, or 30 under your car if that is higher: without this, buying a car would mean nothing, or an early race would be a walkover. Guess; David's words were "similar to the level you use".
+- 2026-10-31: Eight cars on every grid, iPad too (David). 51 fps on High with the full player car, in headless Chrome on this Mac.
+- 2026-10-31: Difficulties are real pace steps, about 8%, 5% and 5% a lap apart on the bench. Pay is 75%, 100%, 130%, 175%. Impossible also gets 5% more tyre grip; it is meant to be very hard, not literally unbeatable.
+- 2026-10-31: Street pays for about 50 races and 6 hours on Normal for a player who finishes second. Prices 15k, 30k, 55k, 100k (Challenjer and Countash David's, the others guesses). Replays pay 60%, a first clear 150%.
+- 2026-10-31: The story: Johnny was born in Yokohama and moved to America for the cars. His garage is in the neon Little Tokyo on the harbor, which squares America with the neon Japan tracks; act 2 flies to Tokyo. Aoi Tachibana, the scout, and the shape of the plot are Claude's.
+- 2026-10-31: Story art is pixel art made in code: real game scenes drawn at 480x270 and baked to 64 colours with an ordered dither; faces painted as shapes. No drawing by hand and nothing bought in.
+- 2026-10-31: Shop and car pick use the same card; pictures rendered straight from the 3D scene with no post effects, on no background.
+- 2026-10-31: The Multiplayer tile and the Drive screen are gone. "F1" is called Formula on screen (real brand; David agreed). Back on track: R, or the pause menu.

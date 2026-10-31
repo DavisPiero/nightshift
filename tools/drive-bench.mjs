@@ -14,7 +14,6 @@ import { CHALLENJER_SRT8, COUNTACH_QV, CARS } from '../src/vehicles/cars.js';
 import { UNDERGROUND_TRACK } from '../src/world/underground.js';
 import { PARABOLICA_TRACK } from '../src/world/parabolica.js';
 import { carStats } from '../src/vehicles/stats.js';
-import { applyParts } from '../src/vehicles/parts.js';
 
 const DT = 1 / 120;
 const NO_ASSISTS = { steering: false, stability: false, drift: false };
@@ -201,16 +200,6 @@ console.log('Second car and ratings');
   check(qv.cls === 'A', 'stock class: the Countash is A');
   const offQv = botLap(NO_ASSISTS, 'clear', COUNTACH_QV);
   console.log(`  Countash assists off: ${offQv.done ? offQv.t.toFixed(1) + ' s' : 'did not finish'}, wall hits ${offQv.hits}, max slide ${deg(offQv.maxBeta)}°`);
-  // Every part must move the stats the way its description says.
-  const with_ = (parts, car = CAR) => carStats(applyParts(car, parts)).stats;
-  const up = (a, b, k) => a[k] > b[k];
-  const base = r34.stats;
-  check(up(with_({ induction: 'big' }), base, 'accel'), 'a big turbo should raise acceleration');
-  check(up(with_({ tyres: 'semi' }), base, 'handling'), 'semi-slicks should raise handling');
-  check(up(with_({ brakes: 'race' }), base, 'braking'), 'a big brake kit should raise braking');
-  check(up(with_({ gearing: 'short' }), base, 'accel') && up(base, with_({ gearing: 'short' }), 'speed'), 'short gears: more acceleration, less top speed');
-  check(up(with_({ aero: 'gt' }), base, 'handling') && up(base, with_({ aero: 'gt' }), 'speed'), 'a GT wing: more handling, less top speed');
-  check(up(with_({ induction: 'super' }, CHALLENJER_SRT8), ch.stats, 'accel'), 'a supercharger should raise acceleration');
 }
 
 console.log('Lap of ' + UNDERGROUND_TRACK.name);
@@ -267,26 +256,21 @@ console.log('Snow and weather patches');
   }
 }
 
-console.log('Garage builds and save');
+console.log('Save');
 {
   // The save code reads the page address and storage; give it stand-ins.
   globalThis.location ??= { search: '' };
-  const old = { version: 2, garage: { selected: 'skyliner-r34', cars: { 'skyliner-r34': { paint: 0x1f4fa8, upgrades: { tyres: 'semi' } } } } };
+  const old = { version: 5, garage: { selected: 'countach-qv', owned: ['impreza-gc8', 'countach-qv'], cars: { 'skyliner-r34': { active: 0, builds: [{ name: 'B', parts: { tyres: 'semi' }, look: { paint: 0x1f4fa8 } }] } } } };
   globalThis.localStorage = { getItem: () => JSON.stringify(old), setItem() {} };
-  const { loadSave, activeBuild } = await import('../src/save/save.js');
-  const { buildSpec } = await import('../src/vehicles/tuning.js');
-  const save = loadSave(), b = activeBuild(save, CAR);
-  console.log(`  version 2 save -> version ${save.version}: build "${b.name}", parts ${JSON.stringify(b.parts)}, paint #${b.look.paint.toString(16)}`);
+  const { loadSave, carLook } = await import('../src/save/save.js');
+  const save = loadSave(), look = carLook(save, CAR);
+  console.log(`  version 5 save -> version ${save.version}: owns ${save.garage.owned.join()}, Skyliner paint #${look.paint.toString(16)}`);
+  check(save.version === 6 && save.garage.owned.join() === 'impreza-gc8' && save.garage.selected === 'impreza-gc8', 'an old save should start the career with the Impreza');
+  check(look.paint === 0x1f4fa8, 'an old save should keep its paint for when the car is bought');
+  check(save.career.cr === 0 && save.career.tracks.join() === 'starter', 'a new career starts with nothing but the Starter Track');
   globalThis.localStorage.getItem = () => JSON.stringify({ version: 3, garage: { selected: 'miata-na', owned: ['miata-na', 'gtar-r35', 'challenjer-srt8'], cars: { 'miata-na': { active: 0, builds: [] }, 'gtar-r35': { active: 0, builds: [] } } } });
   const moved = loadSave();
-  check(moved.garage.selected === 'impreza-gc8' && moved.garage.owned.join() === 'impreza-gc8,challenjer-srt8' && !moved.garage.cars['miata-na'] && !moved.garage.cars['gtar-r35'], 'a Miata save should become the Impreza');
-  check(save.version === 5 && b.parts.tyres === 'semi' && b.look.paint === 0x1f4fa8, 'an old save should carry its paint and parts into a build');
-  const slammed = buildSpec(CAR, { parts: { suspension: 'race' }, look: { ride: 'slammed' } });
-  const stockRide = buildSpec(CAR, { parts: { suspension: 'race' }, look: { ride: 'stock' } });
-  console.log(`  slammed: centre of gravity ${stockRide.cgHeight.toFixed(3)} -> ${slammed.cgHeight.toFixed(3)} m`);
-  check(slammed.cgHeight < stockRide.cgHeight, 'a slammed car should sit lower');
-  const full = carStats(buildSpec(CAR, { parts: { bodykit: 'wide', aero: 'gt', tyres: 'semi', suspension: 'race', brakes: 'race' } }));
-  console.log(`  R34 with grip parts: ${full.cls} ${full.pi}`);
+  check(moved.garage.selected === 'impreza-gc8' && !moved.garage.cars['miata-na'] && !moved.garage.cars['gtar-r35'], 'a Miata save should become the Impreza');
 }
 
 console.log('Walls');

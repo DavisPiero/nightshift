@@ -3,12 +3,16 @@
 // green and red) and a minimap top right, on teal with its corners fading out
 // (see #minimap in the style sheet). Both are drawn small on canvases and
 // scaled up with square pixels, like the menus. Plus a debug panel (F3) with
-// the physics numbers.
+// the physics numbers. In a race: place, lap, times and the gaps along the
+// top, rival dots on the map, the start lights in the middle.
 
 const SEGMENTS = 28;
 const FONT = '"Jersey 10", ui-monospace, monospace';
 const PINK = '#ff2e88', LCD = '#39ff6a', LCD_DIM = '#0f4a22', RED = '#d00000';
 const FACE = '#c0c0c0';
+
+// 1:23.4
+export const clock = (s) => `${Math.floor(s / 60)}:${(s % 60).toFixed(1).padStart(4, '0')}`;
 
 export class Hud {
   constructor(root) {
@@ -23,6 +27,50 @@ export class Hud {
     this.lastGear = null;
     this.units = 'kmh';
     this.shownKmh = 0;
+    this.race = null;
+    this.tick = 0;
+    this.rh = root.querySelector('#race-hud');
+    this.big = root.querySelector('#race-big');
+    this.wrong = root.querySelector('#race-wrong');
+    this.goClock = 0;
+  }
+
+  // The race to show, or null for free driving.
+  setRace(race) {
+    this.race = race;
+    this.rh.hidden = !race;
+    this.big.textContent = '';
+    this.wrong.hidden = true;
+    this.goClock = 0;
+    this.finished = false;
+  }
+
+  // Place, lap and times, ten times a second; the lights every frame.
+  drawRace(dt) {
+    const r = this.race, p = r.player;
+    const lights = r.lights;
+    if (r.state === 'countdown' && lights <= 3 && lights > 0) { this.big.textContent = lights; this.big.className = 'on'; this.goClock = 0.9; }
+    else if (r.state === 'racing' && this.goClock > 0) { this.big.textContent = 'GO'; this.big.className = 'on go'; this.goClock -= dt; }
+    else if (r.state === 'finished' && !this.finished) { this.finished = true; this.big.textContent = 'FINISH'; this.big.className = 'on go'; this.goClock = 2.4; }
+    else if (r.state === 'finished' && this.goClock > 0) this.goClock -= dt;
+    else { this.big.textContent = ''; this.big.className = ''; }
+    this.wrong.hidden = r.wrongWay < 1.5;
+    this.tick -= dt;
+    if (this.tick > 0) return;
+    this.tick = 0.1;
+    const $ = (id) => this.rh.querySelector(id);
+    $('#rh-pos').textContent = p.place || r.cars.indexOf(p) + 1;
+    $('#rh-of').textContent = `/${r.cars.length}`;
+    $('#rh-lap').textContent = `${Math.min(p.lap + 1, r.laps)}/${r.laps}`;
+    $('#rh-time').textContent = clock(r.state === 'racing' || r.state === 'finished' ? r.t - p.lapStart : 0);
+    $('#rh-best').textContent = Number.isFinite(p.best) ? clock(p.best) : '--:--.-';
+    const gap = (step, el, sign) => {
+      const g = p.place ? r.gap(p, step) : null;
+      el.hidden = !g;
+      if (g) el.innerHTML = `<span>${g.name}</span><b>${sign}${g.seconds.toFixed(1)}</b>`;
+    };
+    gap(-1, $('#rh-ahead'), '+');
+    gap(1, $('#rh-behind'), '-');
   }
 
   show(on) { this.el.hidden = !on; }
@@ -76,11 +124,24 @@ export class Hud {
     g.beginPath(); g.moveTo(0, -7); g.lineTo(5.5, 6); g.lineTo(0, 3); g.lineTo(-5.5, 6); g.closePath();
     g.lineWidth = 2; g.strokeStyle = '#1e0010'; g.stroke();
     g.fillStyle = PINK; g.fill();
+    // Rivals, turned with the map. Max is yellow.
+    if (this.race) {
+      const c = Math.cos(v.heading), n = Math.sin(v.heading);
+      for (const o of this.race.cars) {
+        if (o.isPlayer) continue;
+        const [ox, oy] = this.toMap(o.vehicle.x, o.vehicle.z);
+        const dx = ox - x, dy = oy - y;
+        const px = Math.round(dx * c - dy * n), py = Math.round(dx * n + dy * c);
+        g.fillStyle = '#000'; g.fillRect(px - 4, py - 4, 8, 8);
+        g.fillStyle = o.rival ? '#ffe400' : '#ffffff'; g.fillRect(px - 3, py - 3, 6, 6);
+      }
+    }
     g.restore();
   }
 
   draw(v, dt) {
     this.drawMap(v);
+    if (this.race) this.drawRace(dt);
     const g = this.g, W = this.canvas.width, H = this.canvas.height;
     const s = v.spec;
     g.clearRect(0, 0, W, H);

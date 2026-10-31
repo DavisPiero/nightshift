@@ -11,6 +11,12 @@ import { KeyboardSource } from './input/keyboard.js';
 import { TouchSource } from './input/touch.js';
 import { Vehicle } from './physics/vehicle.js';
 import { keepOnTrack } from './physics/walls.js';
+import { RacingLine } from './race/racing-line.js';
+import { Race } from './race/race.js';
+import { RaceView } from './race/race-view.js';
+import { pickField, makeDriver } from './race/opponents.js';
+import { getDifficulty } from './race/difficulty.js';
+import { AIDriver } from './race/ai-driver.js';
 import { applyWeather, WEATHER } from './physics/weather.js';
 import { getCar } from './vehicles/cars.js';
 import { buildSpec } from './vehicles/tuning.js';
@@ -30,7 +36,7 @@ import { CameraManager } from './cameras/cameras.js';
 import { GameAudio } from './audio/audio.js';
 import { Hud } from './ui/hud.js';
 import { Screens } from './ui/screens.js';
-import { loadSave, writeSave, activeBuild } from './save/save.js';
+import { loadSave, writeSave, carLook } from './save/save.js';
 
 const _sun = new THREE.Vector3(), _dir = new THREE.Vector3();
 
@@ -88,6 +94,8 @@ class Game {
 
     // Systems
     this.effects = new Effects(this.scene);
+    this.raceView = new RaceView(this.scene);
+    this.lines = {}; // racing lines, worked out once per track
     this.audio = new GameAudio();
     this.audio.setEngine(this.carSpec);
     this.audio.setMuted(URL_FLAGS.mute);
@@ -125,7 +133,7 @@ class Game {
     const forced = URL_FLAGS.device === 'computer' || URL_FLAGS.device === 'touch' ? URL_FLAGS.device : null;
     if (forced || URL_FLAGS.smoke) {
       this.save.platform = forced || this.save.platform || 'computer';
-      this.startRace({ track: this.trackInfo.id, weather: WEATHER[URL_FLAGS.weather] ? URL_FLAGS.weather : 'clear', car: this.carSpec.id });
+      this.startRace({ track: this.trackInfo.id, weather: WEATHER[URL_FLAGS.weather] ? URL_FLAGS.weather : 'clear', car: this.carSpec.id, rivals: URL_FLAGS.race ? 7 : 0, laps: 3, difficulty: URL_FLAGS.difficulty || 'normal' });
     } else if (URL_FLAGS.screen) {
       this.save.platform = this.save.platform || 'computer';
       this.screens.reset('main');
@@ -178,20 +186,17 @@ class Game {
     if (this.weather && this.preset) this.weather.set(this.weatherId, this.preset, this.save.settings.effects);
   }
 
-  // The numbers the car drives with: stock, plus the active build's parts
-  // and ride height, plus Feel.
+  // The numbers the car drives with: stock, plus Feel.
   currentSpec() {
-    return buildSpec(this.carSpec, activeBuild(this.save, this.carSpec), this.save.settings.feel[this.carSpec.id]);
+    return buildSpec(this.carSpec, this.save.settings.feel[this.carSpec.id]);
   }
 
-  // Any car as its active build (no Feel settings): for menus and ratings.
-  specFor(id) {
-    const car = getCar(id);
-    return buildSpec(car, activeBuild(this.save, car));
-  }
+  // Any car's numbers (no Feel settings): for menus and ratings.
+  specFor(id) { return buildSpec(getCar(id)); }
 
-  // Rating of the car as currently built.
-  currentRating() { return carStats(this.specFor(this.carSpec.id)); }
+  // Rating of a car.
+  currentRatingOf(id) { return carStats(this.specFor(id)); }
+  currentRating() { return this.currentRatingOf(this.carSpec.id); }
 
   // Feel panel moved a slider: apply it now, save it shortly after.
   applyFeel() {
@@ -204,12 +209,10 @@ class Game {
   buildCarModel() {
     const parent = this.model?.root.parent || this.scene;
     if (this.model) { this.model.root.removeFromParent(); this.model.dispose?.(); }
-    this.model = buildCar(this.specFor(this.carSpec.id), activeBuild(this.save, this.carSpec).look);
+    this.model = buildCar(this.specFor(this.carSpec.id), carLook(this.save, this.carSpec));
     this.model.bodyY = this.model.body.position.y;
-    // Rebuilt while the bonnet is up (a part was fitted): keep it up, and
-    // drop the new part in.
+    // Rebuilt while the bonnet is up (a new paint, say): keep it up.
     if (this.bonnetUp) this.model.setBonnet(true, true);
-    if (this.fitSlot) { this.model.fitPart(this.fitSlot); this.fitSlot = null; }
     parent.add(this.model.root);
     this.audio?.setEngine(this.currentSpec());
     // Computers get every triangle, as soon as it has loaded; iPads keep the
@@ -218,8 +221,7 @@ class Game {
     if ((URL_FLAGS.device || this.save.platform) !== 'touch') fullDetail(id).then((fresh) => { if (fresh && this.carSpec.id === id) this.buildChanged(); });
   }
 
-  // The garage changed the active build (parts or looks): drive with it and
-  // show it.
+  // The garage changed the car's look: show it.
   buildChanged() {
     this.vehicle.setSpec(this.currentSpec());
     this.buildCarModel();
@@ -328,7 +330,7 @@ class Game {
 
   // --- menus ---
   onScreen(name) {
-    if (['main', 'garage', 'tracks', 'setup', 'race', 'platform'].includes(name)) this.menuView = name;
+    if (['main', 'garage', 'tracks', 'setup', 'race', 'platform', 'career', 'shop'].includes(name)) this.menuView = name;
   }
 
   showCar(id) {
@@ -354,8 +356,10 @@ class Game {
   // --- driving ---
   // held: a loading screen is up, so set everything up but hold the car
   // still until go().
-  startRace({ track, weather, car, time = this.timeId }, held = false) {
-    this.save.lastRace = { track, weather, time };
+  // rivals: how many AI cars (none is free driving). event: the career event
+  // this race belongs to, if any.
+  startRace({ track, weather, car, time = this.timeId, laps = 3, difficulty = 'normal', rivals = 0, event = null, pi = 0 }, held = false) {
+    if (!event) this.save.lastRace = { track, weather, time, laps, difficulty, rivals };
     this.save.garage.selected = car;
     this.saveNow();
     this.loadTrack(track);
@@ -373,16 +377,54 @@ class Game {
     this.hud.setTouch(this.save.platform === 'touch');
     this.hud.setTrack(this.track, this.trackInfo.def.start);
     this.touch.show(this.save.platform === 'touch');
+    this.raceSetup = { track, laps, difficulty, rivals, event, pi: pi || this.currentRating().pi, seed: 1 + Math.floor(Math.random() * 1e6) };
     this.restartCar();
     this.audio.resume();
+    if (!held) this.go();
   }
 
-  go() { if (this.state === 'loading') { this.controls.releaseAll(); this.state = 'driving'; } }
+  go() {
+    if (this.race) this.race.go();
+    if (this.state === 'loading') { this.controls.releaseAll(); this.state = 'driving'; }
+  }
+
+  // Line up a new race on the grid (or, with no rivals, just drive). Keeps
+  // the same rivals on a restart.
+  buildRace() {
+    const r = this.raceSetup;
+    this.race = null;
+    this.raceView.clear();
+    this.finishClock = 0;
+    this.hud.setRace(null);
+    if (!r?.rivals) return;
+    const d = getDifficulty(r.difficulty), grip = WEATHER[this.weatherId].grip;
+    const line = this.lines[r.track] ??= new RacingLine(this.track);
+    const field = pickField({ count: r.rivals, pi: r.pi, difficulty: r.difficulty, rival: !!r.event?.rival, seed: r.seed });
+    const cars = field.map((f, n) => ({ id: f.id, name: f.name, car: f.car, look: f.look, rival: f.persona.rival, vehicle: new Vehicle(f.spec), driver: makeDriver(line, f, r.difficulty, grip, r.seed + n) }));
+    for (const c of cars) applyWeather(c.vehicle, this.weatherId);
+    cars.splice(Math.min(d.start - 1, cars.length), 0, { id: 'you', name: 'You', car: `${this.carSpec.make} ${this.carSpec.model}`, vehicle: this.vehicle, driver: null });
+    this.race = new Race(this.track, line, cars, {
+      laps: r.laps, weather: this.weatherId, band: d.band,
+      takeover: (c) => new AIDriver(line, c.vehicle.spec, { pace: 0.7, aggression: 0.2, consistency: 1 }, { weatherGrip: grip }),
+    });
+    this.race.grid(this.trackInfo.def.start);
+    this.trackIndex = this.race.player.index;
+    this.raceView.setup(this.race.cars);
+    this.hud.setRace(this.race);
+  }
 
   restartCar() {
     this.controls.releaseAll();
     this.resetCar(this.trackInfo.def.start);
     this.effects.reset();
+    this.buildRace();
+    this.cameras.set(this.cameras.mode, this.carRef());
+  }
+
+  // Put back on the road after going wrong (the Back on track button).
+  backOnTrack() {
+    if (this.race) { this.race.recover(this.race.player); this.trackIndex = this.race.player.index; }
+    else this.resetCar(this.trackIndex);
     this.cameras.set(this.cameras.mode, this.carRef());
   }
 
@@ -407,11 +449,15 @@ class Game {
 
   restart() {
     this.restartCar();
+    if (this.state === 'results') { this.state = 'paused'; this.screens.closeAll(); this.hud.show(true); }
     this.resume();
+    this.race?.go();
   }
 
-  toMain() {
+  toMain(screen = 'main') {
+    this.raceSetup = null;
     this.screens.reset('main');
+    if (screen !== 'main') this.screens.open(screen);
     this.hud.show(false);
     this.touch.show(false);
     this.state = 'menu';
@@ -443,24 +489,55 @@ class Game {
     if (this.state === 'driving') {
       if (c.takeAction('pause')) { this.pauseGame(); return; }
       if (c.takeAction('camera')) this.nextCamera();
+      if (c.takeAction('reset')) this.backOnTrack();
       const input = this.smoke ? this.smoke.input(dt, this) : c.poll(dt);
-      this.vehicle.step(dt, input);
-      const r = keepOnTrack(this.vehicle, this.track, this.trackIndex);
-      this.trackIndex = r.index;
-      this.lastOffset = r.offset;
-      // Heavier weather in the track's patches: a little less grip, eased.
-      this.patch = this.weatherId === 'clear' ? 0 : this.track.patchAt(this.trackIndex);
-      applyWeather(this.vehicle, this.weatherId, this.patch);
-      if (r.impact > 0) {
-        this.audio.impact(r.impact);
-        this.effects.hit(r.contact, r.impact, this.vehicle);
-        this.cameras.bump(r.impact);
+      if (this.race) this.raceStep(dt, input);
+      else {
+        this.vehicle.step(dt, input);
+        const r = keepOnTrack(this.vehicle, this.track, this.trackIndex);
+        this.trackIndex = r.index;
+        this.lastOffset = r.offset;
+        // Heavier weather in the track's patches: a little less grip, eased.
+        this.patch = this.weatherId === 'clear' ? 0 : this.track.patchAt(this.trackIndex);
+        applyWeather(this.vehicle, this.weatherId, this.patch);
+        this.onHit(r);
       }
+    } else if (this.state === 'results' && this.race) {
+      this.race.step(dt); // the cars carry on behind the results
+      c.actions.clear();
     } else if (this.state === 'paused') {
       if (c.takeAction('pause') && this.screens.top === 'pause') this.resume();
       c.actions.clear();
     } else {
       c.actions.clear();
+    }
+  }
+
+  onHit(r) {
+    if (!r.impact) return;
+    this.audio.impact(r.impact);
+    this.effects.hit(r.contact, r.impact, this.vehicle);
+    this.cameras.bump(r.impact);
+  }
+
+  // One physics step of a race. The flag falls for you: a moment later the
+  // results come up.
+  raceStep(dt, input) {
+    const race = this.race, p = race.player, was = race.lights;
+    race.step(dt, input);
+    this.trackIndex = p.index;
+    this.lastOffset = p.offset;
+    this.patch = this.weatherId === 'clear' ? 0 : this.track.patchAt(p.index);
+    if (race.playerHit) this.onHit(race.playerHit);
+    if (race.playerKnock > 1) { this.audio.impact(race.playerKnock); this.cameras.bump(race.playerKnock); }
+    if (race.lights !== was && race.state === 'countdown' && race.lights <= 3) this.audio.ui('count');
+    if (was > 0 && race.state === 'racing') this.audio.ui('go');
+    if (race.state === 'finished' && !this.finishClock) { this.finishClock = 2.6; this.audio.ui('flag'); }
+    if (this.finishClock > 0 && (this.finishClock -= dt) <= 0 && !this.smoke) {
+      this.state = 'results';
+      this.touch.show(false);
+      this.hud.show(false);
+      this.screens.results(race, this.raceSetup);
     }
   }
 
@@ -480,15 +557,15 @@ class Game {
       this.reflections.setWorld(garage ? this.garage : this.world);
     }
     this.model.setLights(!garage);
-    this.bonnetUp = garage && this.menuView === 'garage' && this.garageTab === 'engine';
+    this.bonnetUp = garage && this.menuView === 'garage' && this.garageTab === 'bonnet';
     this.model.setBonnet(this.bonnetUp);
     if (garage) {
       // The turntable turns slowly, or swings round to show what a garage tab
       // is about (the wheels, the wing, the side).
       const view = this.garageView();
       this.turntable += dt * (this.menuView === 'garage' ? 0.1 : 0.05);
-      // A mid-engined car turns its tail to you for the Engine tab.
-      const target = view.turn !== undefined ? view.turn + (this.garageTab === 'engine' && this.model.engineRear ? Math.PI : 0) : ((this.menuView === 'garage' ? 2.4 : -0.65) + Math.sin(this.turntable) * (this.menuView === 'garage' ? 3.2 : 0.35));
+      // A mid-engined car turns its tail to you for the Bonnet tab.
+      const target = view.turn !== undefined ? view.turn + (this.garageTab === 'bonnet' && this.model.engineRear ? Math.PI : 0) : ((this.menuView === 'garage' ? 2.4 : -0.65) + Math.sin(this.turntable) * (this.menuView === 'garage' ? 3.2 : 0.35));
       this.turnNow ??= target;
       const d = Math.atan2(Math.sin(target - this.turnNow), Math.cos(target - this.turnNow));
       this.turnNow += d * Math.min(1, dt * 3);
@@ -522,11 +599,12 @@ class Game {
       this.model.setInterior(false);
       this.audio.update(dt, v, this.weatherId, garage ? 0 : 0.25);
     } else {
-      if (this.state === 'driving' || this.state === 'loading') this.cameras.update(this.carRef(), dt);
+      if (this.state === 'driving' || this.state === 'loading' || this.state === 'results') this.cameras.update(this.carRef(), dt);
       this.model.setInterior(this.cameras.mode === 'cockpit');
       this.audio.update(dt, v, this.weatherId, 1, this.weather.k);
       this.hud.draw(v, dt);
     }
+    this.raceView.update(this.state === 'paused' ? 0 : dt);
     const live = this.state === 'paused' ? 0 : dt;
     // The paint reflects what is round the car (redone every other frame).
     root.updateMatrixWorld();
@@ -564,7 +642,7 @@ class Game {
     const v = this.garage.views;
     if (this.menuView === 'setup') return v.setup;
     const t = this.garageTab;
-    return t === 'wheels' ? v.wheels : t === 'body' ? v.body : t === 'engine' ? v.engine : ['chassis', 'drive'].includes(t) ? v.side : t ? v.paint : v.garage;
+    return t === 'wheels' ? v.wheels : t === 'stance' ? v.side : t === 'bonnet' ? v.engine : t ? v.paint : v.garage;
   }
 
   // The garage camera glides between spots (or follows your dragging); the
@@ -623,7 +701,7 @@ class Game {
   menuCamera(dt) {
     const v = this.vehicle;
     this.attractAngle += dt * 0.12;
-    if (this.menuView === 'tracks' || this.menuView === 'race') {
+    if (['tracks', 'race', 'career', 'shop'].includes(this.menuView)) {
       const t = this.track;
       this.flyIndex = ((this.flyIndex ?? this.trackInfo.def.start) + dt * 22) % t.count;
       const i = t.wrap(Math.floor(this.flyIndex)), j = t.wrap(i + 18);

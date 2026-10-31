@@ -1,34 +1,26 @@
 # NIGHTSHIFT: state
 
-_Last updated 2026-10-31, end of session 14. Everything is signed off and live: `main` is the live site, nothing is on a branch._
+_Last updated 2026-10-31, end of session 15. The career is merged and live: `main` is the live site, nothing is on a branch._
 
 ## Where we are
-Milestone 6. Phase 1 of David's update brief (GLB vehicles) is done and live, plus his fixes.
-- Five cars from GLBs at full detail: Impreza (first car), R34, Challenjer, 1969 Mustank Touring Car, Countash. The Miata, R35 and Aventadoro are gone; saves migrate (version 5).
-- The Mustank uses the 2012 car's cabin. Steering wheels are measured from their own shape. Panels are separate named meshes.
-- HUD: round rev dial bottom centre, frameless map with fading corners.
+The game is a career now. Street is complete: 24 events, the story to level 100, eight-car races on four difficulties, CR, XP, the shop, a looks-only garage, the new teal look, slightly pixelated Medium and High. Then "to be continued".
 
 ## Next
-David must choose the direction first. Claude's advice, not decided: a night racing ladder (Street, Classic, GT3, Formula). Turn racing on first, then tiers and unlocking, one showcase track, a GT3 pack, F1 last. Body kits for Street cars only. Have Arlo play first.
-
-The brief's remaining phases, if nothing changes:
-2. Physical modifications.
-3. Finish integration: remove the old drawn-car code, keep the models' own engines.
-4. Paint presets and shared materials.
-5. Environment: trees, materials, geometry.
-6. Remove the blue shimmer; acceleration zoom.
+Put it in front of Arlo. Watch where he first gets stuck, and whether Normal is fair: the difficulties were set on the bench, never by a person.
+Then GT3: it needs car models from David, and more tracks would help most after that.
 
 ## Open with David
-- Which direction? Add GT3 and F1 cars, and when?
+- GT3 and Formula cars: which models, and when? Formula also needs open-wheel handling and cockpits.
+- Is it "Johnny"? He typed "jhonny"; spelled the usual way until he says.
+- Guesses (session 15): rival level rule (event level, or 30 under your car); Skyliner and Mustank prices; event names and order; pay and XP; replay pay; all story writing; Johnny being from Yokohama; Little Tokyo on the harbor; the scout Aoi; everyone's faces; Medium 480 and High 600 lines; difficulty pace; start positions; Race pay.
 - The Subaru's source: no author or licence. It is live on David's decision; credit it when known.
-- iPad frame rate never measured; iPads use the lite copy everywhere until it is. Computer frame rate with the full cars is unmeasured too.
-- Mustank: real sponsor livery still to be replaced with near-miss art for Racing paint.
-- Guesses (session 14): Impreza 146 hp and four-wheel drive; "Late 90s"; Countash numbers (class A 825) and blurb; near-miss names; car order; Mustank seat position and cabin fit; dial size; map zoom; Impreza's engine bay colours.
-- Guesses (older): feel of the slower cars; handbrake lever; mode tile pictures; Parabolica's gold lamps; sun glare strength; engine sounds; tips' wording; garage lens; rim sizes.
+- Mustank: its real sponsor livery now shows on a shop card; replace with near-miss art.
+- Guesses (older): Impreza 146 hp and four-wheel drive; "Late 90s"; Countash numbers; near-miss names; Mustank seat and cabin; dial size; map zoom; feel of the slower cars; handbrake lever; Parabolica's gold lamps; sun glare; engine sounds; tips' wording; rim sizes.
 
 ## Known rough edges
-- Mustank: plain red, amber front lamps, a tiny grey stub at the right pillar, modern dash in a 1969 body.
-- Name check of the Challenjer not done.
-- Cabin mirrors are flat bright panels. Dials on the new cars do not move.
-- Kits change numbers only. The Skyline's own engine is left out. Old drawn-car code is dead but still there.
-- Car files about 50 MB; textures can go tighter. Touch and controllers untested on real devices.
+- Only the player has engine sound, smoke and sparks. Rivals use the parked model, so they look plainer up close.
+- Slow-tuned rivals sometimes tangle in the Parabolica chicane and get put back on the road.
+- Three tracks across a whole career repeat; weather, time and rivals vary them.
+- Money has nothing to buy once you own the Countash.
+- iPad and touch never tried on a real device. Mustank: amber lamps, stub at the right pillar, modern dash.
+- Old drawn-car code and `src/ui/menus.js` are dead but still there. Car files about 50 MB.

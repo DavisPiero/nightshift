@@ -57,6 +57,17 @@
   <div id="hud" hidden>
     <canvas id="tach" width="132" height="132"></canvas>
     <canvas id="minimap" width="150" height="150"></canvas>
+    <div id="race-hud" hidden>
+      <div class="rh-strip">
+        <div class="rh-cell rh-place"><b id="rh-pos">1</b><span id="rh-of">/8</span></div>
+        <div class="rh-cell"><span>Lap</span><b id="rh-lap">1/3</b></div>
+        <div class="rh-cell"><span>Time</span><b id="rh-time">0:00.0</b></div>
+        <div class="rh-cell"><span>Best</span><b id="rh-best">--:--.-</b></div>
+      </div>
+      <div class="rh-gaps"><div id="rh-ahead" class="rh-gap" hidden></div><div id="rh-behind" class="rh-gap" hidden></div></div>
+    </div>
+    <div id="race-big"></div>
+    <div id="race-wrong" hidden>Wrong way</div>
     <div id="hud-buttons">
       <button id="pause-button" class="btn sq" aria-label="Pause"><i class="ico-pause"></i></button>
     </div>
@@ -86,17 +97,20 @@
     </div>
   </section>
 
-  <!-- Main menu -->
-  <section id="scr-main" class="screen left" hidden>
-    <div class="menu-l">
+  <!-- Main menu: the logo, the four big tiles along the bottom, the gear for
+       Settings top right beside your money and level. -->
+  <section id="scr-main" class="screen home" hidden>
+    <div class="home-top">
       <h1 class="brand"><span class="chrome">NIGHTSHIFT</span><span class="stamp">夜勤</span></h1>
       <p class="tag">street racing after dark</p>
-      <nav class="stack">
-        <button class="btn huge pri" data-go="modes">Drive</button>
-        <button class="btn" data-go="garage">Garage</button>
-        <button class="btn" data-go="settings">Settings</button>
-      </nav>
     </div>
+    <button id="gear" class="btn sq gear" data-go="settings" aria-label="Settings"><svg viewBox="0 0 16 16" width="28" height="28" shape-rendering="crispEdges"><path fill="currentColor" d="M6 0h4v2h1v1h1v-1h2v2h-1v1h1v1h2v4h-2v1h-1v1h1v2h-2v-1h-1v1h-1v2H6v-2H5v-1H4v1H2v-2h1v-1H2v-1H0V6h2V5h1V4H2V2h2v1h1V2h1zm0 5v1H5v4h1v1h4v-1h1V6h-1V5z"/></svg></button>
+    <nav class="stack tiles">
+      <button class="tile big" data-go="career" data-sound="confirm" style="background-image: url(assets/loading/starter.jpg)"><span class="th">Career</span><span id="tile-career" class="ts"></span></button>
+      <button class="tile" data-go="tracks" data-sound="confirm" style="background-image: url(assets/loading/parabolica.jpg)"><span class="th">Race</span><span class="ts">Any track and car you have</span></button>
+      <button class="tile" data-go="shop" data-sound="confirm" style="background-image: url(assets/loading/underground.jpg)"><span class="th">Shop</span><span class="ts">Buy your next car</span></button>
+      <button class="tile" data-go="garage" data-sound="confirm" style="background-image: url(assets/story/garage.png)"><span class="th">Garage</span><span class="ts">Your cars, your paint</span></button>
+    </nav>
   </section>
 
   <!-- The asset library (?library): every prop, one at a time. -->
@@ -109,19 +123,29 @@
     <aside id="library-info" class="info pnl"></aside>
   </section>
 
-  <!-- Drive: pick a mode. Big picture tiles (after the Automobilista 2 menu
-       David sent); only Single Player Race works for now, the other two are
-       there so the menu has room for them later. -->
-  <section id="scr-modes" class="screen modes" hidden>
-    <header class="bar"><button class="btn back" data-back>Back</button><h2>Drive<span class="jp">モード選択</span></h2></header>
-    <nav class="stack mode-grid">
-      <button class="mode single" data-go="tracks" data-sound="confirm" style="background-image: url(assets/loading/parabolica.jpg)"><span class="mh">Single Player Race</span><span class="ms">Pick a track, a car and the weather</span></button>
-      <button class="mode soon" disabled style="background-image: url(assets/loading/underground.jpg)"><span class="mh">Multiplayer Race</span><span class="ms">Coming later</span></button>
-      <button class="mode soon" disabled style="background-image: url(assets/loading/starter.jpg)"><span class="mh">Career</span><span class="ms">Coming later</span></button>
-    </nav>
+  <!-- Career: the acts and their races on the left, the race you picked on
+       the right. -->
+  <section id="scr-career" class="screen select desk" hidden>
+    <header class="bar"><button class="btn back" data-back>Back</button><h2>Career<span class="jp">キャリア</span></h2></header>
+    <div class="side-list pnl">
+      <div class="ttl"><span>Street</span></div>
+      <div id="career-list" class="list"></div>
+    </div>
+    <aside id="career-info" class="info pnl wide-info"></aside>
+    <footer class="foot"><button id="career-car" class="btn">Change car</button><button id="career-go" class="btn go pri">Race</button></footer>
   </section>
 
-  <!-- Drive: pick a track. List on the left, the track flies by behind, its
+  <!-- Shop: tier tabs, brand tabs, the car's numbers on the left, the cards
+       on the right (after David's Forza references). -->
+  <section id="scr-shop" class="screen desk shop" hidden>
+    <header class="bar"><button class="btn back" data-back>Back</button><h2>Shop<span class="jp">ショップ</span></h2></header>
+    <nav id="shop-tiers" class="tier-tabs"></nav>
+    <nav id="shop-brands" class="brand-tabs"></nav>
+    <aside id="shop-info" class="pnl shop-info"></aside>
+    <div id="shop-grid" class="card-grid"></div>
+  </section>
+
+  <!-- Race: pick a track. List on the left, the track flies by behind, its
        details on the right, Continue bottom right. -->
   <section id="scr-tracks" class="screen select" hidden>
     <header class="bar"><button class="btn back" data-back>Back</button><h2>Choose a track<span class="jp">コース選択</span></h2></header>
@@ -133,23 +157,20 @@
     <footer class="foot"><button id="tracks-go" class="btn go pri">Continue</button></footer>
   </section>
 
-  <!-- Drive: pick a car (left), see it in the garage (right), then on to
-       race settings. -->
+  <!-- Pick a car: the car on the turntable, your cards along the bottom,
+       its numbers top right. -->
   <section id="scr-setup" class="screen select" hidden>
-    <header class="bar"><button class="btn back" data-back>Back</button><h2>Choose a car<span class="jp">車両選択</span></h2><span id="setup-title" class="where"></span></header>
-    <div class="side-list pnl">
-      <div class="ttl"><span>Cars</span></div>
-      <div id="car-list" class="list"></div>
-    </div>
+    <header class="bar"><button class="btn back" data-back>Back</button><h2>Choose a car<span class="jp">車両選択</span></h2></header>
     <aside class="info pnl">
       <div class="ttl"><span>Spec</span></div>
       <div class="car-name"><span id="setup-car-year" class="sub"></span><span id="setup-car-name" class="name"></span></div>
       <div id="setup-stats" class="stats"></div>
     </aside>
-    <footer class="foot"><button id="setup-go" class="btn go pri">Continue</button></footer>
+    <div id="car-list" class="card-strip"></div>
+    <footer class="foot high"><button id="setup-go" class="btn go pri">Continue</button></footer>
   </section>
 
-  <!-- Drive: race settings. Weather and time on the left, the track behind
+  <!-- Race: race settings. Weather and time on the left, the track behind
        in that weather and light, what you are driving on the right. -->
   <section id="scr-race" class="screen select" hidden>
     <header class="bar"><button class="btn back" data-back>Back</button><h2>Race settings<span class="jp">レース設定</span></h2></header>
@@ -161,6 +182,12 @@
         <p id="weather-note" class="muted small"></p>
         <h3 class="grp">Time</h3>
         <div id="time-list" class="choices"></div>
+        <h3 class="grp">Laps</h3>
+        <div id="laps-list" class="choices four"></div>
+        <h3 class="grp">Rivals</h3>
+        <div id="rivals-list" class="choices"></div>
+        <h3 class="grp">Difficulty</h3>
+        <div id="diff-list" class="choices four"></div>
       </div>
     </div>
     <aside id="race-info" class="info pnl"></aside>
@@ -169,7 +196,7 @@
 
   <!-- Garage: a rail of tabs on the left; each opens a small pop-up with
        its choices. The car on the turntable fills the rest (drag to turn
-       round it, scroll or pinch to zoom); the build's ratings bottom right. -->
+       round it, scroll or pinch to zoom); its ratings bottom right. -->
   <section id="scr-garage" class="screen garage" hidden>
     <header class="bar"><button class="btn back" data-back>Back</button><h2>Garage<span class="jp">ガレージ</span></h2>
       <div class="car-switch">
@@ -181,17 +208,16 @@
     <nav id="garage-tabs" class="grail pnl"></nav>
     <div id="garage-pop" class="gpop pnl" hidden>
       <div class="ttl"><span id="garage-pop-title"></span><button class="x" id="garage-close" aria-label="Close">&times;</button></div>
-      <div id="garage-dyno" class="dyno" hidden><canvas width="300" height="150"></canvas></div>
       <div id="garage-list" class="list"></div>
     </div>
     <aside class="gstats pnl">
-      <div class="ttl"><span>Build</span><span id="garage-build-name" class="bname"></span></div>
+      <div class="ttl"><span>Spec</span></div>
       <div id="garage-stats" class="stats"></div>
     </aside>
   </section>
 
   <!-- Settings, four tabs -->
-  <section id="scr-settings" class="screen" hidden>
+  <section id="scr-settings" class="screen desk" hidden>
     <header class="bar"><button class="btn back" data-back>Back</button><h2>Settings<span class="jp">設定</span></h2></header>
     <div class="pnl box wide">
       <div class="ttl"><span>System</span></div>
@@ -211,12 +237,54 @@
       <div class="ttl"><span>Paused</span></div>
       <nav class="stack">
         <button class="btn pri" id="pause-resume">Resume</button>
+        <button class="btn" id="pause-track">Back on track</button>
         <button class="btn" id="pause-restart">Restart</button>
         <button class="btn" id="pause-settings">Settings</button>
         <button class="btn" id="pause-main">Main menu</button>
       </nav>
     </div>
   </section>
+
+  <!-- After a race: the order and what you earned. -->
+  <section id="scr-results" class="screen dim results" hidden>
+    <div class="pnl res-board">
+      <div class="ttl"><span id="res-title">Results</span></div>
+      <div id="res-list" class="list"></div>
+    </div>
+    <div class="pnl res-pay">
+      <div class="ttl"><span>Earned</span></div>
+      <div id="res-pay"></div>
+      <nav class="stack">
+        <button class="btn pri" id="res-go">Continue</button>
+        <button class="btn" id="res-again">Race again</button>
+      </nav>
+    </div>
+  </section>
+
+  <!-- Your money and level, top right on the menus. -->
+  <div id="wallet" class="pnl" hidden>
+    <span class="w-level"><small>Level</small><b id="w-level">0</b></span>
+    <span class="w-bar"><i id="w-xp"></i></span>
+    <span id="w-cr" class="w-cr"></span>
+  </div>
+
+  <!-- Story scenes: pixel art, a face, a dialog box. Filled by ui/cutscene.js. -->
+  <div id="story" hidden>
+    <div class="st-frame">
+      <div class="st-art"></div>
+      <canvas class="st-fx" width="480" height="270"></canvas>
+      <img class="st-face" alt="">
+    </div>
+    <div class="st-box">
+      <div class="st-name"></div>
+      <p class="st-text"></p>
+      <span class="st-next"></span>
+    </div>
+    <button class="btn small st-skip">Skip</button>
+  </div>
+
+  <!-- A yes-or-no window, and pop-ups like Level Up. -->
+  <div id="dialog" hidden></div>
 
   <!-- Loading into a race: a still of the track fading in, the wheel
        bottom left, a tip. Filled by screens.js. -->

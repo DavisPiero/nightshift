@@ -1,28 +1,27 @@
-# Hand-off: end of session 14 (2026-10-31)
+# Hand-off: end of session 15 (2026-10-31)
 
 ## Repo state
 - On `main`, everything committed and pushed; no other branches. `main` is the live site. Next work goes on a new branch; merge only when David signs off (he says "push" for merge everything and push).
 
 ## Read first
-`CLAUDE.md`, `STATE.md`, the last 10 lines of `DECISIONS.md`.
+`CLAUDE.md`, `STATE.md`, the last 15 lines of `DECISIONS.md`.
 
 ## What comes next
-1. Ask David the direction question below. The advice is in STATE.md; don't assume it was accepted.
+1. Ask David the questions in STATE.md, starting with the GT3 and Formula cars.
 2. If he brings notes from playing, or from watching Arlo, use `/notes` first.
-3. Then plan and wait for his go-ahead. "Turn on racing" is the recommended first job: `src/race/` has the AI, grid, countdown and laps, benched but not in the game.
+3. Tune difficulty by people playing, not the bench.
 
-## How cars work now
-- `GLB/<file>` goes in unchanged. A recipe in `tools/car-recipes.mjs` names slots by `material|node`, first match wins. `node tools/capture-car.mjs <id>` writes `assets/cars/<id>.bin` (every triangle), `<id>-lite.bin` (lod 2 iPad copy, lod 1 parked) and `assets/cars/tex/`.
-- Check the printed scale: near 1:1 (or 100, 0.01 for files in other units) means the recipe's `axles` fit.
-- Recipe helpers: `listIslands`, `findSteering`, `listCabinNear` print what is there. `tyresOnly` when a rim material holds other parts. `autoWheels` moves anything inside a wheel to it. `bonnet.x` cuts the bonnet from a one-skin body. `panels` names boxes; `cut: true` slices a fused body, otherwise whole islands move.
-- `steeringFit` measures a wheel that is its own group; never hand-write an axis. `donor` takes a cabin from another GLB (`keep`, `drop`: any corner in a drop box takes the triangle), `cabinOut` removes this car's, `cabinKeep` protects a part.
-- Always check a cockpit by turning the wheel: dispatch an ArrowRight keydown in `shot.mjs` with the cockpit camera on.
-- `captured.js` loads lite files at start-up; `fullDetail(id)` swaps in the full car on computers, then `buildChanged()` rebuilds.
-- A material you can't name: render each one in pink from Blender, no window.
+## How the career works
+- `src/career/career.js` has the events, levels and pay; `node tools/career-bench.mjs` proves them and checks every event fits its track.
+- A new stage: add events and acts, set `tier` and `price` on cars in `cars.js`, take the "to be continued" out of `signed` in `story.js` and `LATER`.
+- A new scene: add it to `SCENES` in `story.js`, name it as an event's `before` or `after`. A new picture: a line in `SHOTS` or a branch in `tools/story-paint.mjs`, then `node tools/story-art.mjs`, and an entry in `FX` in `cutscene.js`.
+- A new car also needs `node tools/car-cards.mjs <id>`.
+- `main.js` runs a race through `Race` (`buildRace`, `raceStep`); with `rivals: 0` it is plain free driving. Results and pay are in `screens.js` (`results`).
+- Save version 6: `garage.cars[id] = { look }`, use `carLook(save, car)`. `career`: cr, xp, done, tracks, seen, difficulty.
+
+## How cars work
+- `GLB/<file>` goes in unchanged. A recipe in `tools/car-recipes.mjs` names slots by `material|node`. `node tools/capture-car.mjs <id>` writes `assets/cars/<id>.bin`, `<id>-lite.bin` (lod 2 iPad copy, lod 1 parked, which is also what rivals use) and `assets/cars/tex/`.
+- Check the printed scale: near 1:1 means the recipe's `axles` fit. Helpers: `listIslands`, `findSteering`, `listCabinNear`. Always check a cockpit by turning the wheel.
 
 ## Open with David
-- Which direction, and when GT3 and F1 cars come in.
-- The Subaru's source and credit.
-- iPad and computer frame rate.
-- The Mustang's near-miss livery.
-- Every guess listed in STATE.md.
+Everything under "Open with David" in STATE.md.

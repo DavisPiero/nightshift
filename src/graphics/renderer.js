@@ -321,7 +321,7 @@ export class RetroRenderer {
     this.post.uniforms.filmic.value = smooth ? 1 : 0;
     this.lens = smooth;
     setSmoothTextures(smooth);
-    this.canvas.style.imageRendering = smooth ? 'auto' : 'pixelated';
+    this.canvas.style.imageRendering = smooth && !preset.pixel ? 'auto' : 'pixelated';
     this.gl.shadowMap.enabled = preset.shadows;
     this.post.uniforms.dither.value = preset.dither ? 1 : 0;
     this.bloomMode = smooth && halfOk && preset.bloom ? (preset.bloom === 'fft' && floatOk ? 'fft' : 'chain') : null;

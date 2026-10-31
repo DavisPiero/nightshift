@@ -14,6 +14,9 @@ import { CARS } from '../src/vehicles/cars.js';
 import { RacingLine } from '../src/race/racing-line.js';
 import { AIDriver, DRIVERS } from '../src/race/ai-driver.js';
 import { Race } from '../src/race/race.js';
+import { DIFFICULTY } from '../src/race/difficulty.js';
+import { pickField, makeDriver, tunedSpec } from '../src/race/opponents.js';
+import { carStats } from '../src/vehicles/stats.js';
 
 const DT = 1 / 120;
 let failed = 0;
@@ -33,7 +36,7 @@ for (const def of [STARTER_TRACK, UNDERGROUND_TRACK, PARABOLICA_TRACK]) {
       const grip = applyWeather(vehicle, weather).grip;
       return { id: `${p.name}`, name: `${p.name} (${spec.model})`, vehicle, driver: new AIDriver(line, spec, p, { weatherGrip: grip, seed: n + 1 }) };
     });
-    const race = new Race(track, line, cars, { laps: 2 });
+    const race = new Race(track, line, cars, { laps: 2, weather });
     race.grid(def.start);
     race.go();
     let t = 0;
@@ -44,6 +47,38 @@ for (const def of [STARTER_TRACK, UNDERGROUND_TRACK, PARABOLICA_TRACK]) {
       console.log(`  ${String(r.place).padStart(2)}. ${r.name.padEnd(36)} ${r.done ? fmt(r.time).padStart(8) : '  did not finish'}  best ${fmt(r.best)}  walls ${c.hits}  put back ${c.resets}`);
       check(r.done, `${r.name} should finish on ${def.name} (${weather})`);
       check(c.resets <= 2, `${r.name} should rarely need putting back (${c.resets})`);
+    }
+  }
+}
+
+// Rivals tuned to a level: every car body should reach it, up and down.
+console.log('Tuning');
+for (const pi of [500, 650, 840]) {
+  const got = CARS.map((c) => carStats(tunedSpec(c, pi)).pi);
+  console.log(`  level ${pi}: ${got.join(', ')}`);
+  check(got.every((g) => Math.abs(g - pi) < 25), `every car should tune to about ${pi}`);
+}
+
+// The field on each difficulty, alone (no rubber band): lap times must step up.
+for (const def of [STARTER_TRACK, PARABOLICA_TRACK]) {
+  console.log(`${def.name}: seven cars at level 510 and 800, median best lap`);
+  const track = new TrackPath(def), line = new RacingLine(track);
+  for (const pi of [510, 800]) {
+    let last = Infinity;
+    for (const [id, d] of Object.entries(DIFFICULTY)) {
+      const cars = pickField({ count: 7, pi, difficulty: id, seed: 3 }).map((r, n) => ({ id: r.id, name: r.name, vehicle: new Vehicle(r.spec), driver: makeDriver(line, r, id, 1, n + 1) }));
+      const race = new Race(track, line, cars, { laps: 2, band: { slow: 0, push: 0 } });
+      race.grid(def.start);
+      race.go();
+      let t = 0;
+      while (t < 400 && !race.cars.every((c) => c.done)) { race.step(DT); t += DT; }
+      const bests = race.cars.map((c) => c.best).sort((a, b) => a - b), mid = bests[3];
+      const resets = race.cars.reduce((a, c) => a + c.resets, 0), hits = race.cars.reduce((a, c) => a + c.hits, 0);
+      console.log(`  ${String(pi).padStart(3)} ${d.name.padEnd(10)} ${fmt(mid).padStart(8)}  fastest ${fmt(bests[0])}  slowest ${fmt(bests[6])}  walls ${hits}  put back ${resets}`);
+      check(race.cars.every((c) => c.done), `${d.name} on ${def.name}: every car should finish`);
+      check(mid < last + 1, `${d.name} should be quicker than the difficulty below it`);
+      check(resets <= 10, `${d.name}: rarely put back (${resets})`);
+      last = mid;
     }
   }
 }

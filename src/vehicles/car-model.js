@@ -57,7 +57,7 @@ function wideDef(def) {
   return { ...def, wheels: { ...def.wheels, flare: [f + 0.05, r + 0.06] }, bulge: (def.bulge ?? 0.015) + 0.01 };
 }
 
-// spec: the car as built (its parts set flags like wing, kit, bigBrakes).
+// spec: the car's numbers.
 // look: paint, finish, decal, wheels and ride height (looks.js), or just a
 // paint colour.
 export function buildCar(spec, look = spec.paint, { simple = false } = {}) {

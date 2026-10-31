@@ -1,5 +1,14 @@
 # Changelog
 
+## Career (2026-10-31)
+- Career mode: 24 Street events in five acts, a story with Johnny, Max and Aoi in pixel-art scenes, CR and XP, levels 0 to 100. To be continued.
+- Real races: eight cars, 1 to 10 laps, four difficulties, start lights, places, gaps, results, Back on track.
+- Shop: filter by stage and brand, car cards, locked GT3 and Formula tabs. Tracks unlock by being played.
+- Home is four big tiles, with a gear for Settings and your money and level top right.
+- Garage is looks only, with My Cars. Performance parts, builds and the dyno are gone.
+- New look everywhere: teal desk, black name tags, white cards, yellow selection.
+- Medium and High are a little pixelated. Old saves restart the career with the Impreza.
+
 ## GLB cars (2026-10-31)
 - Cars come from GLBs at full detail: compressed, with lighter copies for iPads and parked cars.
 - Five cars: Subaro Impreza WRX STi Coupe (first car), Nissani Skyliner GT-R, Dodga Challenjer,

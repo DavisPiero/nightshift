@@ -6,21 +6,20 @@ const WINDOWS = [
   {
     id: 'news', title: 'What’s new', icon: 'info', pos: 'a',
     lines: [
-      'Say hello to the Subaro Impreza WRX STi Coupe, the new first car.',
-      'The Nissani Skyliner GT-R (R34) is out of retirement.',
-      'New to the garage: the 1969 Fard Mustank Touring Car and the Lamborgino Countash 5000 QV.',
-      'Cars now keep all their detail, inside and out.',
+      'Career mode: from the docks to the top, one race at a time.',
+      'Real races: eight cars, laps, four difficulties.',
+      'A shop, and a garage just for looks.',
     ],
     button: 'Oh, thanks',
   },
   {
     id: 'look', title: 'Reminder', icon: 'warn', pos: 'b',
-    lines: ['Graphics: Medium is the new default.', 'Miss the chunky pixels? Settings > Graphics > Low.'],
+    lines: ['Medium and High are a little bit pixelated now.', 'Settings > Graphics > Low for the full chunky look.'],
     button: 'Oh, thanks',
   },
   {
     id: 'soon', title: 'You got mail', icon: 'mail', pos: 'c',
-    lines: ['New maps and scenery are next.'],
+    lines: ['From: Johnny', 'Bring my Subaro back in one piece.'],
     button: 'Oh, thanks',
   },
 ];
