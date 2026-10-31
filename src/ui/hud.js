@@ -1,12 +1,34 @@
-// Driving HUD: a pixel rev counter (a ring of chunky blocks) with the gear
-// in the middle and the speed underneath, and a minimap top right (the
-// track's outline, north up, with the car as an arrow). Both are drawn small
-// on canvases and scaled up with square pixels, like the menus. Plus a debug
-// panel (F3) with the physics numbers.
+// Driving HUD: two little old-desktop windows. A rev counter with a block
+// progress bar, the gear and the speed on a black display, and a minimap top
+// right on the classic teal desktop (the track's outline, with the car as an
+// arrow). Both are drawn small on canvases and scaled up with square pixels,
+// like the menus. Plus a debug panel (F3) with the physics numbers.
 
 const SEGMENTS = 28;
 const FONT = '"Jersey 10", ui-monospace, monospace';
-const CYAN = '#3ff0e8', ORANGE = '#ff2e88', RED = '#ff3b3b', TEXT = '#eafcfb';
+const PINK = '#ff2e88', LCD = '#39ff6a', LCD_DIM = '#0f4a22';
+const FACE = '#c0c0c0', NAVY = '#000080';
+
+// A window on a canvas: grey with a raised edge and a navy title bar. Returns
+// nothing; the space inside starts 15 down, 4 in.
+function drawWindow(g, W, H, title) {
+  g.fillStyle = FACE; g.fillRect(0, 0, W, H);
+  g.fillStyle = '#fff'; g.fillRect(0, 0, W - 1, 1); g.fillRect(0, 0, 1, H - 1);
+  g.fillStyle = '#0a0a0a'; g.fillRect(0, H - 1, W, 1); g.fillRect(W - 1, 0, 1, H);
+  g.fillStyle = '#808080'; g.fillRect(1, H - 2, W - 2, 1); g.fillRect(W - 2, 1, 1, H - 2);
+  const bar = g.createLinearGradient(3, 0, W - 3, 0);
+  bar.addColorStop(0, NAVY); bar.addColorStop(1, '#1084d0');
+  g.fillStyle = bar; g.fillRect(3, 3, W - 6, 10);
+  g.fillStyle = '#fff'; g.font = `11px ${FONT}`; g.textAlign = 'left'; g.textBaseline = 'middle';
+  g.fillText(title, 6, 8);
+}
+
+// A sunken box, like a list field.
+function sunken(g, x, y, w, h, fill) {
+  g.fillStyle = '#808080'; g.fillRect(x, y, w, 1); g.fillRect(x, y, 1, h);
+  g.fillStyle = '#fff'; g.fillRect(x, y + h - 1, w, 1); g.fillRect(x + w - 1, y, 1, h);
+  g.fillStyle = fill; g.fillRect(x + 1, y + 1, w - 2, h - 2);
+}
 
 export class Hud {
   constructor(root) {
@@ -49,9 +71,9 @@ export class Hud {
       for (let i = 0; i <= path.count; i += 2) { const [x, y] = this.toMap(path.x[i % path.count], path.z[i % path.count]); if (i === 0) g.moveTo(x, y); else g.lineTo(x, y); }
       g.closePath();
     };
-    g.strokeStyle = 'rgba(0, 0, 0, 0.6)'; g.lineWidth = 9; trace(); g.stroke();
-    g.strokeStyle = '#2a8f92'; g.lineWidth = 6; trace(); g.stroke();
-    g.strokeStyle = '#bff8f4'; g.lineWidth = 2; trace(); g.stroke();
+    g.strokeStyle = '#004848'; g.lineWidth = 9; trace(); g.stroke();
+    g.strokeStyle = '#c0c0c0'; g.lineWidth = 6; trace(); g.stroke();
+    g.strokeStyle = '#ffffff'; g.lineWidth = 2; trace(); g.stroke();
     // The start line.
     const [sx, sy] = this.toMap(path.x[start], path.z[start]);
     g.fillStyle = '#fff'; g.fillRect(Math.round(sx) - 4, Math.round(sy) - 4, 8, 8);
@@ -62,18 +84,21 @@ export class Hud {
   drawMap(v) {
     if (!this.outline) return;
     const g = this.map.getContext('2d'), W = this.map.width, H = this.map.height;
-    g.clearRect(0, 0, W, H);
+    drawWindow(g, W, H, 'Map');
+    const X = 4, Y = 15, MW = W - 8, MH = H - 19;
+    sunken(g, X, Y, MW, MH, '#008080');
     const [x, y] = this.toMap(v.x, v.z);
     g.save();
-    g.translate(W / 2, H * 0.62); // the car sits low, so more of the road ahead shows
+    g.beginPath(); g.rect(X + 1, Y + 1, MW - 2, MH - 2); g.clip();
+    g.save();
+    g.translate(W / 2, Y + MH * 0.62); // the car sits low, so more of the road ahead shows
     g.rotate(v.heading);
     g.drawImage(this.outline, -x, -y);
     g.restore();
-    g.save();
-    g.translate(W / 2, H * 0.62);
+    g.translate(W / 2, Y + MH * 0.62);
     g.beginPath(); g.moveTo(0, -7); g.lineTo(5.5, 6); g.lineTo(0, 3); g.lineTo(-5.5, 6); g.closePath();
     g.lineWidth = 2; g.strokeStyle = '#1e0010'; g.stroke();
-    g.fillStyle = ORANGE; g.fill();
+    g.fillStyle = PINK; g.fill();
     g.restore();
   }
 
@@ -81,70 +106,51 @@ export class Hud {
     this.drawMap(v);
     const g = this.g, W = this.canvas.width, H = this.canvas.height;
     const s = v.spec;
-    g.clearRect(0, 0, W, H);
     g.imageSmoothingEnabled = false;
-    const cx = W / 2, cy = H * 0.5, R = W * 0.46;
-    const a0 = Math.PI * 0.75, a1 = Math.PI * 2.25;
+    drawWindow(g, W, H, 'Rev counter');
 
-    // Backing disc, notched by the blocks around it.
-    g.fillStyle = 'rgba(6, 9, 12, 0.72)';
-    g.beginPath(); g.arc(cx, cy, R - 3, 0, Math.PI * 2); g.fill();
-
+    // The revs: a progress bar of blocks, with the last ones red.
+    const bx = 4, by = 15, bw = W - 8, bh = 13;
+    sunken(g, bx, by, bw, bh, '#fff');
     const lit = (v.rpm / s.limiterRpm) * SEGMENTS;
     const red = Math.round((s.redline / s.limiterRpm) * SEGMENTS) - 2;
     const shiftLight = v.rpm > s.autoUpshiftRpm - 400 && v.gearbox.mode === 'manual';
     this.flash = v.limiter || shiftLight ? (this.flash + dt * 16) % 2 : 0;
+    const step = (bw - 4) / SEGMENTS;
     for (let i = 0; i < SEGMENTS; i++) {
-      const a = a0 + (a1 - a0) * (i + 0.5) / SEGMENTS;
-      const on = i < Math.round(lit);
-      const hot = i >= red, warm = i >= red - 5;
-      let col = on ? (hot ? (this.flash > 1 ? TEXT : RED) : warm ? ORANGE : CYAN) : (hot ? '#3a1410' : '#12222a');
-      const big = i % 4 === 0;
-      const r0 = R - (big ? 12 : 9);
-      g.save();
-      g.translate(cx + Math.cos(a) * (r0 + R) / 2, cy + Math.sin(a) * (r0 + R) / 2);
-      g.rotate(a);
-      g.fillStyle = col;
-      g.fillRect(-(R - r0) / 2, -2.5, R - r0, 5);
-      g.restore();
-    }
-    // rpm numbers 1..7
-    g.fillStyle = 'rgba(134, 163, 173, 0.9)';
-    g.font = `12px ${FONT}`;
-    g.textAlign = 'center'; g.textBaseline = 'middle';
-    for (let k = 1; k * 1000 <= s.limiterRpm; k++) {
-      const a = a0 + (a1 - a0) * (k * 1000 / s.limiterRpm);
-      g.fillText(String(k), Math.round(cx + Math.cos(a) * (R - 21)), Math.round(cy + Math.sin(a) * (R - 21)));
+      const on = i < Math.round(lit), hot = i >= red;
+      if (!on && !hot) continue;
+      g.fillStyle = on ? (hot ? (this.flash > 1 ? '#fff' : '#d00000') : NAVY) : '#f0c8c8';
+      g.fillRect(Math.round(bx + 2 + i * step), by + 2, Math.max(2, Math.floor(step) - 1), bh - 4);
     }
 
-    // Gear, with a short pop when it changes.
+    // The display: gear on the left, speed on the right, in lit green.
+    const dx = 4, dy = 30, dw = W - 8, dh = H - 34;
+    sunken(g, dx, dy, dw, dh, '#050805');
     const gear = v.gearbox.gear === -1 ? 'R' : v.gearbox.gear === 0 ? 'N' : String(v.gearbox.gear);
     if (gear !== this.lastGear) { this.gearPop = this.lastGear === null ? 0 : 1; this.lastGear = gear; }
     this.gearPop = Math.max(0, this.gearPop - dt * 5);
-    const size = Math.round(46 + this.gearPop * 14);
-    g.font = `${size}px ${FONT}`;
-    g.fillStyle = '#0d5d68';
-    g.fillText(gear, cx + 2, cy - 6 + 2);
-    g.fillStyle = v.gearbox.shifting ? CYAN : TEXT;
-    g.fillText(gear, cx, cy - 6);
+    g.textBaseline = 'middle'; g.textAlign = 'center';
+    g.font = `${Math.round(46 + this.gearPop * 10)}px ${FONT}`;
+    g.fillStyle = v.gearbox.shifting ? LCD_DIM : LCD;
+    g.fillText(gear, dx + 22, dy + dh / 2 - 1);
     if (v.gearbox.mode === 'manual') {
       g.font = `12px ${FONT}`;
-      g.fillStyle = CYAN;
-      g.fillText('M', cx + 20, cy - 22);
+      g.fillStyle = LCD;
+      g.fillText('M', dx + 42, dy + 9);
     }
 
     // Speed, eased a touch so the digits do not flicker.
     const kmh = Math.abs(v.speedForward) * 3.6;
     this.shownKmh += (kmh - this.shownKmh) * Math.min(1, dt * 12);
     const shown = Math.round(this.units === 'mph' ? this.shownKmh / 1.609 : this.shownKmh);
-    g.font = `30px ${FONT}`;
-    g.fillStyle = '#5a0a30';
-    g.fillText(String(shown), cx + 2, cy + 26 + 2);
-    g.fillStyle = ORANGE;
-    g.fillText(String(shown), cx, cy + 26);
+    g.textAlign = 'right';
+    g.font = `40px ${FONT}`;
+    g.fillStyle = LCD;
+    g.fillText(String(shown), dx + dw - 6, dy + dh / 2 - 6);
     g.font = `11px ${FONT}`;
-    g.fillStyle = 'rgba(134, 163, 173, 0.9)';
-    g.fillText(this.units === 'mph' ? 'MPH' : 'KM/H', cx, cy + 44);
+    g.fillStyle = '#20a040';
+    g.fillText(this.units === 'mph' ? 'MPH' : 'KM/H', dx + dw - 6, dy + dh - 8);
   }
 
   drawDebug(v, info) {
