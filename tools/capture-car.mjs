@@ -2,9 +2,12 @@
 // is only the source: this sorts its parts into the game's materials (paint,
 // glass, lamps...), throws away badges and logos, finds the wheels, scales the
 // car so its axles sit where the physics has them, stands it on the road,
-// finds the bonnet panel, measures the body (src/vehicles/captured.js uses
-// that for kits, wings and the engine bay), and simplifies everything for
-// browsers. Output: assets/cars/<id>.bin and any textures it needs.
+// finds the bonnet panel and measures the body (src/vehicles/captured.js uses
+// that for kits, wings and the engine bay). No triangle of the car is removed:
+// the full detail is only compressed. Two files come out, in assets/cars/:
+// <id>.bin (every triangle) and <id>-lite.bin (made from it: a lighter copy for
+// iPads, and a small one for parked cars), plus the textures. The GLB stays as
+// it was.
 //
 //   node tools/capture-car.mjs            all cars in tools/car-recipes.mjs
 //   node tools/capture-car.mjs gtar-r35   one car
@@ -12,12 +15,12 @@
 // Needs `npm install` (meshoptimizer) and the GLBs in GLB/ (git-ignored).
 // The game itself needs neither: it only reads assets/cars/.
 
-import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdirSync, statSync, rmSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { tmpdir } from 'node:os';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { MeshoptSimplifier as Simplifier } from 'meshoptimizer';
+import { MeshoptSimplifier as Simplifier, MeshoptEncoder as Encoder } from 'meshoptimizer';
 import { RECIPES } from './car-recipes.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -71,6 +74,9 @@ function primitives(glb) {
       const P = accessor(pr.attributes.POSITION), N = pr.attributes.NORMAL != null ? accessor(pr.attributes.NORMAL) : null;
       const U = pr.attributes.TEXCOORD_0 != null ? accessor(pr.attributes.TEXCOORD_0) : null;
       const X = pr.indices != null ? accessor(pr.indices) : Float64Array.from({ length: P.length / 3 }, (_, k) => k);
+      // A mirrored node turns its faces inside out: put them back.
+      const det = w[0] * (w[5] * w[10] - w[6] * w[9]) - w[4] * (w[1] * w[10] - w[2] * w[9]) + w[8] * (w[1] * w[6] - w[2] * w[5]);
+      if (det < 0) for (let t = 0; t < X.length; t += 3) { const k = X[t + 1]; X[t + 1] = X[t + 2]; X[t + 2] = k; }
       const count = P.length / 3, pos = new Float64Array(count * 3), nor = new Float64Array(count * 3);
       for (let k = 0; k < count; k++) {
         const x = P[k * 3], y = P[k * 3 + 1], z = P[k * 3 + 2];
@@ -192,16 +198,60 @@ function take(s, tris) {
   return r;
 }
 
-// Copy a texture out of the GLB, smaller. Alpha survives only as PNG.
+// Copy a texture out of the GLB, shrunk only if it is bigger than `size` (sips
+// -Z also enlarges), and re-encoded only if that makes the file smaller. Alpha
+// survives only as PNG.
 function saveTexture(glb, texIndex, id, name, keepAlpha, size) {
   const { data, mime } = glb.image(glb.j.textures[texIndex].source);
-  const tmp = join(tmpdir(), `cap-${process.pid}.${mime.split('/')[1]}`);
+  const ext = mime.split('/')[1].replace('jpeg', 'jpg');
+  const tmp = join(tmpdir(), `cap-${process.pid}.${ext}`);
   writeFileSync(tmp, data);
-  const file = `${id}-${name}.${keepAlpha ? 'png' : 'jpg'}`;
-  const args = ['-Z', String(size), '-s', 'format', keepAlpha ? 'png' : 'jpeg'];
-  if (!keepAlpha) args.push('-s', 'formatOptions', '72');
-  execFileSync('sips', [...args, tmp, '--out', join(OUT, 'tex', file)], { stdio: 'ignore' });
+  const sizes = execFileSync('sips', ['-g', 'pixelWidth', '-g', 'pixelHeight', '-g', 'hasAlpha', tmp]).toString();
+  // JPEG turns see-through pixels white, even on a solid material: stay PNG.
+  keepAlpha ||= /hasAlpha: yes/.test(sizes);
+  const big = Math.max(...[...sizes.matchAll(/pixel\w+: (\d+)/g)].map((m) => +m[1]));
+  const file = `${id}-${name}.${keepAlpha ? 'png' : 'jpg'}`, path = join(OUT, 'tex', file);
+  const args = big > size ? ['-Z', String(size)] : [];
+  args.push('-s', 'format', keepAlpha ? 'png' : 'jpeg');
+  if (!keepAlpha) args.push('-s', 'formatOptions', '88');
+  execFileSync('sips', [...args, tmp, '--out', path], { stdio: 'ignore' });
+  if (big <= size && ext === (keepAlpha ? 'png' : 'jpg') && statSync(path).size > data.length) writeFileSync(path, data);
   return file;
+}
+
+// One part's mesh, packed 16 bytes a corner (position, normal, texture spot)
+// and compressed. Corners are reordered, which changes nothing you can see.
+function encodeMesh(q, useUv) {
+  const n = q.pos.length / 3, idx = Uint32Array.from(q.idx);
+  const [remap, verts] = Encoder.reorderMesh(idx, true, true);
+  const uvMin = [1e9, 1e9], uvMax = [-1e9, -1e9];
+  if (useUv) for (let i = 0; i < n; i++) for (let c = 0; c < 2; c++) { uvMin[c] = Math.min(uvMin[c], q.uv[i * 2 + c]); uvMax[c] = Math.max(uvMax[c], q.uv[i * 2 + c]); }
+  const uvSpan = [Math.max(uvMax[0] - uvMin[0], 1e-6), Math.max(uvMax[1] - uvMin[1], 1e-6)];
+  const vb = new DataView(new ArrayBuffer(verts * 16));
+  for (let i = 0; i < n; i++) {
+    const at = remap[i] * 16;
+    if (remap[i] === 0xffffffff) continue;
+    for (let c = 0; c < 3; c++) {
+      vb.setInt16(at + c * 2, Math.round(q.pos[i * 3 + c] * POS_SCALE), true);
+      vb.setInt16(at + 6 + c * 2, Math.round(q.nor[i * 3 + c] * 32767), true);
+    }
+    if (useUv) for (let c = 0; c < 2; c++) vb.setUint16(at + 12 + c * 2, Math.round((q.uv[i * 2 + c] - uvMin[c]) / uvSpan[c] * 65535), true);
+  }
+  return {
+    verts, indices: idx.length, uvMin: useUv ? uvMin : null, uvSpan: useUv ? uvSpan : null,
+    vb: Encoder.encodeVertexBuffer(new Uint8Array(vb.buffer), verts, 16),
+    ib: Encoder.encodeIndexBuffer(new Uint8Array(idx.buffer), idx.length, 4),
+  };
+}
+
+const AXES = ['x', 'y', 'z'];
+// Is this triangle's middle inside the box? ({ x: [a, b], y: ..., z: ... })
+function triIn(q, t, box) {
+  return AXES.every((a, c) => {
+    if (!box[a]) return true;
+    const m = (q.pos[q.idx[t] * 3 + c] + q.pos[q.idx[t + 1] * 3 + c] + q.pos[q.idx[t + 2] * 3 + c]) / 3;
+    return m >= box[a][0] && m <= box[a][1];
+  });
 }
 
 // --- One car --------------------------------------------------------------
@@ -229,7 +279,7 @@ function capture(R) {
   // the car are found from the tyres themselves.
   const raw = [[], [], [], []]; // +x+z, -x+z, +x-z, -x-z
   let cx = 0, cz = 0, n = 0;
-  const tyres = prims.filter((p) => p.slot === 'tyre' || p.slot === 'rim');
+  const tyres = prims.filter((p) => p.slot === 'tyre' || (p.slot === 'rim' && !R.tyresOnly));
   for (const p of tyres) for (let i = 0; i < p.pos.length; i += 3) { cx += p.pos[i]; cz += p.pos[i + 2]; n++; }
   cx /= n; cz /= n;
   for (const p of tyres) for (let i = 0; i < p.pos.length; i += 3) raw[(p.pos[i] > cx ? 0 : 1) + (p.pos[i + 2] > cz ? 0 : 2)].push(i < 0 ? 0 : [p.pos[i], p.pos[i + 1], p.pos[i + 2]]);
@@ -251,6 +301,14 @@ function capture(R) {
     if (nor) { nor[0] *= sign; nor[2] *= sign; }
   };
   const wheelAt = boxes.map((b) => { const p = [...b.c]; xf(p); return { c: p, r: b.r * s, w: (b.max[0] - b.min[0]) * s }; });
+
+  // Bought-in cars keep hubs, callipers and wheel bolts in general materials:
+  // anything wholly inside a wheel goes with it. Bolts turn, the rest steers.
+  const inWheel = (p) => boxes.find((b) => {
+    for (let i = 0; i < p.pos.length; i += 3) if (Math.hypot(p.pos[i + 1] - b.c[1], p.pos[i + 2] - b.c[2]) > b.r || Math.abs(p.pos[i] - b.c[0]) > (b.max[0] - b.min[0]) * 0.75) return false;
+    return true;
+  });
+  if (R.autoWheels) for (const p of prims) if (!['tyre', 'rim', 'disc', 'caliper', 'drop'].includes(p.slot) && p.pos.length && inWheel(p)) p.rule = [null, p.slot, { ...p.rule?.[2], group: /bolt/i.test(j.materials[p.material]?.name) ? 'spin' : 'hub' }];
 
   // 3. Sort triangles into parts.
   const groupOf = (slot) => ['rim', 'tyre'].includes(slot) ? 'spin' : ['disc', 'caliper'].includes(slot) ? 'hub' : slot === 'drop' ? null : 'body';
@@ -287,11 +345,18 @@ function capture(R) {
           const rimR = R.rimRatio ?? 0.74;
           partFor(`${group}${axle}:rim:${m.name}`, { slot: 'rim', group: group + axle, m }).soup.add(p, (a, c, d) => cornerOf(p, a) === corner && radial(a, c, d) < rimR, localise);
           partFor(`${group}${axle}:tyre:`, { slot: 'tyre', group: group + axle, m }).soup.add(p, (a, c, d) => cornerOf(p, a) === corner && radial(a, c, d) >= rimR, localise);
+        } else if (R.tyresOnly && p.slot === 'rim') {
+          // A rim material that also holds other parts: only what is in the wheel.
+          partFor(`${group}${axle}:rim:${m.name}`, { slot: 'rim', group: group + axle, m, opts }).soup.add(p, (a, c, d) => cornerOf(p, a) === corner && radial(a, c, d) <= 1, localise);
         } else {
-          const key = `${group}${axle}:${p.slot}:${p.slot === 'rim' || p.slot === 'tyre' ? m.name : ''}`;
+          const key = `${group}${axle}:${p.slot}:${['rim', 'tyre', 'asis'].includes(p.slot) ? m.name : ''}`;
           partFor(key, { slot: p.slot, group: group + axle, m, opts }).soup.add(p, (a) => cornerOf(p, a) === corner, localise);
         }
       }
+      if (R.tyresOnly && p.slot === 'rim') partFor('body:trim:', { slot: 'trim', group: 'body', m, opts }).soup.add(p, (a) => {
+        const b = boxes[cornerOf(p, a)];
+        return Math.hypot(p.pos[a * 3 + 1] - b.c[1], p.pos[a * 3 + 2] - b.c[2]) > b.r;
+      }, xf);
       continue;
     }
     // Split by end of the car where a slot asks for it (lamp atlases).
@@ -373,8 +438,17 @@ function capture(R) {
     const list = islands(paint.soup);
     if (R.listIslands) for (const g of list.sort((a, b) => b.tris.length - a.tris.length).slice(0, 14)) console.log('   island', g.tris.length, g.min.map((v) => +v.toFixed(2)).join(' '), '..', g.max.map((v) => +v.toFixed(2)).join(' '));
     const [bz0, bz1] = R.bonnet.z, minY = R.bonnet.y ?? 0.7;
+    if (R.bonnet.x) {
+      // A body that is one skin: the bonnet is the triangles inside the box.
+      const q = paint.soup, inside = [], rest = [];
+      const box = { x: [-R.bonnet.x, R.bonnet.x], y: [minY, 9], z: [bz0, bz1] };
+      for (let t = 0; t < q.idx.length; t += 3) (triIn(q, t, box) ? inside : rest).push(t);
+      parts.set('lid', { slot: 'paint', group: 'lid', m: paint.m, opts: { double: true }, soup: take(q, inside) });
+      paint.soup = take(q, rest);
+      lid = [bz0, bz1];
+    }
     const inBox = list.filter((g) => g.min[2] > bz0 && g.max[2] < bz1 && g.min[1] > minY).sort((a, b) => b.tris.length - a.tris.length);
-    const big = inBox[0];
+    const big = lid ? null : inBox[0];
     // The panel, and anything small sitting on it (vents, scoops).
     const hit = big ? inBox.filter((g) => g === big || (g.min[0] > big.min[0] && g.max[0] < big.max[0] && g.min[2] > big.min[2] && g.max[2] < big.max[2])) : [];
     if (hit.length) {
@@ -386,13 +460,36 @@ function capture(R) {
       let a = 1e9, b = -1e9;
       for (const g of hit) { a = Math.min(a, g.min[2]); b = Math.max(b, g.max[2]); }
       lid = [+a.toFixed(3), +b.toFixed(3)];
-    } else console.log('   no bonnet island found');
+    } else if (!lid) console.log('   no bonnet island found');
+  }
+
+  // 6b. Panels: bumpers, skirts, wing, boot and so on become parts of their
+  // own, so they can be swapped or moved. Whole islands where the file keeps a
+  // panel separate; `cut` slices a body that is one skin along the box's edges.
+  if (R.panels) for (const [name, box] of Object.entries(R.panels)) {
+    let moved = 0;
+    for (const [key, part] of [...parts]) {
+      if (part.group !== 'body' || part.panel || !['paint', 'trim', 'carbon', 'black'].includes(part.slot)) continue;
+      const q = part.soup, picked = [];
+      if (box.cut) { for (let t = 0; t < q.idx.length; t += 3) if (triIn(q, t, box)) picked.push(t); }
+      else for (const g of islands(q)) {
+        const c = g.min.map((v, i) => (v + g.max[i]) / 2);
+        if (AXES.every((a, i) => !box[a] || (c[i] >= box[a][0] && c[i] <= box[a][1]))) picked.push(...g.tris);
+      }
+      if (!picked.length) continue;
+      const set = new Set(picked), rest = [];
+      for (let t = 0; t < q.idx.length; t += 3) if (!set.has(t)) rest.push(t);
+      parts.set(`panel:${name}:${key}`, { ...part, panel: name, soup: take(q, picked) });
+      part.soup = take(q, rest);
+      moved += picked.length;
+    }
+    console.log(`   panel ${name}: ${moved} triangles`);
   }
 
   if (R.findSteering) {
     // Help for writing a recipe: interior islands the size of a steering wheel.
     for (const part of parts.values()) {
-      if (part.group !== 'body' || part.slot !== 'asis') continue;
+      if (part.group !== 'body' || part.slot === 'paint') continue;
       for (const g of islands(part.soup)) {
         const size = g.min.map((v, c) => g.max[c] - v), c = g.min.map((v, k) => (v + g.max[k]) / 2);
         if (size[0] > 0.26 && size[0] < 0.46 && size[1] > 0.2 && c[1] > 0.6 && c[1] < 1.15 && Math.abs(c[0]) > 0.2 && Math.abs(c[0]) < 0.6) console.log('   wheel?', part.m.name.slice(-22), g.tris.length, 'centre', c.map((v) => +v.toFixed(3)).join(' '), 'size', size.map((v) => +v.toFixed(3)).join(' '));
@@ -406,8 +503,9 @@ function capture(R) {
   if (R.steering) {
     let best = null;
     for (const [k, part] of parts) {
-      if (part.group !== 'body' || part.slot !== 'asis') continue;
+      if (part.group !== 'body' || part.slot === 'paint') continue;
       for (const g of islands(part.soup)) {
+        if (g.tris.length < 200) continue;
         const c = g.min.map((v, i) => (v + g.max[i]) / 2), d = Math.hypot(c[0] - R.steering[0], c[1] - R.steering[1], c[2] - R.steering[2]);
         if (!best || d < best.d) best = { d, g, part, c, k };
       }
@@ -448,57 +546,56 @@ function capture(R) {
   // A foundry car says where its wheel is: it is already its own part.
   if (R.steeringAt) steering = { c: R.steeringAt.c, axis: R.steeringAt.axis, hub: 0, padR: 0 };
 
-  // 8. Simplify and write.
+  // 8. Compress and write. lod 0 is every triangle; lod 2 the iPad copy
+  // (LITE_TRIS for the whole car); lod 1 the parked car (PARKED_TRIS).
   mkdirSync(join(OUT, 'tex'), { recursive: true });
-  const header = { id: R.id, source: R.credit, def, lid, wheels: wheelAt, steering, eye: R.eye, needles: R.needles, exhausts: R.exhausts, popups: R.popups, kits: !!R.kits, dials: R.dials, headLamp: R.headLamp, ownWing: !!R.ownWing, engineRear: !!R.engineRear, parts: [] };
-  const blobs = [];
-  let offset = 0, total = 0;
-  const push = (arr) => { const pad = (4 - (offset % 4)) % 4; if (pad) { blobs.push(Buffer.alloc(pad)); offset += pad; } const b = Buffer.from(arr.buffer, arr.byteOffset, arr.byteLength); blobs.push(b); const at = offset; offset += b.length; return at; };
+  const head = { format: 2, id: R.id, source: R.credit, identity: R.identity, def, lid, wheels: wheelAt, steering, eye: R.eye, needles: R.needles, exhausts: R.exhausts, popups: R.popups, kits: !!R.kits, dials: R.dials, headLamp: R.headLamp, ownWing: !!R.ownWing, engineRear: !!R.engineRear };
+  const files = { full: { parts: [], blobs: [], offset: 0 }, lite: { parts: [], blobs: [], offset: 0 } };
+  const push = (f, arr) => { const pad = (4 - (f.offset % 4)) % 4; if (pad) { f.blobs.push(Buffer.alloc(pad)); f.offset += pad; } const b = Buffer.from(arr.buffer, arr.byteOffset, arr.byteLength); f.blobs.push(b); const at = f.offset; f.offset += b.length; return at; };
   const texNames = new Map();
-  const write = (part, lod) => {
-    const ratio = part.opts?.ratio ?? R.ratio?.[part.slot.replace(/[FR]$/, '')] ?? (part.group.startsWith('spin') ? 0.5 : 1);
-    const q = lod ? simplify(part.soup, Math.min(1, ratio * 0.14), 0.03) : simplify(part.soup, ratio, ratio < 0.3 ? 0.02 : 0.004);
-    if (!q.idx.length) return;
-    const pos = new Int16Array(q.pos.length), nor = new Int16Array(q.nor.length);
-    for (let i = 0; i < q.pos.length; i++) { pos[i] = Math.round(q.pos[i] * POS_SCALE); nor[i] = Math.round(q.nor[i] * 32767); }
-    const big = q.pos.length / 3 > 65535;
-    const idx = big ? Uint32Array.from(q.idx) : Uint16Array.from(q.idx);
-    const useTex = part.m.texIndex != null && part.opts?.tex !== false && !NO_TEX.has(part.slot);
-    let tex = null;
-    if (useTex) {
-      const k = part.m.texIndex;
-      if (!texNames.has(k)) texNames.set(k, saveTexture(glb, k, R.id, `t${texNames.size}`, part.m.alpha !== 'OPAQUE', part.opts?.texSize ?? 1024));
-      tex = texNames.get(k);
-    }
-    const uv = useTex ? Float32Array.from(q.uv) : null;
-    const info = {
-      slot: part.slot, group: part.group, lod, name: part.m.name, tex,
-      color: part.m.color.map((v, i) => +(i < 3 ? v * (part.opts?.tint ?? 1) : v).toFixed(3)), metal: part.m.metal, rough: part.m.rough, alpha: part.m.alpha, double: !!(part.m.double || part.opts?.double),
-      verts: q.pos.length / 3, indices: q.idx.length, big,
-    };
-    info.pos = push(pos); info.nor = push(nor); info.idx = push(idx); if (uv) info.uv = push(uv);
-    header.parts.push(info);
-    total += q.tris;
+  const texFor = (part, small) => {
+    const k = `${part.m.texIndex}${small ? 's' : ''}`;
+    if (!texNames.has(k)) texNames.set(k, saveTexture(glb, part.m.texIndex, R.id, `t${part.m.texIndex}${small ? '-s' : ''}`, part.m.alpha !== 'OPAQUE', small ? 1024 : 4096));
+    return texNames.get(k);
   };
-  const lod1 = (p) => (p.group === 'body' || p.group === 'lid' || p.group === 'pop') && !NO_LOD1.has(p.slot);
-  let lodTotal = 0;
+  let fullTris = 0;
+  for (const part of parts.values()) fullTris += part.soup.tris;
+  const write = (part, lod) => {
+    const q = lod === 0 ? part.soup : simplify(part.soup, (lod === 2 ? LITE_TRIS : PARKED_TRIS) / fullTris, lod === 2 ? 0.01 : 0.03);
+    if (!q.idx.length) return 0;
+    const useTex = part.m.texIndex != null && part.opts?.tex !== false && !NO_TEX.has(part.slot);
+    const e = encodeMesh(q, useTex);
+    const f = lod === 0 ? files.full : files.lite;
+    f.parts.push({
+      slot: part.slot, group: part.group, panel: part.panel, lod, name: part.m.name, tex: useTex ? texFor(part, lod !== 0) : null,
+      color: part.m.color.map((v, i) => +(i < 3 ? v * (part.opts?.tint ?? 1) : v).toFixed(3)), metal: part.m.metal, rough: part.m.rough, alpha: part.m.alpha, double: !!(part.m.double || part.opts?.double),
+      verts: e.verts, indices: e.indices, uvMin: e.uvMin, uvSpan: e.uvSpan, vb: push(f, e.vb), vbLen: e.vb.length, ib: push(f, e.ib), ibLen: e.ib.length,
+    });
+    return q.tris;
+  };
+  const parked = (p) => (p.group === 'body' || p.group === 'lid' || p.group === 'pop') && !NO_LOD1.has(p.slot);
+  let total = 0, liteTotal = 0, parkedTotal = 0;
   for (const part of parts.values()) {
-    write(part, 0);
-    if (lod1(part)) { const b = total; write(part, 1); lodTotal += total - b; total = b; }
+    total += write(part, 0);
+    liteTotal += write(part, 2);
+    if (parked(part)) parkedTotal += write(part, 1);
   }
-  const json = Buffer.from(JSON.stringify(header));
-  const pad = Buffer.alloc((4 - ((json.length + 4) % 4)) % 4, 32);
-  const len = Buffer.alloc(4); len.writeUInt32LE(json.length + pad.length);
-  writeFileSync(join(OUT, `${R.id}.bin`), Buffer.concat([len, json, pad, ...blobs]));
-  console.log(`  ${R.id}: scale ${s.toFixed(5)}, ${total} triangles (parked version ${lodTotal}), ${(offset / 1e6).toFixed(2)} MB, length ${(z1 - z0).toFixed(2)} m, tall ${rise.toFixed(2)} m, tyre radius ${wheelAt[0].r.toFixed(3)}/${wheelAt[2].r.toFixed(3)} m, track ${wheelAt[0].c[0].toFixed(3)}, lid ${lid}, steering ${steering?.found ?? '-'}`);
+  for (const [name, f] of [['', files.full], ['-lite', files.lite]]) {
+    const json = Buffer.from(JSON.stringify({ ...head, parts: f.parts }));
+    const pad = Buffer.alloc((4 - ((json.length + 4) % 4)) % 4, 32);
+    const len = Buffer.alloc(4); len.writeUInt32LE(json.length + pad.length);
+    writeFileSync(join(OUT, `${R.id}${name}.bin`), Buffer.concat([len, json, pad, ...f.blobs]));
+  }
+  console.log(`  ${R.id}: scale ${s.toFixed(5)}, ${total} triangles in ${(files.full.offset / 1e6).toFixed(2)} MB; iPad copy ${liteTotal}, parked ${parkedTotal} in ${(files.lite.offset / 1e6).toFixed(2)} MB; length ${(z1 - z0).toFixed(2)} m, tall ${rise.toFixed(2)} m, tyre radius ${wheelAt[0].r.toFixed(3)}/${wheelAt[2].r.toFixed(3)} m, track ${wheelAt[0].c[0].toFixed(3)}, lid ${lid}, steering ${steering?.found ?? '-'}`);
   const bySlot = {};
-  for (const p of header.parts) if (!p.lod) bySlot[p.slot] = (bySlot[p.slot] || 0) + p.indices / 3;
+  for (const p of files.full.parts) bySlot[p.slot] = (bySlot[p.slot] || 0) + p.indices / 3;
   console.log('   ', Object.entries(bySlot).map(([k, v]) => `${k} ${v}`).join(', '));
 }
 
 const NO_TEX = new Set(['tyre', 'paint', 'paint2', 'glass', 'trim', 'carbon', 'chrome', 'under', 'tail', 'amber', 'lens', 'black', 'metal', 'caliper', 'plate']);
 const NO_LOD1 = new Set(['asis', 'engine', 'interior', 'lens']);
+const LITE_TRIS = 150000, PARKED_TRIS = 20000;
 
-await Simplifier.ready;
+await Promise.all([Simplifier.ready, Encoder.ready]);
 const only = process.argv[2];
 for (const R of RECIPES) if (!only || only === R.id) { console.log(R.id); capture(R); }

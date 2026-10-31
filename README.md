@@ -30,10 +30,9 @@ layout can be dragged into place there too.
 
 ## Credits
 
-The Miata is modelled for this game by its own car foundry (`tools/foundry/`), from a reference
-sheet. Four car bodies and cabins are captured from these 3D models (simplified, resized, badges
-and logos removed, sorted into the game's own materials, see `tools/capture-car.mjs`). All are
-from Sketchfab, used under Creative Commons licences. Thank you to the authors.
+Car bodies and cabins are captured from these 3D models (badges and logos removed, sorted into
+the game's own materials, see `tools/capture-car.mjs`). All are from Sketchfab, used under Creative
+Commons licences. Thank you to the authors.
 
 - [2017 Nissan Aimgain GT R35 GT-R Type 2](https://sketchfab.com/3d-models/2017-nissan-aimgain-gt-r35-gt-r-type-2-883cf78fadef4d698e50d2c1ae3f59c2)
   by [Outlaw Games](https://sketchfab.com/Outlaw_Games), [CC BY-NC 4.0](http://creativecommons.org/licenses/by-nc/4.0/)
@@ -41,8 +40,10 @@ from Sketchfab, used under Creative Commons licences. Thank you to the authors.
   by [Outlaw Games](https://sketchfab.com/Outlaw_Games), [CC BY-NC 4.0](http://creativecommons.org/licenses/by-nc/4.0/)
 - [2019 Lamborghini Aventador SVJ](https://sketchfab.com/3d-models/2019-lamborghini-aventador-svj-1910d24bbad34fdda0c4fe30f01b3cc1)
   by [Ddiaz Design](https://sketchfab.com/ddiaz-design), [CC BY 4.0](http://creativecommons.org/licenses/by/4.0/)
-- [Ford Mustang Shelby 2012](https://sketchfab.com/3d-models/ford-mustang-shelby-2012-b60b3a520c024fd69416d56a71900626)
-  by [David_Holiday](https://sketchfab.com/David_Holiday), [CC BY 4.0](http://creativecommons.org/licenses/by/4.0/)
+- **Nissan Skyline R34 GT-R (2002)**
+  by [Ddiaz Design](https://sketchfab.com/ddiaz-design), [CC BY 4.0](http://creativecommons.org/licenses/by/4.0/)
+- **Ford Mustang John Bowe 1969** and **Lamborghini Countach 5000QV**
+  by [vecarz](https://sketchfab.com/heynic), [CC BY 4.0](http://creativecommons.org/licenses/by/4.0/)
 
 ## Checks
 

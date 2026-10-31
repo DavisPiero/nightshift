@@ -566,50 +566,6 @@ function r34Details({ B, add, box, mats: m, spec, tip }) {
 // (open, because the lights are on), amber indicators low in the nose, a low
 // mouth, a bonnet with soft bulges over the wings, oval tail lights, a plate
 // between them, one exhaust and a black soft top (def.softTop).
-function miataDetails({ B, add, box, mats: m, spec, tip }) {
-  const zf = B.z1, zr = B.z0;
-  // Nose: a low, wide mouth with a thin lip, amber indicators in the corners.
-  add(flatShape(roundRect(0, 0.33, 0.92, 0.1, 0.035), zf, 1), m.black);
-  add(flatShape(roundRect(0, 0.4, 0.5, 0.05, 0.015), zf, 1, 0.006), m.trim);
-  for (const s of [1, -1]) {
-    add(flatShape(roundRect(s * 0.58, 0.45, 0.2, 0.075, 0.025), zf, 1, 0.004), m.lampInner);
-    add(flatShape(roundRect(s * 0.58, 0.45, 0.17, 0.05, 0.02), zf, 1, 0.007), m.amber);
-    add(flatShape(roundRect(s * 0.24, 0.47, 0.1, 0.05, 0.015), zf, 1, 0.005), m.lampInner);
-  }
-  const lip = box(1.4, 0.02, 0.14, m.carbon, 0, 0.27, zf - 0.05);
-  lip.rotation.x = 0.04;
-  // Pop-up headlights, raised: a black bucket, the lamp facing forward, the
-  // body-colour lid tipped up behind it.
-  for (const s of [1, -1]) {
-    const x = s * 0.5, y = B.hood(1.58) + 0.02;
-    const bucket = add(new THREE.CylinderGeometry(0.085, 0.085, 0.11, 14), m.black);
-    bucket.rotation.x = Math.PI / 2; bucket.position.set(x, y + 0.07, 1.58);
-    const disc = add(new THREE.CircleGeometry(0.07, 14), m.headlight);
-    disc.position.set(x, y + 0.07, 1.58 + 0.058);
-    const lid = box(0.19, 0.012, 0.15, m.paint, x, y + 0.14, 1.52);
-    lid.rotation.x = -0.35;
-  }
-  // The bonnet's two soft bulges over the front wings, and a door handle.
-  for (const s of [1, -1]) add(B.decal(1.25, 1.72, s > 0 ? 7.2 : 4.8, s > 0 ? 8.2 : 5.8, { lift: 0.004, sides: [s], nz: 4, nt: 1 }), m.paint);
-  add(B.decal(-0.05, 0.1, 5.2, 5.4, { lift: 0.006, nz: 1, nt: 1 }), m.black);
-  for (const s of [1, -1]) box(0.04, 0.05, 1.5, m.carbon, s * 0.78, 0.2, 0);
-  // Tail: a wide oval lamp each side (two round lenses), a dark plate panel,
-  // reverse lamps, a lip under the bumper and one exhaust on the left.
-  const tails = [];
-  for (const s of [1, -1]) {
-    add(flatShape(roundRect(s * 0.66, 0.74, 0.34, 0.12, 0.05), zr, -1, 0.003), m.tailRing);
-    tails.push(roundLamp(add, m, s * 0.58, 0.74, zr, 0.052, -1, m.tail));
-    tails.push(roundLamp(add, m, s * 0.74, 0.74, zr, 0.052, -1, m.tail));
-  }
-  add(flatShape(roundRect(0, 0.66, 0.5, 0.13, 0.02), zr, -1, 0.004), m.black);
-  add(flatShape(roundRect(0, 0.66, 0.4, 0.085, 0.01), zr, -1, 0.007), m.plate);
-  add(flatShape(roundRect(0, 0.4, 1.2, 0.09, 0.03), zr, -1), m.black);
-  const ex = [exhaust(add, m, 0.5, 0.3, zr - 0.02, 0.035 * tip, 0.16)];
-  mirror(add, m, B, 0.56, 0.9);
-  return { exhausts: ex, tails };
-}
-
-// The R34's tall stock wing on two uprights, with endplates and a small flap.
 function r34Wing({ box, m, zr }) {
   for (const s of [1, -1]) { const up = box(0.05, 0.22, 0.14, m.paint, s * 0.58, 1.1, zr + 0.25); up.rotation.x = -0.12; }
   const wing = box(1.56, 0.04, 0.3, m.paint, 0, 1.22, zr + 0.2);
@@ -1025,26 +981,17 @@ function capturedCabin(cockpit, cap, mats) {
 // drive); cockpitOffset moves the whole cockpit [up, forward] to fit.
 // Body keys are [z, value], rear to front (see body.js).
 const SHAPES = {
-  'miata-na': {
-    def: {
-      width: [[-1.98, 0.7], [-1.9, 0.78], [-1.5, 0.83], [-0.8, 0.835], [0, 0.83], [0.8, 0.835], [1.4, 0.83], [1.85, 0.78], [1.98, 0.68]],
-      sill: [[-1.98, 0.3], [-1.85, 0.21], [-1.4, 0.17], [1.5, 0.17], [1.85, 0.19], [1.98, 0.24]],
-      belt: [[-1.98, 0.74], [-1.85, 0.8], [-1.2, 0.8], [-0.3, 0.78], [0.4, 0.74], [1.0, 0.7], [1.6, 0.65], [1.85, 0.62], [1.98, 0.55]],
-      hood: [[-1.98, 0.78], [-1.88, 0.86], [-1.6, 0.89], [-1.0, 0.87], [-0.6, 0.84], [0.3, 0.8], [0.8, 0.78], [1.3, 0.72], [1.7, 0.66], [1.9, 0.62], [1.98, 0.56]],
-      roof: [[-1.0, 0.9], [-0.75, 1.07], [-0.4, 1.19], [0, 1.215], [0.3, 1.17], [0.55, 1.0], [0.8, 0.8]],
-      roofW: [[-1.0, 0.62], [-0.4, 0.6], [0.3, 0.6], [0.8, 0.72]],
-      wheels: { z: [1.13, -1.135], r: 0.36, top: 0.6, flare: [0.02, 0.03] },
-      windows: [[0.72, -0.5]], pillarsBlack: [[-0.5, -1.0]],
-      screen: [0.8, 0.3], rearGlass: [-0.8, -1.0],
-      crown: 0.03, baseW: 0.93, tuck: 0.05, sillTrim: true, fenderRise: 0.035, bulge: 0.02, roofCrown: 0.04,
-      softTop: true,
-    },
-    wheelX: 0.7, tyreWidth: 0.19,
-    rim: { style: 'five', color: '#b8bcbe', caliper: 0x2a2c2e },
-    core: [1.2, 3.0],
-    driverX: 0.37, cockpitOffset: [-0.02, -0.06], doorX: 0.84, linerY: 1.25, cabinScale: 0.9,
-    headLamp: [0.5, 0.7, 1.62], tailLamp: [0.6, 0.72, -1.96],
-    details: miataDetails,
+  'impreza-gc8': {
+    wheelX: 0.74, tyreWidth: 0.22,
+    rim: { style: 'five', color: '#c8a040', caliper: 0x2a2c2e },
+    core: [1.3, 3.2],
+    driverX: -0.36, cockpitOffset: [0, 0], doorX: 0.85, linerY: 1.3,
+  },
+  'countach-qv': {
+    wheelX: 0.83, tyreWidth: 0.3,
+    rim: { style: 'dish', color: '#e8e8e4', caliper: 0x2a2c2e },
+    core: [1.4, 3.0],
+    driverX: 0.33, cockpitOffset: [0, 0], doorX: 0.95, linerY: 1.05,
   },
   'skyliner-r34': {
     def: {

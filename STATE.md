@@ -1,32 +1,31 @@
 # NIGHTSHIFT: state
 
-_Last updated 2026-10-31, end of session 13. Signed off and merged: `main` is the live site, nothing is on a branch._
+_Last updated 2026-10-31, session 14, on branch `m6-glb-vehicles`. Nothing from this session is committed or live yet. `main` is still session 13._
 
 ## Where we are
-Milestone 6, the realism overhaul. Live now:
-- Car foundry (`tools/foundry/`): a reference sheet goes in, a detailed car comes out through the same capture as the bought-in cars. `./tools/foundry/make-car.sh <id>`.
-- The Miata rebuilt with it: outside, cabin, working pop-ups, moving dials. 99% match to the sheet's outline.
-- Garage rims are real 3D wheels on every car; the car keeps its tyres and brakes. The four bought-in car files are unchanged.
-- The Miata's body kits and wing are real parts.
-- Menus and the driving HUD in the old Microsoft look. CLAUDE.md and SPEC.md rewritten to match.
-- Garage lens softened.
+David's update brief (GLB vehicles, then environment), six phases, each checked by David.
+- Phase 1, GLB import: built. Full cars keep every triangle (badges and inner glass faces removed), compressed. Lite files for iPad and parked cars. Panels are separate named meshes.
+- In the game now: Subaro Impreza WRX STi Coupe (first car, replaces the Miata), Nissani Skyliner GT-R R34 (back), 1969 Fard Mustank Touring Car (replaces the 2012 car), Lamborgino Countash 5000 QV (new). Seven cars in all.
+- Miata scrapped; old saves move to the Impreza (save version 4). Foundry unused, kept in `tools/foundry/`.
 
 ## Next
-1. Rebuilding the maps and environment assets (David: next, replaces Parabolica remake and Mountain Edge in the old order).
-2. Later: real kits on the other four cars through the same parts system; the R34 through the foundry when it is wanted.
-
-Also not done: exhaust flame/smoke/spark upgrades, ambient occlusion, exposure adaptation, headlight pools and wet roads, the sun raise. Racing is parked until after this.
+2. Physical modifications: widebody, street kit, wings on every car, on real geometry.
+3. Finish integration: remove the old drawn-car code, keep the models' own engines.
+4. Paint presets and shared materials (mirrors, lamps, glass).
+5. Environment: trees, materials, geometry.
+6. Remove the blue shimmer; acceleration zoom.
 
 ## Open with David
-- Not measured: frame rate on a real iPad with everything together.
-- Guesses to confirm (session 13): the cabin's look (the sheet barely shows it); pop-ups down in the garage and up when driving; pink kept on main buttons; the Map on Windows teal; the green gear and speed display; the shape of the Street and Widebody kits; the amount the garage lens is softened; the wheel size of the six rims against each car.
-- Guesses to confirm (older): the feel of the slower cars, drifts especially; near-miss names; left-hand R35; hub pads; Mustang interior darkness; the Aventadoro in class X; the handbrake lever's look; the mode tiles' pictures; Parabolica's gold lamps; the sun glare's strength; the R34 still hidden; engine sounds; tips' wording.
+- Where did the Subaru GLB come from? No author or licence, and it must not go live until cleared.
+- iPad frame rate never measured; iPads use the lite copy everywhere until it is.
+- David's nine answers are taken as "yes to all" (see DECISIONS.md and the session 14 plan).
+- Guesses to confirm (session 14): the Impreza's 146 hp and four-wheel drive; "Late 90s" instead of a year; the Countash's numbers (class A 825) and blurb; the near-miss names; the Mustank's seat position; the Impreza's red cam covers in the drawn engine bay.
+- Guesses to confirm (older): the feel of the slower cars; left-hand R35; Aventadoro in class X; handbrake lever; mode tile pictures; Parabolica's gold lamps; sun glare strength; engine sounds; tips' wording; green gear and speed display; Map on teal; garage lens; rim sizes.
 
 ## Known rough edges
-- Foundry: a new car still takes a working session (trace, blueprint, parts). Sheets show little interior; one or two cabin pictures would help.
-- The Miata's front wheel sits about 11 cm further back than on the sheet, because the sheet's wheelbase is longer than the game's physics.
-- Parked cars and the hidden R34 still use the old flat wheel.
-- Bought-in cars: dials do not move; body kits change only the numbers; the GT wing is not seen on the Mustank or Challenjer; about 14 MB to load in all.
-- The Aventadoro's engine bay is the front-engine layout turned round.
-- Touch and controllers are untested on real devices. Parabolica Street is the heaviest track.
-- White decals on a white car do not show.
+- The Mustank has no livery yet (Phase 4), and its real sponsor logos must be replaced first. Its round lamps come out amber.
+- Cabin mirrors show as flat bright panels. Dials on the new cars do not move.
+- Kits on the new cars change numbers only until Phase 2.
+- The Skyline's own engine is left out; the game's drawn bay is used instead.
+- Assets: 58 MB of car files, 7 cars. Textures are JPEG and PNG, not yet tighter.
+- Touch and controllers untested on real devices. Parabolica Street is the heaviest track.
