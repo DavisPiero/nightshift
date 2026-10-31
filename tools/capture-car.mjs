@@ -398,7 +398,10 @@ function capture(R) {
       part.soup.add(p, D.keep ? (i, j2, k) => {
         const c = [0, 1, 2].map((e) => (p.pos[i * 3 + e] + p.pos[j2 * 3 + e] + p.pos[k * 3 + e]) / 3);
         dxf(c);
-        return AXES.every((ax, e) => !D.keep[ax] || (c[e] >= D.keep[ax][0] && c[e] <= D.keep[ax][1]));
+        const inBox = (q) => (box) => AXES.every((ax, e) => !box[ax] || (q[e] >= box[ax][0] && q[e] <= box[ax][1]));
+        // Any corner in a `drop` box takes the triangle, so no long shards stay behind.
+        const corners = [i, j2, k].map((v) => { const q = [p.pos[v * 3], p.pos[v * 3 + 1], p.pos[v * 3 + 2]]; dxf(q); return q; });
+        return inBox(c)(D.keep) && !(D.drop || []).some((box) => corners.some((q) => inBox(q)(box)));
       } : null, dxf);
       const q = part.soup.pos;
       const e = (seen[m.name] ??= [[1e9, 1e9, 1e9], [-1e9, -1e9, -1e9], 0]);
@@ -406,16 +409,27 @@ function capture(R) {
     }
     for (const [k, e] of Object.entries(seen)) console.log('   donor', k, e[0].map((v) => +v.toFixed(2)).join(' '), '..', e[1].map((v) => +v.toFixed(2)).join(' '));
   }
-  // This body's own cabin goes: whole islands inside the box.
+  // This body's own cabin goes: whole islands inside the boxes, but not
+  // `cabinKeep` (a box and a material, such as the mirror).
   if (R.cabinOut) for (const [key, part] of parts) {
-    if (part.group !== 'body' || key.startsWith('donor:') || part.slot === 'glass') continue;
+    if (part.group !== 'body' || key.startsWith('donor:') || part.slot === 'glass' || part.m.name === R.cabinKeep?.material) continue;
     const q = part.soup, keep = [];
     let out = 0;
     for (const g of islands(q)) {
-      const inside = AXES.every((ax, i) => g.min[i] >= R.cabinOut[ax][0] && g.max[i] <= R.cabinOut[ax][1]);
+      const within = (box) => AXES.every((ax, i) => g.min[i] >= box[ax][0] && g.max[i] <= box[ax][1]);
+      const inside = R.cabinOut.some(within) && !(R.cabinKeep && within(R.cabinKeep));
       if (inside) { out += g.tris.length; if (R.listCabin) console.log('   out', part.slot, part.m.name, g.tris.length, g.min.map((v) => +v.toFixed(2)).join(' '), '..', g.max.map((v) => +v.toFixed(2)).join(' ')); } else for (const t of g.tris) keep.push(t);
     }
     if (out) { part.soup = take(q, keep); console.log(`   cabin out: ${out} triangles of ${part.m.name}`); }
+  }
+
+  // Help for writing `cabinOut`: every island left in a box, biggest first.
+  if (R.listCabinNear) for (const [key, part] of parts) {
+    if (part.group !== 'body' || part.slot === 'paint') continue;
+    for (const g of islands(part.soup)) {
+      if (!AXES.every((ax, i) => g.min[i] >= R.listCabinNear[ax][0] && g.max[i] <= R.listCabinNear[ax][1]) || g.tris.length < 60) continue;
+      console.log('   near', key.slice(0, 26), g.tris.length, g.min.map((v) => +v.toFixed(2)).join(' '), '..', g.max.map((v) => +v.toFixed(2)).join(' '));
+    }
   }
 
   // 4. Glass: only the outward faces, so you can see out from the driver's seat.

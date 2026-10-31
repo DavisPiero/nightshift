@@ -151,3 +151,4 @@ One line each, newest last.
 - 2026-10-31: The Mustank has the old 2012 car's cabin, taken straight from that GLB by a recipe `donor` and scaled to fit (93% wide, 86% tall, nothing above 1.04 m); `cabinOut` removes the racer's own cabin and cage. A modern dash in a 1969 body, by David's choice.
 - 2026-10-31: `steeringFit` measures a wheel's axis and centre from its own shape. The Impreza's hand-written axis leaned the wrong way, which is why its wheel swung off the dash.
 - 2026-10-31: The HUD's round rev dial is back, bottom centre on every device, in the grey, green and red of the desktop look; smaller than before (198 px) so it doesn't hide the car. The map has no frame, its corners fade out, and it shows about 270 m. Overturns the two HUD windows.
+- 2026-10-31: Mustank cockpit corrected: the racer's wheel and column also go (they outran the first removal box), the 2012 car's A-pillar gauge pod is cut away, and the racer's rear-view mirror stays.
