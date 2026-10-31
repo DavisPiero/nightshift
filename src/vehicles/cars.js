@@ -10,7 +10,7 @@ export const SKYLINER_R34 = {
   make: 'Nissani',
   model: 'Skyliner GT-R',
   code: 'R34',
-  year: 1999,
+  year: 2002,
   blurb: 'Twin-turbo straight six, square shoulders, four round tail lights.',
 
   // Body and mass
@@ -344,11 +344,10 @@ export const MUSTANK_GT500 = {
   id: 'mustank-gt500',
   accelScale: 0.53,            // gentler power delivery (see vehicle.js)
   make: 'Fard',
-  model: 'Mustank Shelbi GT-500',
-  code: 'S550',
-  stripes: 0x111214,          // the factory black twin stripes (sheet)
-  year: 2012,
-  blurb: 'A supercharged V8 muscle car with a twin-clutch. The most power here.',
+  model: 'Mustank Touring Car',
+  code: '#18',
+  year: 1969,
+  blurb: 'A 1969 fastback built for the track. A huge V8 and the most power here.',
 
   mass: 1916,
   wheelbase: 2.72,
@@ -415,51 +414,52 @@ export const MUSTANK_GT500 = {
   paintNames: ['Race Red', 'Velocity Blue', 'Shadow Black', 'Oxford White', 'Carbonized Grey', 'Twister Orange'],
 };
 
-// Based on the 1990 MX-5 Miata (David's reference sheet): 1.6 L four-cylinder
-// (116 hp at 6500 rpm, 136 N·m at 5500), about 990 kg, rear-wheel drive,
-// five-speed gearbox, 185/60R14 tyres. The tutorial car and the first one you
-// own: light, forgiving and a little slower than the others, with grip a touch
-// below the GT-R's so it is easy to learn and still slides when asked.
-export const MIATA_NA = {
-  id: 'miata-na',
+// The entry car, from David's GLB: a late-1990s Impreza WRX STi two-door (GC8;
+// the exact year and version can't be told from the model, so no year is
+// claimed). The numbers are NOT the real car's 280 PS: it keeps the old
+// starter's power for its weight, so it stays the car to learn in. Rear-biased
+// four-wheel drive, like the R35.
+export const IMPREZA_GC8 = {
+  id: 'impreza-gc8',
   accelScale: 0.78,            // gentler power delivery (see vehicle.js)
-  make: 'Mazdo',
-  model: 'MX-5 Miata',
-  code: 'NA',
-  year: 1990,
-  blurb: 'Light, open and friendly. The car to learn in: small power, big smiles.',
+  make: 'Subaro',
+  model: 'Impreza WRX STi Coupe',
+  code: 'GC8',
+  year: 'Late 90s',
+  blurb: 'Two doors, gold wheels, all four driven. The car to learn in.',
 
-  mass: 990,
-  wheelbase: 2.265,
-  frontWeight: 0.52,
-  cgHeight: 0.44,
-  trackWidth: 1.41,
-  halfWidth: 0.84,
-  halfLength: 1.98,
+  mass: 1250,
+  wheelbase: 2.52,
+  frontWeight: 0.54,
+  cgHeight: 0.47,
+  trackWidth: 1.48,
+  halfWidth: 0.86,
+  halfLength: 2.17,
   yawInertiaScale: 1.0,
 
   idleRpm: 900,
   redline: 6800,
   limiterRpm: 7000,
   torqueCurve: [
-    [900, 72], [2000, 108], [3000, 122], [4000, 130],
-    [5500, 136], [6500, 127], [7000, 110],
+    [900, 91], [2000, 136], [3000, 154], [4000, 164],
+    [5500, 172], [6500, 160], [7000, 139],
   ],
   throttleResponse: 12,
   engineBraking: 70,
   engineInertia: 0.16,
-  sound: { cylinders: 4, burble: 0.15, pitch: 1.15, sub: 0.7, rasp: 1.1 },
+  sound: { cylinders: 4, burble: 0.3, pitch: 1.05, sub: 0.85, rasp: 1.1 },
 
   gearRatios: [3.14, 1.89, 1.33, 1.0, 0.81],
   reverseRatio: 3.48,
   finalDrive: 4.1,
   drivetrainEfficiency: 0.86,
-  drivetrain: 'rwd',
+  drivetrain: 'awd',
+  frontTorqueShare: 0.3,
   shiftTime: 0.2,
   autoUpshiftRpm: 6500,
   autoDownshiftRpm: 2800,
 
-  wheelRadius: 0.29,
+  wheelRadius: 0.305,
   tireGrip: 1.02,
   rearGripScale: 1.09,
   slipPeak: 0.17,
@@ -489,15 +489,43 @@ export const MIATA_NA = {
   maxRoll: 0.06,
   maxPitch: 0.055,
 
-  paint: 0xc4151c,
-  paints: [0xc4151c, 0xe8e6e0, 0x1d3f7a, 0x101114, 0x2a6a46, 0xd8b020],
-  paintNames: ['Classic Red', 'Crystal White', 'Mariner Blue', 'Brilliant Black', 'British Racing Green', 'Sunburst Yellow'],
+  paint: 0x17307f,
+  paints: [0x17307f, 0xe8e6e0, 0x101114, 0x8e9396, 0x8a1418],
+  paintNames: ['Rally Blue', 'Pure White', 'Black Mica', 'Cool Grey', 'Deep Red'],
 };
 
-// The cars you can pick. The R34 is hidden until its body is rebuilt (David,
-// 2026-10-26): its numbers stay, so the bench still drives it.
-export const CARS = [MIATA_NA, GTAR_R35, CHALLENJER_SRT8, AVENTADORO_SV, MUSTANK_GT500];
-export const ALL_CARS = [SKYLINER_R34, ...CARS];
+// From David's GLB, a Countach 5000 QV (the model year is not certain, so 1985,
+// the first). 5.2 L V12 behind the cabin, about 455 hp, 1490 kg, rear-wheel
+// drive. The Aventadoro's chassis numbers with the older car's size and power.
+export const COUNTACH_QV = {
+  ...AVENTADORO_SV,
+  id: 'countach-qv',
+  accelScale: 0.76,
+  make: 'Lamborgino',
+  model: 'Countash 5000 QV',
+  code: 'QV',
+  year: 1985,
+  blurb: 'A wedge, a wing and twelve cylinders. All drama, no driver aids in the styling.',
+  mass: 1490,
+  wheelbase: 2.5,
+  trackWidth: 1.62,
+  halfWidth: 0.98,
+  halfLength: 2.1,
+  redline: 7500,
+  limiterRpm: 7700,
+  autoUpshiftRpm: 7100,
+  torqueCurve: [[900, 300], [2500, 410], [4000, 470], [5200, 500], [6500, 475], [7000, 440], [7700, 370]],
+  drivetrain: 'rwd',
+  tireGrip: 1.0,
+  downforce: 0.3,
+  paint: 0xd8261e,
+  paints: [0xd8261e, 0xe8e8e4, 0x111214, 0xe8b81e],
+  paintNames: ['Rosso', 'Bianco', 'Nero', 'Giallo'],
+};
+
+// The cars you can pick.
+export const CARS = [IMPREZA_GC8, SKYLINER_R34, CHALLENJER_SRT8, MUSTANK_GT500, GTAR_R35, COUNTACH_QV, AVENTADORO_SV];
+export const ALL_CARS = CARS;
 
 export function getCar(id) {
   return CARS.find((c) => c.id === id) || CARS[0];

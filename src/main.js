@@ -19,7 +19,7 @@ import { CAMERA_FEEL } from './cameras/cameras.js';
 import { FeelPanel } from './ui/feel-panel.js';
 import { GamepadSource } from './input/gamepad.js';
 import { buildCar } from './vehicles/car-model.js';
-import { carsReady } from './vehicles/captured.js';
+import { carsReady, fullDetail } from './vehicles/captured.js';
 import { getTrack, trackWeathers } from './world/tracks.js';
 import { buildGarage } from './world/garage.js';
 import { Reflections } from './graphics/reflections.js';
@@ -212,6 +212,10 @@ class Game {
     if (this.fitSlot) { this.model.fitPart(this.fitSlot); this.fitSlot = null; }
     parent.add(this.model.root);
     this.audio?.setEngine(this.currentSpec());
+    // Computers get every triangle, as soon as it has loaded; iPads keep the
+    // lighter copy (DECISIONS.md).
+    const id = this.carSpec.id;
+    if ((URL_FLAGS.device || this.save.platform) !== 'touch') fullDetail(id).then((fresh) => { if (fresh && this.carSpec.id === id) this.buildChanged(); });
   }
 
   // The garage changed the active build (parts or looks): drive with it and

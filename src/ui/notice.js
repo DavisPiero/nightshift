@@ -6,10 +6,10 @@ const WINDOWS = [
   {
     id: 'news', title: 'What’s new', icon: 'info', pos: 'a',
     lines: [
-      'The Mazdo MX-5 Miata is rebuilt from scratch, outside and in, with working pop-up headlamps and moving dials.',
-      'Garage rims are real 3D wheels now, on every car. Each car keeps its own tyres and brakes.',
-      'The Miata’s body kits and wing are real parts.',
-      'The menus and the driving display look like old Windows now.',
+      'Say hello to the Subaro Impreza WRX STi Coupe, the new first car.',
+      'The Nissani Skyliner GT-R (R34) is out of retirement.',
+      'New to the garage: the 1969 Fard Mustank Touring Car and the Lamborgino Countash 5000 QV.',
+      'Cars now keep all their detail, inside and out.',
     ],
     button: 'Oh, thanks',
   },

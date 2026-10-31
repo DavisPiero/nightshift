@@ -8,29 +8,50 @@
 // Car space, like body.js: +z forward, +x left, heights from the road.
 
 import * as THREE from 'three';
+import { MeshoptDecoder } from '../../vendor/meshopt_decoder.js';
 
-const IDS = ['gtar-r35', 'challenjer-srt8', 'aventadoro-sv', 'mustank-gt500', 'miata-na'];
+const IDS = ['impreza-gc8', 'skyliner-r34', 'challenjer-srt8', 'mustank-gt500', 'gtar-r35', 'countach-qv', 'aventadoro-sv'];
 const POS_SCALE = 1 / 8000;
 const CARS = new Map();
 
-async function load(id) {
-  const res = await fetch(new URL(`../../assets/cars/${id}.bin`, import.meta.url));
-  if (!res.ok) return;
+async function read(file) {
+  const res = await fetch(new URL(`../../assets/cars/${file}.bin`, import.meta.url));
+  if (!res.ok) return null;
   const buf = await res.arrayBuffer();
   const len = new DataView(buf).getUint32(0, true);
   const head = JSON.parse(new TextDecoder().decode(new Uint8Array(buf, 4, len)));
   const base = 4 + len;
+  await MeshoptDecoder.ready;
   head.parts = head.parts.map((p) => {
+    const raw = new Uint8Array(p.verts * 16), index = new Uint32Array(p.indices);
+    MeshoptDecoder.decodeVertexBuffer(raw, p.verts, 16, new Uint8Array(buf, base + p.vb, p.vbLen));
+    MeshoptDecoder.decodeIndexBuffer(new Uint8Array(index.buffer), p.indices, 4, new Uint8Array(buf, base + p.ib, p.ibLen));
+    const v = new DataView(raw.buffer), pos = new Float32Array(p.verts * 3), nor = new Float32Array(p.verts * 3), uv = p.uvMin ? new Float32Array(p.verts * 2) : null;
+    for (let i = 0; i < p.verts; i++) {
+      for (let c = 0; c < 3; c++) {
+        pos[i * 3 + c] = v.getInt16(i * 16 + c * 2, true) * POS_SCALE;
+        nor[i * 3 + c] = v.getInt16(i * 16 + 6 + c * 2, true) / 32767;
+      }
+      if (uv) for (let c = 0; c < 2; c++) uv[i * 2 + c] = p.uvMin[c] + v.getUint16(i * 16 + 12 + c * 2, true) / 65535 * p.uvSpan[c];
+    }
     const g = new THREE.BufferGeometry();
-    const pos = Float32Array.from(new Int16Array(buf, base + p.pos, p.verts * 3), (v) => v * POS_SCALE);
-    const nor = Float32Array.from(new Int16Array(buf, base + p.nor, p.verts * 3), (v) => v / 32767);
     g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
     g.setAttribute('normal', new THREE.BufferAttribute(nor, 3));
-    if (p.uv !== undefined) g.setAttribute('uv', new THREE.Float32BufferAttribute(new Float32Array(buf, base + p.uv, p.verts * 2), 2));
-    g.setIndex(new THREE.BufferAttribute(p.big ? new Uint32Array(buf, base + p.idx, p.indices) : new Uint16Array(buf, base + p.idx, p.indices), 1));
+    if (uv) g.setAttribute('uv', new THREE.BufferAttribute(uv, 2));
+    g.setIndex(new THREE.BufferAttribute(index, 1));
     g.computeBoundingSphere();
     return { ...p, geometry: g };
   });
+  return head;
+}
+
+// The light file of every car comes first: that is enough to show or drive
+// any car, and parked cars use it. lod 2, the iPad copy, stands in as lod 0
+// until `fullDetail` swaps in the real thing.
+async function load(id) {
+  const head = await read(`${id}-lite`);
+  if (!head) return;
+  for (const p of head.parts) if (p.lod === 2) p.lod = 0;
   if (head.engineRear) head.def.engineLid = head.lid;
   // Where the lamps' glows go: the middle of each lamp sheet, one side.
   const middle = (slots) => {
@@ -49,7 +70,21 @@ async function load(id) {
 }
 
 // Start-up waits for this (see main.js), so captures() is ready for buildCar.
-export const carsReady = Promise.all(IDS.map((id) => load(id).catch(() => {})));
+export const carsReady = Promise.all(IDS.map((id) => load(id).catch((e) => console.error(`car ${id} failed to load`, e))));
+
+// Every triangle of one car. Resolves true once it has arrived, the first
+// time; the caller then rebuilds the car.
+export async function fullDetail(id) {
+  const cap = CARS.get(id);
+  if (!cap || cap.full) return false;
+  cap.full = true;
+  const head = await read(id).catch(() => null);
+  if (!head) { cap.full = false; return false; }
+  for (const p of cap.parts) if (p.lod === 0) p.geometry.dispose();
+  cap.parts = [...cap.parts.filter((p) => p.lod !== 0), ...head.parts];
+  delete cap.fitF; delete cap.fitR;
+  return true;
+}
 
 export const captures = (id) => CARS.get(id) || null;
 
@@ -116,6 +151,7 @@ export function capturedParts(cap, lod, mats, group, skip = null) {
         : p.slot === 'lightR' ? (mats.lampR = lampMaterial(p, 0xff3a2a, 1)) : ownMaterial(p);
     }
     const m = new THREE.Mesh(p.geometry, mat);
+    m.name = p.panel ?? ''; // bumperF, wing and so on: see `panels` in tools/car-recipes.mjs
     if (mat.transparent) m.renderOrder = 1;
     out.push(m);
   }
