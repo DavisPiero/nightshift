@@ -209,7 +209,7 @@ def build(bp, trace):
     for y in (.27, .305, .34):
         extras.append(F.sweep('black', [(-.37, y, 1.84), (0, y, 1.87), (.37, y, 1.84)], F.rrect(.012, .012, .004), 'trim'))
     extras.append(F.lathe('chrome', [(-1.945, .0), (-1.945, .034), (-1.94, .042), (-1.935, .044), (-1.8, .044), (-1.8, .0)], 'black', axis='z', segs=28, at=(-.49, .262, 0)))
-    extras.append(F.lathe('chrome', [(-1.945, .033), (-1.94, .044), (-1.925, .044), (-1.86, .04)], 'chrome', axis='z', segs=32, at=(-.49, .262, 0)))
+    extras.append(F.lathe('chrome', [(-1.945, .033), (-1.94, .044), (-1.925, .044), (-1.86, .04)], 'pipe', axis='z', segs=32, at=(-.49, .262, 0)))
 
     build_screen(skin, extras)
     build_cabin(extras)
@@ -567,6 +567,7 @@ def mats(bp):
     mat('lensamber', (.62, .2, .02, 1), 0, .22)
     mat('lensclear', (.5, .52, .52, 1), .3, .15)
     mat('platedark', (.012, .012, .014, 1), .2, .4)
+    mat('pipe', (.2, .2, .21, 1), .6, .5)
     mat('dash', (.028, .028, .03, 1), 0, .7)
     mat('console', (.02, .02, .022, 1), 0, .6)
     mat('seat', (.035, .035, .037, 1), 0, .85)
