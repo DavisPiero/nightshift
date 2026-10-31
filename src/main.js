@@ -529,7 +529,11 @@ class Game {
     this.lastOffset = p.offset;
     this.patch = this.weatherId === 'clear' ? 0 : this.track.patchAt(p.index);
     if (race.playerHit) this.onHit(race.playerHit);
-    if (race.playerKnock > 1) { this.audio.impact(race.playerKnock); this.cameras.bump(race.playerKnock); }
+    if (race.playerKnock > 1) {
+      this.audio.impact(race.playerKnock + 2); // a light tap still makes a noise
+      this.effects.hit(race.playerContact, race.playerKnock + 1, this.vehicle);
+      this.cameras.bump(race.playerKnock + 2);
+    }
     if (race.lights !== was && race.state === 'countdown' && race.lights <= 3) this.audio.ui('count');
     if (was > 0 && race.state === 'racing') this.audio.ui('go');
     if (race.state === 'finished' && !this.finishClock) { this.finishClock = 2.6; this.audio.ui('flag'); }

@@ -12,6 +12,7 @@
 
 import { keepOnTrack } from '../physics/walls.js';
 import { applyWeather } from '../physics/weather.js';
+import { knock } from '../physics/knocks.js';
 
 export const COUNTDOWN = 3; // seconds of lights before the start
 
@@ -27,6 +28,7 @@ export class Race {
     this.player = this.cars.find((c) => c.isPlayer) || null;
     this.playerHit = null;    // the player's last wall hit, for sparks and sound
     this.playerKnock = 0;     // the hardest knock from another car this step
+    this.playerContact = null; // where it was, for sparks
     this.wrongWay = 0;        // seconds the player has been going the wrong way
     this.state = 'grid';
     this.t = 0;          // race clock, from the green light
@@ -57,7 +59,7 @@ export class Race {
   // One physics step. playerControls: the player's control state (or none).
   step(dt, playerControls) {
     const held = this.state === 'grid' || this.state === 'countdown';
-    this.playerHit = null; this.playerKnock = 0;
+    this.playerHit = null; this.playerKnock = 0; this.playerContact = null;
     if (this.state === 'countdown') {
       this.clock -= dt;
       if (this.clock <= 0) { this.state = 'racing'; this.t = 0; for (const c of this.cars) c.lapStart = 0; }
@@ -121,24 +123,19 @@ export class Race {
     }
   }
 
-  // Cars that touch push each other apart, like a knock off a wall but
-  // shared between the two (circles about a car's width; enough for a
-  // casual game, no damage).
+  // Cars that touch share the knock (physics/knocks.js). A car's own wall
+  // check runs again afterwards, in case the knock pushed it through a wall.
   knocks() {
     const cs = this.cars;
     for (let a = 0; a < cs.length; a++) for (let b = a + 1; b < cs.length; b++) {
       const va = cs[a].vehicle, vb = cs[b].vehicle;
-      const dx = vb.x - va.x, dz = vb.z - va.z, d = Math.hypot(dx, dz);
-      const reach = (va.spec.halfWidth + vb.spec.halfWidth) * 1.05;
-      if (d >= reach || d < 1e-3) continue;
-      // Only when they really overlap end to end too (cars are long).
-      const fa = Math.abs(dx * Math.sin(va.heading) + dz * Math.cos(va.heading));
-      if (fa > va.spec.halfLength + vb.spec.halfLength * 0.6) continue;
-      const nx = dx / d, nz = dz / d, depth = (reach - d) / 2;
-      const ia = va.collide(-nx, -nz, depth, nx * va.spec.halfWidth, nz * va.spec.halfWidth);
-      const ib = vb.collide(nx, nz, depth, -nx * vb.spec.halfWidth, -nz * vb.spec.halfWidth);
-      if (cs[a].isPlayer) this.playerKnock = Math.max(this.playerKnock, ia);
-      if (cs[b].isPlayer) this.playerKnock = Math.max(this.playerKnock, ib);
+      if (Math.abs(vb.x - va.x) > 7 || Math.abs(vb.z - va.z) > 7) continue;
+      const hit = knock(va, vb);
+      if (!hit) continue;
+      if ((cs[a].isPlayer || cs[b].isPlayer) && hit.closing > this.playerKnock) {
+        this.playerKnock = hit.closing;
+        this.playerContact = hit;
+      }
     }
   }
 

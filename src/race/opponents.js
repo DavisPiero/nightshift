@@ -49,7 +49,7 @@ export function pickField({ count, pi, difficulty, rival = false, seed = 1 }) {
     const spread = (count > 1 ? 0.5 - n / (count - 1) : 0) * 40; // the front of the grid a little quicker
     const base = tunedSpec(car, pi + spread + (persona.rival ? 15 : 0));
     const spec = d.edge === 1 ? base : { ...base, tireGrip: base.tireGrip * d.edge };
-    const look = { ...defaultLook(car), paint: persona.rival ? 0x111214 : PALETTE[Math.floor(rand() * PALETTE.length)][0], finish: rand() < 0.5 ? 'gloss' : 'metallic', decal: persona.rival ? 'stripes' : 'none', decalColour: 0xff2e88 };
+    const look = { ...defaultLook(car), paint: persona.rival ? 0x111214 : PALETTE[Math.floor(rand() * PALETTE.length)][0], finish: rand() < 0.5 ? 'gloss' : 'metallic', decal: persona.rival ? 'stripes' : 'none', decalColour: 0xc81414 }; // Max: black with red stripes
     return { id: persona.name, name: persona.name, car: `${car.make} ${car.model}`, spec, persona, look };
   });
 }

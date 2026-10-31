@@ -27,7 +27,7 @@ export function buildTrackScene(track, def) {
   grassTex.repeat.set(200, 200);
   const ground = new THREE.Mesh(new THREE.PlaneGeometry(2000, 2000), new THREE.MeshLambertMaterial({ map: grassTex, color: 0x6a7a62 }));
   ground.rotation.x = -Math.PI / 2;
-  ground.position.set(190, -0.02, 50);
+  ground.position.set(130, -0.02, 40);
   ground.receiveShadow = true;
   group.add(ground);
 
@@ -131,7 +131,7 @@ export function buildTrackScene(track, def) {
 
   // Petrol station on the outside of the main straight.
   {
-    const k = 260;
+    const k = 170;
     const [x, z] = along(k, -1, track.wall + 22);
     placedSpots.push([x, z, 22]);
     place.add('petrol-station', x, 0, z, track.headingAt(k));
@@ -139,7 +139,7 @@ export function buildTrackScene(track, def) {
 
   // Container yard by the harbour, outside the long sweeper.
   const contTints = [0x6a2a20, 0x2a4a5a, 0x5a5a4a, 0x7a5a2a, 0x3a5a3a, 0x8a8a84];
-  for (let k = 520; k < 820; k += 14) {
+  for (let k = 270; k < 460; k += 14) {
     for (let row = 0; row < 3; row++) {
       if (r() < 0.25) continue;
       const [x, z] = along(k, -1, track.wall + 16 + row * 4);
@@ -153,7 +153,7 @@ export function buildTrackScene(track, def) {
     placedSpots.push([...along(k, -1, track.wall + 20), 7]);
   }
   // Two tall yard floodlights over the containers.
-  for (const k of [590, 750]) {
+  for (const k of [320, 420]) {
     const [x, z] = along(k, -1, track.wall + 9);
     place.add('floodlight', x, 0, z, track.headingAt(k));
   }
@@ -178,7 +178,7 @@ export function buildTrackScene(track, def) {
   }
   // A big industrial block filling the middle of the loop.
   for (let i = 0; i < 40; i++) {
-    const x = 60 + r() * 260, z = -200 + r() * 520;
+    const x = 40 + r() * 190, z = -150 + r() * 340;
     addBuilding(x, z, 20 + r() * 30, 16 + r() * 24, 7 + r() * 10, (r() < 0.5 ? 0 : Math.PI / 2) + 0.35);
   }
   for (const b of buildings) place.block('warehouse', b);
@@ -205,7 +205,7 @@ export function buildTrackScene(track, def) {
   {
     const polesP = [], wire = [];
     let prev = null;
-    for (let k = 1520; k < 1880; k += 30) {
+    for (let k = 840; k < 1060; k += 30) {
       const [x, z] = along(k, -1, track.wall + 9);
       polesP.push([x, 5, z, track.headingAt(k)]);
       const tops = [-0.9, 0, 0.9].map((o) => [x + track.leftX(k) * o, 9.4, z + track.leftZ(k) * o]);
@@ -260,7 +260,7 @@ export function buildTrackScene(track, def) {
     park(x, z, track.headingAt(k) + (r() < 0.5 ? 0 : Math.PI), n);
   }
   {
-    const k = 260, ry = track.headingAt(k);
+    const k = 170, ry = track.headingAt(k);
     for (let i = 0; i < 3; i++) {
       const [x, z] = along(track.wrap(k + 14 + i * 3), -1, track.wall + 9);
       park(x, z, ry + Math.PI / 2, i + 2);

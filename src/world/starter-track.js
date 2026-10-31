@@ -1,19 +1,24 @@
-// The Starter Track: one closed loop through a harbour industrial estate.
-// A long straight, a fast sweeper, an S-bend, a kink and one tight corner.
-// Points are in metres, in driving order; the start line is on the straight.
+// The Starter Track: one short closed loop through a harbour industrial estate,
+// made for slow cars: long open corners you can stay flat through, a quick
+// right-left, a back straight and one tight corner onto the main straight.
+// 1.2 km and 9 m wide (Arlo's notes, 2026-11-01). Radii in metres.
+
+import { turtle } from './track-path.js';
 
 export const STARTER_TRACK = {
   name: 'Starter Track',
-  halfWidth: 6,     // 12 m of tarmac
-  wall: 9.5,        // barriers 3.5 m beyond the road edge
-  start: 30,        // sample index of the start line
-  patches: [[430, 650], [1300, 1480]], // heavier weather: the sweeper, the back straight
-  points: [
-    [0, -170], [0, -60], [0, 60], [0, 180],           // main straight
-    [20, 290], [100, 360], [215, 380], [320, 340],    // long sweeper
-    [370, 255], [355, 165], [290, 120], [265, 50],    // S-bend
-    [300, -20], [365, -70], [380, -160],              // kink
-    [345, -235], [260, -255], [150, -265],            // back straight
-    [70, -290], [20, -265],                           // tight corner onto the straight
-  ],
+  halfWidth: 4.5,   // 9 m of tarmac
+  wall: 7,          // barriers 2.5 m beyond the road edge
+  start: 130,       // sample index of the start line
+  patches: [[270, 450], [830, 1050]], // heavier weather: the sweeper, the back straight
+  points: turtle([0, -130], 0, [
+    ['S', 260],                 // main straight
+    ['L', 130, 85],             // long sweeper
+    ['S', 30],
+    ['R', 40, 90], ['L', 65, 75], // the right-left
+    ['S', 90],
+    ['L', 85, 70],              // onto the back straight
+    ['S', 240],                 // back straight
+    ['L', 120, 58],             // tight corner onto the straight
+  ]),
 };
