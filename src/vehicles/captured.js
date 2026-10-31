@@ -86,12 +86,29 @@ function lampMaterial(p, tint, strength) {
   });
 }
 
+// How big a new rim should be on this axle: as wide as the car's own rim, and
+// most of the tyre's width.
+export function rimFit(cap, front) {
+  const axle = front ? 'F' : 'R';
+  const key = `fit${axle}`;
+  if (cap[key]) return cap[key];
+  let R = 0;
+  for (const p of cap.parts) {
+    if (p.lod !== 0 || p.slot !== 'rim' || p.group !== `spin${axle}`) continue;
+    const a = p.geometry.attributes.position, rs = [];
+    for (let i = 0; i < a.count; i++) rs.push(Math.hypot(a.getY(i), a.getZ(i)));
+    rs.sort((x, y) => x - y);
+    R = Math.max(R, rs[Math.floor((rs.length - 1) * 0.95)]);
+  }
+  return (cap[key] = { R, w: cap.wheels[front ? 0 : 2].w * 0.8 });
+}
+
 // The mesh parts of a car, in `lod` 0 (full) or 1 (parked cars), by group.
-// mats: the game's shared materials by slot.
-export function capturedParts(cap, lod, mats, group) {
+// mats: the game's shared materials by slot. `skip`: slots to leave out.
+export function capturedParts(cap, lod, mats, group, skip = null) {
   const out = [];
   for (const p of cap.parts) {
-    if (p.lod !== lod || p.group !== group) continue;
+    if (p.lod !== lod || p.group !== group || skip?.includes(p.slot)) continue;
     let mat = mats[p.slot];
     if (!mat) {
       const key = `own:${p.name}:${p.tex}`;

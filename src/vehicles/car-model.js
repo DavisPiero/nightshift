@@ -16,7 +16,8 @@ import { Tex } from '../graphics/textures.js';
 import { Body, SLOT, flatShape, roundRect } from './body.js';
 import { bonnetRange, buildEngineBay } from './engine-bay.js';
 import { buildCabin } from './cabin.js';
-import { captures, capturedParts, projectDecal } from './captured.js';
+import { captures, capturedParts, projectDecal, rimFit } from './captured.js';
+import { rimGeometry } from './wheels.js';
 import { FINISHES, RIDE, checkLook } from './looks.js';
 
 const ROLL_CENTRE = 0.42; // m above the road
@@ -191,8 +192,9 @@ export function buildCar(spec, look = spec.paint, { simple = false } = {}) {
   const discGeo = new THREE.CircleGeometry(WR * 0.6 * big, 18).rotateY(Math.PI / 2);
   const rimTint = cap && look.rimColour !== null ? new THREE.MeshStandardMaterial({ color: look.rimColour, metalness: 0.75, roughness: 0.3 }) : null;
   const wheels = [];
+  let rimBody = null;
   const [WZf, WZr] = def.wheels.z, WX = sh.wheelX + (wide ? 0.045 : 0);
-  const capWheels = !!cap && !simple && !look.rim; // a rim picked in the garage uses the drawn wheel
+  const capWheels = !!cap && !simple; // a captured car keeps its tyres and brakes whatever rim it wears
   const wheelSpots = cap ? [[cap.wheels[0].c[0], cap.wheels[0].c[2], true], [-cap.wheels[0].c[0], cap.wheels[0].c[2], true], [cap.wheels[2].c[0], cap.wheels[2].c[2], false], [-cap.wheels[2].c[0], cap.wheels[2].c[2], false]]
     : [[WX, WZf, true], [-WX, WZf, true], [WX, WZr, false], [-WX, WZr, false]];
   for (const [x, z, front] of wheelSpots) {
@@ -210,8 +212,14 @@ export function buildCar(spec, look = spec.paint, { simple = false } = {}) {
       const wmats = { ...mats, tyre: wallMat, caliper: caliperMat, disc: discMat };
       if (look.rimColour !== null) wmats.rim = rimTint;
       const place = (parent) => (m) => { if (out < 0) m.rotation.y = Math.PI; parent.add(m); };
-      capturedParts(cap, 0, wmats, `spin${axle}`).forEach(place(spin));
+      capturedParts(cap, 0, wmats, `spin${axle}`, look.rim ? ['rim', 'metal'] : null).forEach(place(spin));
       capturedParts(cap, 0, wmats, `hub${axle}`).forEach(place(steer));
+      if (look.rim) {
+        const fit = rimFit(cap, front), g = rimGeometry(look.rim, fit.R, fit.w);
+        rimBody ??= new THREE.MeshStandardMaterial({ color: look.rimColour ?? 0xb8bcc0, metalness: 0.7, roughness: 0.3, side: THREE.DoubleSide, envMapIntensity: 1.3 });
+        place(spin)(new THREE.Mesh(g.rim, rimBody));
+        place(spin)(new THREE.Mesh(g.nuts, mats.metal));
+      }
       wheels.push({ steer, spin, front });
       continue;
     }

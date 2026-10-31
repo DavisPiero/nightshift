@@ -12,7 +12,7 @@ import { SLOTS, optionsFor } from '../vehicles/parts.js';
 import { PALETTE, FINISHES, DECALS, DECAL_COLOURS, RIMS, RIM_COLOURS, CALIPER_COLOURS, RIDE } from '../vehicles/looks.js';
 import { buildSpec } from '../vehicles/tuning.js';
 import { garageCar, newBuild, MAX_BUILDS } from '../save/save.js';
-import { Tex } from '../graphics/textures.js';
+import { drawRim } from '../vehicles/wheels.js';
 import { fillStats } from './stats-view.js';
 
 const $ = (sel) => document.querySelector(sel);
@@ -241,12 +241,9 @@ export class Garage {
         name, on: b.look.rim === id, extra: '<canvas class="rim" width="64" height="64"></canvas>',
         onClick: () => { b.look.rim = id; this.changed(); },
       });
-      const style = id || null;
-      const tex = Tex.rimFace(style || 'five', b.look.rimColour !== null ? hex(b.look.rimColour) : '#a8acae');
       const cv = it.querySelector('canvas'), g = cv.getContext('2d');
-      g.fillStyle = '#0a0b0c'; g.beginPath(); g.arc(32, 32, 32, 0, Math.PI * 2); g.fill();
-      if (style) g.drawImage(tex.image, 0, 0);
-      else { g.fillStyle = '#7fa7ab'; g.font = '14px "Jersey 10", monospace'; g.textAlign = 'center'; g.fillText('STOCK', 32, 37); }
+      if (id) drawRim(cv, id, b.look.rimColour !== null ? hex(b.look.rimColour) : '#b8bcc0');
+      else { g.fillStyle = '#0a0b0c'; g.beginPath(); g.arc(32, 32, 32, 0, Math.PI * 2); g.fill(); g.fillStyle = '#7fa7ab'; g.font = '14px "Jersey 10", monospace'; g.textAlign = 'center'; g.fillText('STOCK', 32, 37); }
     };
     rimItem(null, 'Stock wheels');
     for (const [id, r] of Object.entries(RIMS)) rimItem(id, r.name);
