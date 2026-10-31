@@ -24,8 +24,8 @@ way they are, HANDOFF.md for how the last session ended. BRIEF.md is the origina
   call 2026-10-31; replaces the reference-sheet foundry, which stays on the shelf in `tools/foundry/`).
   `tools/capture-car.mjs` turns a GLB into `assets/cars/`: it removes badges but never simplifies the full-detail
   car, and never touches the GLB. Inspect every model and name it for what it actually is, not what it was meant
-  to replace. Authors are credited in README.md. The Impreza's source is unknown: it must not go live until
-  David has cleared it.
+  to replace. Authors are credited in README.md. The Impreza's source is unknown: David chose to publish it
+  anyway (2026-10-31); add its credit to README.md once he knows it.
 - UI: the old Microsoft desktop, after the notice board (David, 2026-10-31; replaces the street-racer
   dark glass look): same pixel fonts and sizes (Jersey 10 for titles, DotGothic16 for text), grey raised
   windows and buttons, navy title bars, white sunken lists with a navy selected row, toggles pressed in

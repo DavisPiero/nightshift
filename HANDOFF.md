@@ -1,7 +1,7 @@
-# Hand-off: session 14 (2026-10-31), mid-brief
+# Hand-off: session 14 (2026-10-31), Phase 1 signed off
 
 ## Repo state
-- Branch `m6-glb-vehicles`, not committed. `main` is session 13, live. Merge only when David signs off (he says "push" for merge everything and push). The Impreza must not reach `main` until David clears its source.
+- On `main`, everything committed and pushed; `m6-glb-vehicles` is merged and deleted. `main` is the live site. Next work goes on a new branch; merge only when David signs off (he says "push" for merge everything and push). The Impreza is live on David's decision, source still unknown.
 
 ## What comes next
 Phase 2 of David's brief: physical modifications. See STATE.md.

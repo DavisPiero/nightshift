@@ -152,7 +152,7 @@ export const RECIPES = [
     id: 'impreza-gc8', glb: 'Subaru Impreza.glb', axles: [1.26, -1.26], ownWing: true, autoWheels: true, eye: [-0.36, 1.08, -0.3], exhausts: [[0.45, 0.3, -2.15]],
     steeringAt: { c: [-0.36, 0.76, 0.42], axis: [0, 0.36, 0.933] },
     identity: { make: 'Subaru', model: 'Impreza WRX STi two-door (GC8)', year: null, sure: 'medium', from: 'badges, wheels and shape; late 1990s, exact year and version unknown' },
-    credit: 'Subaru Impreza WRX STi: author and licence unknown, not cleared for publishing',
+    credit: 'Subaru Impreza WRX STi: author and licence unknown',
     rules: [
       [/^(ext_front_badge|ext_side_logo|ext_body_logos|steering_logo|int_window_logo|caliper_badge|seat_sti|metal_engraving)/, 'drop'],
       [/^ext_plate/, 'plate'],

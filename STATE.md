@@ -1,10 +1,10 @@
 # NIGHTSHIFT: state
 
-_Last updated 2026-10-31, session 14, on branch `m6-glb-vehicles`. Nothing from this session is committed or live yet. `main` is still session 13._
+_Last updated 2026-10-31, session 14. Phase 1 signed off and merged: `main` is the live site, nothing is on a branch._
 
 ## Where we are
 David's update brief (GLB vehicles, then environment), six phases, each checked by David.
-- Phase 1, GLB import: built. Full cars keep every triangle (badges and inner glass faces removed), compressed. Lite files for iPad and parked cars. Panels are separate named meshes.
+- Phase 1, GLB import: done, signed off. Full cars keep every triangle (badges and inner glass faces removed), compressed. Lite files for iPad and parked cars. Panels are separate named meshes.
 - In the game now: Subaro Impreza WRX STi Coupe (first car, replaces the Miata), Nissani Skyliner GT-R R34 (back), 1969 Fard Mustank Touring Car (replaces the 2012 car), Lamborgino Countash 5000 QV (new). Seven cars in all.
 - Miata scrapped; old saves move to the Impreza (save version 4). Foundry unused, kept in `tools/foundry/`.
 
@@ -16,7 +16,7 @@ David's update brief (GLB vehicles, then environment), six phases, each checked 
 6. Remove the blue shimmer; acceleration zoom.
 
 ## Open with David
-- Where did the Subaru GLB come from? No author or licence, and it must not go live until cleared.
+- Where did the Subaru GLB come from? No author or licence. It is live on David's decision; add the credit to the README when known.
 - iPad frame rate never measured; iPads use the lite copy everywhere until it is.
 - David's nine answers are taken as "yes to all" (see DECISIONS.md and the session 14 plan).
 - Guesses to confirm (session 14): the Impreza's 146 hp and four-wheel drive; "Late 90s" instead of a year; the Countash's numbers (class A 825) and blurb; the near-miss names; the Mustank's seat position; the Impreza's red cam covers in the drawn engine bay.
