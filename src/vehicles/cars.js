@@ -175,167 +175,6 @@ export const CHALLENJER_SRT8 = {
   paintNames: ['Brilliant Black', 'Hemi Orange', 'Inferno Red', 'Bright Silver', 'Deep Water Blue'],
 };
 
-// Based on the 2017 GT-R (R35): 3.8 L twin-turbo V6 (565 PS at 6800 rpm,
-// 633 N·m from 3300 to 5800), 1752 kg, six-speed twin-clutch gearbox
-// (4.06/2.30/1.59/1.25/1.00/0.80, 3.70 final drive), four-wheel drive that
-// sends most of the torque to the rear. Brutal off the line and very
-// stable; it still slides if you ask it to.
-export const GTAR_R35 = {
-  id: 'gtar-r35',
-  accelScale: 0.75,            // gentler power delivery (see vehicle.js)
-  make: 'Nissani',
-  model: 'GT-Ar Aimgane Type 2',
-  code: 'R35',
-  year: 2017,
-  blurb: 'Twin-turbo V6 and four-wheel drive. Fast everywhere, calm at the limit.',
-
-  mass: 1752,
-  wheelbase: 2.78,
-  frontWeight: 0.54,
-  cgHeight: 0.46,
-  trackWidth: 1.6,
-  halfWidth: 0.95,
-  halfLength: 2.355,
-  yawInertiaScale: 1.1,
-
-  idleRpm: 950,
-  redline: 7000,
-  limiterRpm: 7100,
-  torqueCurve: [
-    [900, 260], [2000, 450], [3300, 633], [4500, 633],
-    [5800, 633], [6800, 580], [7100, 520],
-  ],
-  throttleResponse: 12,
-  engineBraking: 130,
-  engineInertia: 0.22,
-  turbo: { spoolRpm: 2600, lag: 0.25, share: 0.3 },
-  sound: { cylinders: 6, burble: 0.3, pitch: 1.08, sub: 1.1, rasp: 1.25 },
-
-  gearRatios: [4.06, 2.3, 1.59, 1.25, 1.0, 0.8],
-  reverseRatio: 3.38,
-  finalDrive: 3.7,
-  drivetrainEfficiency: 0.84,
-  drivetrain: 'awd',
-  frontTorqueShare: 0.3,
-  shiftTime: 0.08,            // twin-clutch: barely a pause
-  autoUpshiftRpm: 6800,
-  autoDownshiftRpm: 3200,
-
-  wheelRadius: 0.35,
-  tireGrip: 1.12,
-  rearGripScale: 1.06,
-  slipPeak: 0.15,
-  slideGrip: 0.84,
-
-  maxSteer: 0.56,
-  highSpeedSteer: 0.1,
-  steerSpeed: 3.2,
-
-  brakeForce: 20500,
-  brakeFrontBias: 0.64,
-  handbrakeForce: 4800,
-  handbrakeRearGrip: 0.4,
-
-  dragCoefficient: 0.26,
-  frontalArea: 2.1,
-  downforce: 0.32,
-  rollingResistance: 0.015,
-  liftOffDrag: 0.6,
-
-  suspensionStiffness: 50,
-  suspensionDamping: 8,
-  rollScale: 0.0035,
-  pitchScale: 0.005,
-  squatShare: 0.5,
-  shiftKick: 0.15,
-  maxRoll: 0.05,
-  maxPitch: 0.045,
-
-  paint: 0xe8e6e0,
-  paints: [0xe8e6e0, 0x8e9396, 0x101114, 0x1d3f7a, 0x8a1418, 0xc96a1a],
-  paintNames: ['Pearl White', 'Gun Metal', 'Meteor Black', 'Bayside Blue', 'Vibrant Red', 'Katsura Orange'],
-};
-
-// Based on the 2016 Aventador SV (David's reference sheet): 6.5 L V12
-// behind the seats (750 PS at 8400 rpm, 690 N·m at 5500), 1525 kg dry, about
-// 1700 kg ready to drive, a seven-speed single-clutch robot (ISR), four-wheel
-// drive that keeps most of the torque at the back. Shrieks to 8500 rpm; the
-// gear changes thump. Huge grip, a big fixed wing.
-export const AVENTADORO_SV = {
-  id: 'aventadoro-sv',
-  accelScale: 0.76,            // gentler power delivery (see vehicle.js)
-  make: 'Lamborgino',
-  model: 'Aventadoro SVJ',
-  code: 'LP750',
-  year: 2019,
-  blurb: 'A V12 behind your head and a wing on the back. Loud, wide, very fast.',
-
-  mass: 1700,
-  wheelbase: 2.7,
-  frontWeight: 0.43,          // mid-engined: the weight sits behind you
-  cgHeight: 0.42,
-  trackWidth: 1.7,
-  halfWidth: 1.01,
-  halfLength: 2.42,
-  yawInertiaScale: 0.95,
-
-  idleRpm: 1000,
-  redline: 8500,
-  limiterRpm: 8600,
-  torqueCurve: [
-    [1000, 300], [2500, 470], [4000, 600], [5500, 690],
-    [7000, 670], [8400, 630], [8600, 600],
-  ],
-  throttleResponse: 15,
-  engineBraking: 150,
-  engineInertia: 0.2,
-  sound: { cylinders: 12, burble: 0.35, pitch: 1.25, sub: 0.9, rasp: 1.45 },
-
-  gearRatios: [3.91, 2.44, 1.81, 1.46, 1.19, 0.97, 0.84],
-  reverseRatio: 2.92,
-  finalDrive: 3.24,
-  drivetrainEfficiency: 0.85,
-  drivetrain: 'awd',
-  frontTorqueShare: 0.25,
-  shiftTime: 0.1,             // a quick robot, with a kick
-  autoUpshiftRpm: 8300,
-  autoDownshiftRpm: 4200,
-
-  wheelRadius: 0.355,
-  tireGrip: 1.16,
-  rearGripScale: 1.08,
-  slipPeak: 0.14,
-  slideGrip: 0.85,
-
-  maxSteer: 0.55,
-  highSpeedSteer: 0.1,
-  steerSpeed: 3.4,
-
-  brakeForce: 22000,
-  brakeFrontBias: 0.6,
-  handbrakeForce: 4600,
-  handbrakeRearGrip: 0.42,
-
-  dragCoefficient: 0.33,
-  frontalArea: 2.05,
-  downforce: 0.55,            // the SV's wing
-  rollingResistance: 0.015,
-  liftOffDrag: 0.6,
-
-  suspensionStiffness: 58,
-  suspensionDamping: 9,
-  rollScale: 0.0028,
-  pitchScale: 0.0042,
-  squatShare: 0.4,
-  shiftKick: 0.35,
-  maxRoll: 0.04,
-  maxPitch: 0.04,
-
-  paint: 0xc8141a,
-  paints: [0xc8141a, 0xe8c21a, 0x6aa82a, 0x101114, 0xe8e8e4, 0x2a4ea8],
-  paintNames: ['Rosso Mars', 'Giallo Orion', 'Verde Ithaca', 'Nero Aldebaran', 'Bianco Isis', 'Blu Nethuns'],
-};
-
 // Based on the 2020 Mustang Shelby GT500 (David's reference sheet): 5.2 L
 // supercharged V8 (771 PS at 7300 rpm, 847 N·m at 5000), 1916 kg, a
 // seven-speed twin-clutch, rear-wheel drive. Enormous shove; it wants to
@@ -496,9 +335,8 @@ export const IMPREZA_GC8 = {
 
 // From David's GLB, a Countach 5000 QV (the model year is not certain, so 1985,
 // the first). 5.2 L V12 behind the cabin, about 455 hp, 1490 kg, rear-wheel
-// drive. The Aventadoro's chassis numbers with the older car's size and power.
+// drive.
 export const COUNTACH_QV = {
-  ...AVENTADORO_SV,
   id: 'countach-qv',
   accelScale: 0.76,
   make: 'Lamborgino',
@@ -506,25 +344,71 @@ export const COUNTACH_QV = {
   code: 'QV',
   year: 1985,
   blurb: 'A wedge, a wing and twelve cylinders. All drama, no driver aids in the styling.',
+
   mass: 1490,
   wheelbase: 2.5,
+  frontWeight: 0.43,          // mid-engined: the weight sits behind you
+  cgHeight: 0.42,
   trackWidth: 1.62,
   halfWidth: 0.98,
   halfLength: 2.1,
+  yawInertiaScale: 0.95,
+
+  idleRpm: 1000,
   redline: 7500,
   limiterRpm: 7700,
-  autoUpshiftRpm: 7100,
   torqueCurve: [[900, 300], [2500, 410], [4000, 470], [5200, 500], [6500, 475], [7000, 440], [7700, 370]],
+  throttleResponse: 15,
+  engineBraking: 150,
+  engineInertia: 0.2,
+  sound: { cylinders: 12, burble: 0.35, pitch: 1.25, sub: 0.9, rasp: 1.45 },
+
+  gearRatios: [3.91, 2.44, 1.81, 1.46, 1.19, 0.97, 0.84],
+  reverseRatio: 2.92,
+  finalDrive: 3.24,
+  drivetrainEfficiency: 0.85,
   drivetrain: 'rwd',
+  shiftTime: 0.1,             // a quick robot, with a kick
+  autoUpshiftRpm: 7100,
+  autoDownshiftRpm: 4200,
+
+  wheelRadius: 0.355,
   tireGrip: 1.0,
+  rearGripScale: 1.08,
+  slipPeak: 0.14,
+  slideGrip: 0.85,
+
+  maxSteer: 0.55,
+  highSpeedSteer: 0.1,
+  steerSpeed: 3.4,
+
+  brakeForce: 22000,
+  brakeFrontBias: 0.6,
+  handbrakeForce: 4600,
+  handbrakeRearGrip: 0.42,
+
+  dragCoefficient: 0.33,
+  frontalArea: 2.05,
   downforce: 0.3,
+  rollingResistance: 0.015,
+  liftOffDrag: 0.6,
+
+  suspensionStiffness: 58,
+  suspensionDamping: 9,
+  rollScale: 0.0028,
+  pitchScale: 0.0042,
+  squatShare: 0.4,
+  shiftKick: 0.35,
+  maxRoll: 0.04,
+  maxPitch: 0.04,
+
   paint: 0xd8261e,
   paints: [0xd8261e, 0xe8e8e4, 0x111214, 0xe8b81e],
   paintNames: ['Rosso', 'Bianco', 'Nero', 'Giallo'],
 };
 
 // The cars you can pick.
-export const CARS = [IMPREZA_GC8, SKYLINER_R34, CHALLENJER_SRT8, MUSTANK_GT500, GTAR_R35, COUNTACH_QV, AVENTADORO_SV];
+export const CARS = [IMPREZA_GC8, SKYLINER_R34, CHALLENJER_SRT8, MUSTANK_GT500, COUNTACH_QV];
 export const ALL_CARS = CARS;
 
 export function getCar(id) {

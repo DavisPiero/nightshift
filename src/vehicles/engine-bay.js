@@ -21,9 +21,7 @@ const ENGINES = {
   'skyliner-r34': { layout: 'inline', covers: 0xa01818, plenum: 0x2a2c2e }, // the famous red cam cover
   'impreza-gc8': { layout: 'inline', covers: 0xa01818, plenum: 0x2a2c2e },
   'countach-qv': { layout: 'v', covers: 0x1c1d20, plenum: 0x8c949a },
-  'gtar-r35': { layout: 'v', covers: 0x1c1d20, plenum: 0x8c949a },
   'challenjer-srt8': { layout: 'v', covers: 0xd2561a, plenum: 0x1c1d20 },  // orange cam covers
-  'aventadoro-sv': { layout: 'v', covers: 0x1c1d20, plenum: 0x2a2c2e },
   'mustank-gt500': { layout: 'v', covers: 0x1c1d20, plenum: 0x2a3a8a },     // the blue supercharger lid
 };
 
@@ -33,7 +31,7 @@ export function buildEngineBay({ B, def, spec, mats, lid = null }) {
   const ex = (z) => B.width(z) * 0.86; // where the bonnet meets the fenders
   const top = (z) => B.hood(z) - 0.03;  // keep everything under the closed bonnet
   const floor = 0.6;
-  const eng = ENGINES[spec.id] || ENGINES['gtar-r35'];
+  const eng = ENGINES[spec.id] || ENGINES['countach-qv'];
   const parts = spec.parts || {};
 
   const metal = new THREE.MeshStandardMaterial({ color: 0x3a3e42, roughness: 0.55, metalness: 0.6 });

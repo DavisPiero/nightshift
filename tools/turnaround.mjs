@@ -1,8 +1,8 @@
 // One picture of a car from eight sides, under bright work lights, to judge
 // its shape. Saves the shots to review/turn/ (git-ignored) plus a contact sheet.
-//   node tools/turnaround.mjs gtar-r35            all eight sides
-//   node tools/turnaround.mjs gtar-r35 "red"      with a name on the file
-//   node tools/turnaround.mjs cockpit gtar-r35    from the driver's seat
+//   node tools/turnaround.mjs countach-qv            all eight sides
+//   node tools/turnaround.mjs countach-qv "red"      with a name on the file
+//   node tools/turnaround.mjs cockpit countach-qv    from the driver's seat
 
 import { execFileSync } from 'node:child_process';
 import { mkdirSync, writeFileSync } from 'node:fs';
@@ -13,7 +13,7 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const OUT = join(ROOT, 'review/turn');
 mkdirSync(OUT, { recursive: true });
 const cockpit = process.argv[2] === 'cockpit';
-const car = process.argv[cockpit ? 3 : 2] || 'gtar-r35', tag = process.argv[cockpit ? 4 : 3] || '';
+const car = process.argv[cockpit ? 3 : 2] || 'countach-qv', tag = process.argv[cockpit ? 4 : 3] || '';
 const SIDES = [[0.6, 'front 3/4'], [0, 'front'], [-0.75, 'other 3/4'], [Math.PI / 2, 'side'], [2.5, 'rear 3/4'], [Math.PI, 'rear'], [-2.4, 'rear other'], [0.9, 'high']];
 const bright = `(()=>{const g=nightshift;g.fixedTurn=0;document.querySelectorAll('.screen,#hud').forEach((e)=>{e.style.display='none';});
   g.scene?.traverse?.((o)=>{if(o.isLight){o.intensity*=1.7;}});

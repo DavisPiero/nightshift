@@ -579,72 +579,6 @@ function r34Wing({ box, m, zr }) {
 // front wheels, a big trapezoid grille, the shark-gill vent behind the
 // front wheel, a high fastback roof, round quad tail lights in the body
 // colour, a wing on the boot edge and four titanium pipes.
-function r35Details({ B, add, box, mats: m, spec, tip }) {
-  const zf = B.z1, zr = B.z0;
-  // Headlights: a chrome-backed lamp that sweeps back over the fender, an
-  // L-shaped running light along its inner and lower edge.
-  add(B.decal(1.9, zf - 0.01, (z) => 5.4 + (z - 1.9) * 0.6, (z) => 8.9 - (z - 1.9) * 2.6, { nz: 8, nt: 5 }), m.lampInner);
-  add(B.decal(2.05, zf - 0.015, (z) => 6.2 + (z - 2.05) * 0.4, (z) => 7.4 - (z - 2.05) * 1.6, { lift: 0.007, nz: 5, nt: 3 }), m.headlight);
-  add(B.decal(1.95, 2.3, (z) => 5.45 + (z - 1.9) * 0.6, (z) => 5.65 + (z - 1.9) * 0.6, { lift: 0.008, nz: 6, nt: 1 }), m.headlight);
-  add(B.decal(1.9, zf - 0.01, (z) => 5.3 + (z - 1.9) * 0.6, (z) => 9.0 - (z - 1.9) * 2.6, { lift: 0.011, nz: 8, nt: 5 }), m.lens);
-  // On the nose: swept lamp units at the top corners, each with an L of
-  // running light and three small projectors.
-  for (const s of [1, -1]) {
-    add(flatShape([[s * 0.3, 0.665], [s * 0.66, 0.645], [s * 0.7, 0.59], [s * 0.36, 0.585]], zf, 1, 0.004), m.lampInner);
-    add(flatShape([[s * 0.4, 0.6], [s * 0.66, 0.6], [s * 0.67, 0.588], [s * 0.4, 0.59]], zf, 1, 0.007), m.headlight);
-    add(flatShape([[s * 0.64, 0.64], [s * 0.665, 0.638], [s * 0.668, 0.59], [s * 0.645, 0.59]], zf, 1, 0.007), m.headlight);
-    for (const x of [0.43, 0.5, 0.57]) { const p = add(new THREE.CircleGeometry(0.018, 10), m.headlight); p.position.set(s * x, 0.628, zf + 0.008); }
-  }
-  // The big trapezoid grille with a chrome frame, two bars, no badge.
-  add(flatShape([[-0.33, 0.555], [0.33, 0.555], [0.4, 0.25], [-0.4, 0.25]], zf, 1, 0.003), m.chrome);
-  add(flatShape([[-0.3, 0.535], [0.3, 0.535], [0.37, 0.27], [-0.37, 0.27]], zf, 1, 0.006), m.black);
-  for (const y of [0.45, 0.36]) add(flatShape(roundRect(0, y, 0.66, 0.012, 0.004), zf, 1, 0.009), m.trim);
-  // Side intakes in the bumper, each with a strip of running light.
-  for (const s of [1, -1]) {
-    add(flatShape([[s * 0.47, 0.43], [s * 0.64, 0.47], [s * 0.68, 0.24], [s * 0.45, 0.24]].map(([x, y]) => [x, y]), zf, 1, 0.005), m.black);
-    add(flatShape(roundRect(s * 0.6, 0.36, 0.025, 0.15, 0.008), zf, 1, 0.008), m.headlight);
-  }
-  const split = box(1.52, 0.025, 0.16, m.carbon, 0, 0.175, zf - 0.06);
-  split.rotation.x = 0.02;
-  // Two small nostrils on the bonnet.
-  for (const s of [1, -1]) add(B.decal(1.66, 1.78, 10.5, 10.85, { lift: 0.006, sides: [s], nz: 2, nt: 1 }), m.black);
-  // The shark-gill vent behind the front wheel, and the crease that runs
-  // from it down the door.
-  add(B.decal(0.8, 0.93, (z) => 3.9 + (z - 0.8) * 2.0, (z) => 4.9 + (z - 0.8) * 1.5, { lift: 0.006, nz: 3, nt: 2 }), m.black);
-  add(B.decal(-0.7, 0.8, (z) => 4.88 + (z - 0.8) * 0.4, (z) => 4.93 + (z - 0.8) * 0.4, { lift: 0.004, nz: 6, nt: 1 }), m.trim);
-  add(B.decal(-0.15, -0.02, 5.6, 5.85, { lift: 0.006, nz: 1, nt: 1 }), m.chrome);
-  // Black side skirts.
-  for (const s of [1, -1]) box(0.05, 0.07, 2.2, m.trim, s * 0.9, 0.2, 0);
-  // Rear: quad round tail lights with dark centres in a body-colour panel.
-  const tails = [];
-  for (const x of [-0.68, -0.45, 0.45, 0.68]) {
-    tails.push(roundLamp(add, m, x, 0.86, zr, 0.085, -1, m.tail));
-    const c = add(new THREE.CircleGeometry(0.038, 14), m.tailRing);
-    c.position.set(x, 0.86, zr - 0.011); c.rotation.y = Math.PI;
-  }
-  add(flatShape(roundRect(0, 0.62, 0.5, 0.11, 0.01), zr, -1, 0.006), m.plate);
-  add(flatShape(roundRect(0, 0.4, 1.56, 0.16, 0.03), zr, -1), m.black);
-  for (const s of [1, -1]) add(flatShape(roundRect(s * 0.25, 0.47, 0.12, 0.04, 0.01), zr, -1, 0.007), m.reverseLight);
-  const diff = box(1.3, 0.03, 0.3, m.carbon, 0, 0.3, zr + 0.13);
-  diff.rotation.x = -0.15;
-  for (const x of [-0.36, -0.12, 0.12, 0.36]) box(0.02, 0.09, 0.26, m.carbon, x, 0.33, zr + 0.13);
-  const ex = [];
-  for (const x of [-0.7, -0.56, 0.56, 0.7]) ex.push(exhaust(add, m, x, 0.36, zr - 0.02, 0.05 * Math.min(tip, 1.25), 0.16));
-  // Wing on the boot edge.
-  if (!spec.wing) {
-    for (const s of [1, -1]) { const up = box(0.05, 0.1, 0.16, m.paint, s * 0.55, 1.11, zr + 0.22); up.rotation.x = -0.2; }
-    const wing = box(1.5, 0.03, 0.24, m.paint, 0, 1.16, zr + 0.17);
-    wing.rotation.x = 0.1;
-    for (const s of [1, -1]) box(0.015, 0.07, 0.24, m.paint, s * 0.76, 1.15, zr + 0.17);
-  }
-  mirror(add, m, B, 0.66);
-  return { exhausts: ex, tails };
-}
-
-// The Challenjer (after the Challenger SRT8 sheet): a long flat bonnet with
-// a central scoop and two vents, four round lamps in a full-width black
-// grille, slab sides, a short glasshouse, a full-width tail-light band, a
-// ducktail and two big pipes.
 function challenjerDetails({ B, add, box, mats: m, tip }) {
   const zf = B.z1, zr = B.z0;
   // Full-width grille with the four lamps set into it.
@@ -701,76 +635,6 @@ function challenjerDetails({ B, add, box, mats: m, tip }) {
   return { exhausts: ex, tails };
 }
 
-// The Aventadoro (after the Aventador SV sheet): a low wedge with the cabin
-// pushed forward, Y-shaped lamps front and back, huge black intakes in the
-// nose and behind the doors, a louvred engine lid, a hexagonal exhaust in a
-// black mesh tail, and the SV's big fixed wing.
-function aventadoroDetails({ B, add, box, mats: m, spec, tip }) {
-  const zf = B.z1, zr = B.z0;
-  // Headlamps on top of the front wings: a dark wedge, a Y of running
-  // light (a long arm along the top, a short one slanting down).
-  add(B.decal(1.78, zf - 0.04, (z) => 7.05 + (z - 1.78) * 0.5, (z) => 8.55 - (z - 1.78) * 0.4, { nz: 6, nt: 4 }), m.lampInner);
-  add(B.decal(1.82, zf - 0.07, (z) => 7.7 + (z - 1.82) * 0.25, (z) => 7.82 + (z - 1.82) * 0.25, { lift: 0.008, nz: 6, nt: 1 }), m.headlight);
-  add(B.decal(2.05, zf - 0.06, (z) => 7.25 + (z - 2.05) * 1.6, (z) => 7.37 + (z - 2.05) * 1.6, { lift: 0.008, nz: 4, nt: 1 }), m.headlight);
-  add(B.decal(1.78, zf - 0.04, (z) => 7.0 + (z - 1.78) * 0.5, (z) => 8.6 - (z - 1.78) * 0.4, { lift: 0.011, nz: 6, nt: 4 }), m.lens);
-  // Nose: two big intakes either side of a body-colour blade, a carbon lip.
-  for (const s of [1, -1]) {
-    add(flatShape([[s * 0.2, 0.36], [s * 0.66, 0.4], [s * 0.7, 0.16], [s * 0.24, 0.16]], zf, 1, 0.004), m.black);
-    for (const y of [0.3, 0.23]) add(flatShape(roundRect(s * 0.45, y, 0.38, 0.012, 0.004), zf, 1, 0.007), m.trim);
-  }
-  add(flatShape(roundRect(0, 0.26, 0.3, 0.07, 0.02), zf, 1, 0.006), m.black);
-  const lip = box(1.86, 0.025, 0.24, m.carbon, 0, 0.13, zf - 0.08);
-  lip.rotation.x = 0.03;
-  // Two ducts on the bonnet.
-  for (const s of [1, -1]) add(B.decal(1.55, 2.05, 10.45, 10.75, { lift: 0.006, sides: [s], nz: 3, nt: 1 }), m.black);
-  // Sides: the big intake behind the door, the shoulder scoop over it,
-  // carbon sills.
-  add(B.decal(-1.0, -0.3, (z) => 4.3 + (z + 1.0) * 0.6, (z) => 5.9, { lift: 0.006, nz: 5, nt: 3 }), m.black);
-  for (let i = 0; i < 3; i++) add(B.decal(-0.95 + i * 0.2, -0.88 + i * 0.2, 4.6, 5.8, { lift: 0.009, nz: 1, nt: 2 }), m.trim);
-  add(B.decal(-1.25, -0.72, 7.1, 7.9, { lift: 0.006, nz: 3, nt: 2 }), m.black);
-  for (const s of [1, -1]) box(0.06, 0.08, 2.0, m.carbon, s * 0.97, 0.15, 0.02);
-  // Engine lid: louvres across it.
-  // A dark engine cover with body-colour ribs across it, as on the sheet.
-  add(B.decal(-2.1, -1.5, 9.6, 12, { lift: 0.006, nz: 6, nt: 3 }), m.black);
-  for (let i = 0; i < 5; i++) add(B.decal(-2.04 + i * 0.12, -2.0 + i * 0.12, 9.8, 12, { lift: 0.009, nz: 1, nt: 3 }), m.paint);
-  // Tail: a black mesh panel, the Y-shaped lamps either side, a hexagonal
-  // exhaust with two pipes in the middle, a deep diffuser.
-  // Body colour above, black mesh below with two big vents either side of the exhaust.
-  add(flatShape(roundRect(0, 0.47, 1.62, 0.3, 0.04), zr, -1, 0.003), m.black);
-  for (const s of [1, -1]) {
-    add(flatShape(roundRect(s * 0.55, 0.5, 0.42, 0.2, 0.03), zr, -1, 0.005), m.carbon);
-    for (let i = 0; i < 4; i++) add(flatShape(roundRect(s * 0.55, 0.43 + i * 0.05, 0.4, 0.008, 0.002), zr, -1, 0.007), m.trim);
-  }
-  add(flatShape(roundRect(0, 0.66, 1.62, 0.025, 0.01), zr, -1, 0.005), m.carbon);
-  const tails = [];
-  for (const s of [1, -1]) {
-    tails.push(add(flatShape([[s * 0.4, 0.86], [s * 0.84, 0.82], [s * 0.84, 0.79], [s * 0.4, 0.83]], zr, -1, 0.008), m.tail));
-    tails.push(add(flatShape([[s * 0.6, 0.83], [s * 0.66, 0.83], [s * 0.76, 0.66], [s * 0.7, 0.66]], zr, -1, 0.008), m.tail));
-    tails.push(add(flatShape([[s * 0.66, 0.83], [s * 0.72, 0.83], [s * 0.62, 0.68], [s * 0.56, 0.68]], zr, -1, 0.008), m.tail));
-  }
-  const hex = Array.from({ length: 6 }, (_, i) => [Math.cos(i * Math.PI / 3) * 0.2, 0.52 + Math.sin(i * Math.PI / 3) * 0.12]);
-  add(flatShape(hex, zr, -1, 0.009), m.carbon);
-  add(flatShape(roundRect(0, 0.76, 0.34, 0.08, 0.01), zr, -1, 0.006), m.plate);
-  const ex = [];
-  for (const x of [-0.08, 0.08]) ex.push(exhaust(add, m, x, 0.52, zr - 0.02, 0.06 * Math.min(tip, 1.25), 0.14));
-  const diff = box(1.5, 0.03, 0.42, m.carbon, 0, 0.24, zr + 0.18);
-  diff.rotation.x = -0.2;
-  for (const x of [-0.6, -0.3, 0.3, 0.6]) box(0.02, 0.12, 0.38, m.carbon, x, 0.28, zr + 0.18);
-  // The sheet's car has no fixed wing (the wing is a part you can fit).
-  if (false) {
-    const z = zr + 0.2, y = B.hood(z);
-    for (const s of [1, -1]) { const st = box(0.04, 0.26, 0.1, m.carbon, s * 0.4, y + 0.11, z); st.rotation.x = 0.2; }
-    const blade = box(1.86, 0.03, 0.3, m.carbon, 0, y + 0.25, z - 0.06);
-    blade.rotation.x = 0.1;
-    for (const s of [1, -1]) box(0.012, 0.1, 0.32, m.carbon, s * 0.93, y + 0.24, z - 0.06);
-  }
-  mirror(add, m, B, 0.45, 0.95);
-  return { exhausts: ex, tails };
-}
-
-// The Mustank (after the Shelby GT500 sheet): a long bonnet with a big heat
-// extractor, a gaping trapezoid grille between slim angry lamps, a fastback,
-// three upright bars of tail light each side, four pipes and a lip wing.
 function mustankDetails({ B, add, box, mats: m, spec, tip }) {
   const zf = B.z1, zr = B.z0;
   // Grille: a big black trapezoid with a frame, a few honeycomb bars, no
@@ -1013,26 +877,6 @@ const SHAPES = {
     headLamp: [0.54, 0.66, 2.33], tailLamp: [0.53, 0.76, -2.4],
     details: r34Details,
   },
-  'gtar-r35': {
-    def: {
-      width: [[-2.355, 0.8], [-2.3, 0.875], [-2.15, 0.925], [-1.6, 0.948], [-0.6, 0.93], [0.4, 0.922], [1.4, 0.935], [1.95, 0.92], [2.2, 0.875], [2.31, 0.8], [2.355, 0.72]],
-      sill: [[-2.355, 0.34], [-2.2, 0.24], [-1.8, 0.185], [1.9, 0.175], [2.25, 0.165], [2.355, 0.19]],
-      belt: [[-2.355, 0.92], [-2.2, 0.98], [-1.6, 0.975], [-0.6, 0.925], [0.5, 0.885], [1.3, 0.865], [1.9, 0.815], [2.2, 0.76], [2.355, 0.68]],
-      hood: [[-2.355, 0.97], [-2.25, 1.03], [-1.9, 1.045], [-1.25, 1.05], [0.8, 0.955], [1.4, 0.9], [1.9, 0.845], [2.2, 0.78], [2.355, 0.7]],
-      roof: [[-1.95, 1.03], [-1.6, 1.14], [-1.1, 1.285], [-0.55, 1.36], [-0.1, 1.37], [0.25, 1.335], [0.55, 1.19], [0.86, 0.96]],
-      roofW: [[-1.95, 0.72], [-1.4, 0.63], [-0.5, 0.6], [0.2, 0.6], [0.86, 0.75]],
-      wheels: { z: [1.39, -1.39], r: 0.44, top: 0.76, flare: [0.025, 0.045] },
-      windows: [[0.74, -1.15]],
-      screen: [0.87, 0.22], rearGlass: [-0.85, -1.95],
-      crown: 0.045, baseW: 0.91, tuck: 0.06, sillTrim: true, fenderRise: 0.02, bulge: 0.02,
-    },
-    wheelX: 0.82, tyreWidth: 0.27,
-    rim: { style: 'ten', color: '#3a3c3f', caliper: 0x8a6a2a },
-    core: [1.42, 4.0],
-    driverX: -0.38, cockpitOffset: [0.04, -0.02], doorX: 0.82, linerY: 1.33,
-    headLamp: [0.6, 0.66, 2.3], tailLamp: [0.56, 0.86, -2.42],
-    details: r35Details,
-  },
   'challenjer-srt8': {
     def: {
       width: [[-2.51, 0.86], [-2.42, 0.93], [-2.0, 0.955], [-1.2, 0.95], [0, 0.94], [1.2, 0.95], [2.2, 0.945], [2.42, 0.925], [2.51, 0.885]],
@@ -1052,27 +896,6 @@ const SHAPES = {
     driverX: 0.4, cockpitOffset: [0.06, 0.08], doorX: 0.83, linerY: 1.33,
     headLamp: [0.58, 0.72, 2.56], tailLamp: [0.6, 0.88, -2.56],
     details: challenjerDetails,
-  },
-  'aventadoro-sv': {
-    def: {
-      width: [[-2.42, 0.86], [-2.35, 0.95], [-2.0, 1.0], [-1.3, 1.01], [-0.6, 0.965], [0.2, 0.935], [1.0, 0.95], [1.5, 0.955], [2.0, 0.93], [2.3, 0.87], [2.42, 0.8]],
-      sill: [[-2.42, 0.36], [-2.3, 0.22], [-1.8, 0.15], [1.9, 0.13], [2.3, 0.13], [2.42, 0.15]],
-      belt: [[-2.42, 0.86], [-2.2, 0.9], [-1.6, 0.9], [-0.8, 0.86], [0, 0.8], [0.8, 0.74], [1.6, 0.67], [2.2, 0.55], [2.42, 0.44]],
-      hood: [[-2.42, 0.9], [-2.3, 0.97], [-1.9, 0.98], [-1.2, 0.97], [0.75, 0.84], [1.4, 0.75], [2.0, 0.63], [2.3, 0.53], [2.42, 0.45]],
-      roof: [[-1.95, 0.97], [-1.4, 1.04], [-0.9, 1.1], [-0.45, 1.13], [-0.05, 1.13], [0.3, 1.06], [0.6, 0.96], [0.86, 0.85]],
-      roofW: [[-1.95, 0.72], [-1.2, 0.62], [-0.4, 0.58], [0.3, 0.58], [0.86, 0.76]],
-      wheels: { z: [1.36, -1.34], r: 0.42, top: 0.74, flare: [0.03, 0.06] },
-      windows: [[0.72, -0.72]],
-      screen: [0.86, 0.3], rearGlass: [-0.75, -1.25],
-      crown: 0.04, baseW: 0.9, tuck: 0.07, sillTrim: true, fenderRise: 0.03, bulge: 0.025, roofCrown: 0.03,
-      engineLid: [-2.15, -1.3], // mid-engined: the Engine tab lifts the lid behind the cabin
-    },
-    wheelX: 0.87, tyreWidth: 0.3,
-    rim: { style: 'six', color: '#26282a', caliper: 0xc89a2a },
-    core: [1.5, 4.2],
-    driverX: 0.38, cockpitOffset: [-0.2, -0.06], doorX: 0.86, linerY: 1.31, seatColour: 0x5a1a1a,
-    headLamp: [0.62, 0.53, 2.3], tailLamp: [0.66, 0.82, -2.43],
-    details: aventadoroDetails,
   },
   'mustank-gt500': {
     def: {

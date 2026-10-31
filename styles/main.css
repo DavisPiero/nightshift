@@ -370,13 +370,15 @@ input[type=range]::-moz-range-thumb { width: 14px; height: 24px; border: 0; bord
 /* ---------- HUD */
 #hud { position: fixed; inset: 0; pointer-events: none; z-index: 3; }
 #tach {
-  position: absolute; width: 264px; height: 176px;
-  right: max(14px, var(--sr)); bottom: max(10px, var(--sb));
+  position: absolute; width: 198px; height: 198px;
+  left: 50%; transform: translateX(-50%); bottom: max(6px, var(--sb));
 }
-#hud.touch #tach { width: 200px; height: 133px; right: auto; left: 50%; transform: translateX(-50%); bottom: max(4px, var(--sb)); }
+#hud.touch #tach { width: 170px; height: 170px; bottom: max(4px, var(--sb)); }
 #hud-buttons { position: absolute; top: max(14px, var(--st)); left: max(16px, var(--sl)); display: flex; gap: 8px; pointer-events: auto; }
 #minimap {
-  position: absolute; top: max(14px, var(--st)); right: max(16px, var(--sr)); width: 270px; height: 270px; overflow: hidden;
+  position: absolute; top: max(14px, var(--st)); right: max(16px, var(--sr)); width: 270px; height: 270px;
+  -webkit-mask-image: radial-gradient(circle at center, #000 52%, transparent 74%);
+  mask-image: radial-gradient(circle at center, #000 52%, transparent 74%);
 }
 #hud.touch #minimap { width: 180px; height: 180px; }
 #hud.touch #hud-buttons { display: none; }
@@ -448,8 +450,8 @@ input[type=range]::-moz-range-thumb { width: 14px; height: 24px; border: 0; bord
   #track-list .item { height: 54px; }
   .btn { font-size: 21px; padding: 8px 16px 10px; }
   .box h2, .bar h2 { font-size: 36px; }
-  #tach { width: 200px; height: 133px; }
-  #hud.touch #tach { width: 160px; height: 107px; }
+  #tach { width: 170px; height: 170px; }
+  #hud.touch #tach { width: 140px; height: 140px; }
   #minimap { width: 200px; height: 200px; }
   #hud.touch #minimap { width: 150px; height: 150px; }
   .box { padding: 10px 14px 14px; gap: 8px; }

@@ -29,8 +29,8 @@ David's Windows 98 reference (2026-10-31; replaces the street-racer look).
   stays pressed in on a fine grey-and-white check. Main action solid hot pink.
 - Lists: a white sunken box; rows are flat, the picked one solid navy with white text.
 - Meters are block progress bars. Tips are pale yellow tooltips.
-- HUD: two small windows, Rev counter (block bar, green gear and speed on a black display) and
-  Map (on the classic teal desktop).
+- HUD: a round rev dial at the bottom centre, ring of blocks with gear and speed inside, in the
+  same grey, green and red; and a teal map with no frame, its corners fading out (David, 2026-10-31).
 - Behind every menu: the 3D scene.
 - Japanese: on screen titles and in the world only, never on buttons or rows.
 - Motion: quick and stepped. Lists slide in when a screen or tab opens, never on every click.

@@ -10,7 +10,7 @@
 // it was.
 //
 //   node tools/capture-car.mjs            all cars in tools/car-recipes.mjs
-//   node tools/capture-car.mjs gtar-r35   one car
+//   node tools/capture-car.mjs countach-qv   one car
 //
 // Needs `npm install` (meshoptimizer) and the GLBs in GLB/ (git-ignored).
 // The game itself needs neither: it only reads assets/cars/.
@@ -314,8 +314,8 @@ function capture(R) {
   const groupOf = (slot) => ['rim', 'tyre'].includes(slot) ? 'spin' : ['disc', 'caliper'].includes(slot) ? 'hub' : slot === 'drop' ? null : 'body';
   const parts = new Map();
   const partFor = (key, info) => { if (!parts.has(key)) parts.set(key, { ...info, soup: new Soup() }); return parts.get(key); };
-  const pbr = (mi) => {
-    const m = j.materials[mi] || {}, b = m.pbrMetallicRoughness || {};
+  const pbr = (mi, file = j) => {
+    const m = file.materials[mi] || {}, b = m.pbrMetallicRoughness || {};
     return { color: b.baseColorFactor || [1, 1, 1, 1], metal: b.metallicFactor ?? 1, rough: b.roughnessFactor ?? 1, alpha: m.alphaMode || 'OPAQUE', texIndex: b.baseColorTexture?.index ?? null, double: !!m.doubleSided, name: m.name };
   };
   // Wheels near a corner of the car, measured on the file's own numbers.
@@ -368,6 +368,54 @@ function capture(R) {
       partFor(`${key}R`, { slot: `${p.slot}R`, group, m, opts }).soup.add(p, (a) => (p.pos[a * 3 + 2] - zMid) * sign <= 0 && !low(a), xf);
       if (opts.tailMinY) partFor(`${key}L`, { slot: 'asis', group, m, opts }).soup.add(p, (a) => (p.pos[a * 3 + 2] - zMid) * sign <= 0 && low(a), xf);
     } else partFor(key, { slot: p.slot, group, m, opts }).soup.add(p, null, xf);
+  }
+
+  // A cabin from another GLB: its interior, fitted to its own axles the same
+  // way, then moved and scaled into this body (`donor` in the recipe).
+  if (R.donor) {
+    const D = R.donor, dglb = readGlb(join(ROOT, 'GLB', D.glb)), dp = primitives(dglb);
+    const name = (p) => `${dglb.j.materials[p.material]?.name || ''}|${p.node}`;
+    let a = [1e9, 1e9, 1e9], b = [-1e9, -1e9, -1e9], cz = 0, n = 0;
+    const tyre = dp.filter((p) => D.tyre.test(name(p)));
+    for (const p of tyre) for (let i = 0; i < p.pos.length; i += 3) { cz += p.pos[i + 2]; n++; for (let c = 0; c < 3; c++) { a[c] = Math.min(a[c], p.pos[i + c]); b[c] = Math.max(b[c], p.pos[i + c]); } }
+    cz /= n;
+    let f = [1e9, -1e9], r = [1e9, -1e9];
+    for (const p of tyre) for (let i = 0; i < p.pos.length; i += 3) { const e = p.pos[i + 2] > cz ? f : r; e[0] = Math.min(e[0], p.pos[i + 2]); e[1] = Math.max(e[1], p.pos[i + 2]); }
+    const fz = (f[0] + f[1]) / 2, rz = (r[0] + r[1]) / 2, ds = (D.axles[0] - D.axles[1]) / Math.abs(fz - rz);
+    const [mx, my, mz] = D.move || [0, 0, 0], [kx, ky, kz] = D.scale || [1, 1, 1];
+    const dxf = (q) => {
+      q[0] = ((q[0] - (a[0] + b[0]) / 2) * ds) * kx + mx;
+      q[1] = ((q[1] - a[1]) * ds) * ky + my;
+      q[2] = ((q[2] - (fz + rz) / 2) * ds + (D.axles[0] + D.axles[1]) / 2) * kz + mz;
+    };
+    const seen = {};
+    for (const p of dp) {
+      if (!D.take.test(name(p)) || (D.skip && D.skip.test(name(p)))) continue;
+      const m = pbr(p.material, dglb.j);
+      if (!p.hasNormals) { const t = new Soup(); t.add(p); fixNormals(t); p.nor = Float64Array.from(t.nor); }
+      const part = partFor(`donor:${m.name}`, { slot: 'asis', group: 'body', m, opts: { tint: D.tint }, glb: dglb });
+      const from = part.soup.pos.length;
+      part.soup.add(p, D.keep ? (i, j2, k) => {
+        const c = [0, 1, 2].map((e) => (p.pos[i * 3 + e] + p.pos[j2 * 3 + e] + p.pos[k * 3 + e]) / 3);
+        dxf(c);
+        return AXES.every((ax, e) => !D.keep[ax] || (c[e] >= D.keep[ax][0] && c[e] <= D.keep[ax][1]));
+      } : null, dxf);
+      const q = part.soup.pos;
+      const e = (seen[m.name] ??= [[1e9, 1e9, 1e9], [-1e9, -1e9, -1e9], 0]);
+      for (let i = from; i < q.length; i += 3) for (let c = 0; c < 3; c++) { e[0][c] = Math.min(e[0][c], q[i + c]); e[1][c] = Math.max(e[1][c], q[i + c]); }
+    }
+    for (const [k, e] of Object.entries(seen)) console.log('   donor', k, e[0].map((v) => +v.toFixed(2)).join(' '), '..', e[1].map((v) => +v.toFixed(2)).join(' '));
+  }
+  // This body's own cabin goes: whole islands inside the box.
+  if (R.cabinOut) for (const [key, part] of parts) {
+    if (part.group !== 'body' || key.startsWith('donor:') || part.slot === 'glass') continue;
+    const q = part.soup, keep = [];
+    let out = 0;
+    for (const g of islands(q)) {
+      const inside = AXES.every((ax, i) => g.min[i] >= R.cabinOut[ax][0] && g.max[i] <= R.cabinOut[ax][1]);
+      if (inside) { out += g.tris.length; if (R.listCabin) console.log('   out', part.slot, part.m.name, g.tris.length, g.min.map((v) => +v.toFixed(2)).join(' '), '..', g.max.map((v) => +v.toFixed(2)).join(' ')); } else for (const t of g.tris) keep.push(t);
+    }
+    if (out) { part.soup = take(q, keep); console.log(`   cabin out: ${out} triangles of ${part.m.name}`); }
   }
 
   // 4. Glass: only the outward faces, so you can see out from the driver's seat.
@@ -543,8 +591,30 @@ function capture(R) {
     steering = { c: c.map((v) => +v.toFixed(4)), axis: ax.map((v) => +v.toFixed(4)), found: g.tris.length, hub: +hub.toFixed(4), padR: R.padR ?? 0 };
   }
 
-  // A foundry car says where its wheel is: it is already its own part.
-  if (R.steeringAt) steering = { c: R.steeringAt.c, axis: R.steeringAt.axis, hub: 0, padR: 0 };
+  // A wheel that is already its own group (`steeringFit`): its axis is the
+  // direction it is thinnest in, its centre the middle of the rim.
+  if (R.steeringFit) {
+    const pts = [];
+    for (const p of parts.values()) if (p.group === 'steering') for (let i = 0; i < p.soup.pos.length; i += 3) pts.push([p.soup.pos[i], p.soup.pos[i + 1], p.soup.pos[i + 2]]);
+    const mid = [0, 1, 2].map((c) => pts.reduce((t, q) => t + q[c], 0) / pts.length);
+    const C = [[0, 0, 0], [0, 0, 0], [0, 0, 0]];
+    for (const q of pts) for (let a2 = 0; a2 < 3; a2++) for (let b2 = 0; b2 < 3; b2++) C[a2][b2] += (q[a2] - mid[a2]) * (q[b2] - mid[b2]);
+    const tr = C[0][0] + C[1][1] + C[2][2];
+    let ax = [0, 0.3, 1];
+    for (let it = 0; it < 200; it++) {
+      const n = [0, 1, 2].map((r) => tr * ax[r] - C[r][0] * ax[0] - C[r][1] * ax[1] - C[r][2] * ax[2]);
+      const l = Math.hypot(...n); ax = n.map((v) => v / l);
+    }
+    if (ax[2] < 0) ax = ax.map((v) => -v);
+    ax[0] = 0; const al = Math.hypot(...ax); ax = ax.map((v) => v / al); // columns point straight ahead
+    const dot = (a2, b2) => a2[0] * b2[0] + a2[1] * b2[1] + a2[2] * b2[2];
+    const u0 = [1, 0, 0], k = dot(u0, ax), u = u0.map((v, i) => v - k * ax[i]), ul = Math.hypot(...u), U = u.map((v) => v / ul);
+    const V = [ax[1] * U[2] - ax[2] * U[1], ax[2] * U[0] - ax[0] * U[2], ax[0] * U[1] - ax[1] * U[0]];
+    const span = (d) => { let lo = 1e9, hi = -1e9; for (const q of pts) { const t = dot(q.map((v, i) => v - mid[i]), d); lo = Math.min(lo, t); hi = Math.max(hi, t); } return (lo + hi) / 2; };
+    const cu = span(U), cv = span(V);
+    steering = { c: mid.map((v, i) => +(v + U[i] * cu + V[i] * cv).toFixed(4)), axis: ax.map((v) => +v.toFixed(4)), hub: 0, padR: 0 };
+    console.log('   steering fit', JSON.stringify(steering));
+  }
 
   // 8. Compress and write. lod 0 is every triangle; lod 2 the iPad copy
   // (LITE_TRIS for the whole car); lod 1 the parked car (PARKED_TRIS).
@@ -554,8 +624,9 @@ function capture(R) {
   const push = (f, arr) => { const pad = (4 - (f.offset % 4)) % 4; if (pad) { f.blobs.push(Buffer.alloc(pad)); f.offset += pad; } const b = Buffer.from(arr.buffer, arr.byteOffset, arr.byteLength); f.blobs.push(b); const at = f.offset; f.offset += b.length; return at; };
   const texNames = new Map();
   const texFor = (part, small) => {
-    const k = `${part.m.texIndex}${small ? 's' : ''}`;
-    if (!texNames.has(k)) texNames.set(k, saveTexture(glb, part.m.texIndex, R.id, `t${part.m.texIndex}${small ? '-s' : ''}`, part.m.alpha !== 'OPAQUE', small ? 1024 : 4096));
+    const d = part.glb ? 'd' : '';
+    const k = `${d}${part.m.texIndex}${small ? 's' : ''}`;
+    if (!texNames.has(k)) texNames.set(k, saveTexture(part.glb ?? glb, part.m.texIndex, R.id, `${d}t${part.m.texIndex}${small ? '-s' : ''}`, part.m.alpha !== 'OPAQUE', small ? 1024 : 4096));
     return texNames.get(k);
   };
   let fullTris = 0;

@@ -2,7 +2,7 @@
 // window. Starts a local server and headless Chrome, loads the game with
 // ?shot&mute plus your query, waits, optionally runs some JavaScript in the
 // page, and saves PNGs.
-//   node tools/shot.mjs "screen=garage&car=gtar-r35" out.png [--wait 4] [--size 1280x720] [--js "code"]
+//   node tools/shot.mjs "screen=garage&car=countach-qv" out.png [--wait 4] [--size 1280x720] [--js "code"]
 // A job's `page` loads that file from the project instead of the game.
 // Several shots in one go: pass a JSON list as the only argument:
 //   node tools/shot.mjs '[{"q":"screen=main","out":"a.png"},{"q":"device=computer","out":"b.png","wait":6}]'
