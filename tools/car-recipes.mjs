@@ -72,13 +72,18 @@ export const RECIPES = [
       [/^clearglass/, 'lens'],
       [/^redglass/, 'tail'],
       [/^orangeglass/, 'amber'],
-      [/^(chrome|mirror)/, 'chrome'],
+      [/^mirror/, 'asis'],
+      [/^chrome/, 'chrome'],
       [/^black/, 'trim'],
       [/^interior/, 'asis'],
     ],
     bonnet: { z: [0.78, 2.0], y: 0.6, x: 0.7 },
-    donor: { glb: 'ford_mustang_shelby_2012.glb', axles: [1.47, -1.25], tyre: /^Pneu/, take: /^Interior/, skip: /Interior_HP/, tint: 0.3, scale: [0.93, 0.86, 1], keep: { y: [0, 1.04], z: [-1.3, 1] } },
-    cabinOut: { x: [-0.72, 0.72], y: [0.15, 1.24], z: [-0.95, 0.62] },
+    donor: { glb: 'ford_mustang_shelby_2012.glb', axles: [1.47, -1.25], tyre: /^Pneu/, take: /^Interior/, skip: /Interior_HP/, tint: 0.3, scale: [0.93, 0.86, 1], keep: { y: [0, 1.04], z: [-1.3, 1] },
+      // Its A-pillar trim and gauge pod belong to a taller car.
+      drop: [{ x: [0.46, 0.9], y: [0.88, 1.1], z: [0.02, 0.52] }, { x: [-0.9, -0.46], y: [0.88, 1.1], z: [0.02, 0.52] }] },
+    // The racer's cabin and cage, and its wheel and column, which reach further forward.
+    cabinOut: [{ x: [-0.72, 0.72], y: [0.15, 1.24], z: [-0.95, 0.62] }, { x: [0.15, 0.5], y: [0.58, 0.96], z: [0.1, 0.76] }],
+    cabinKeep: { x: [-0.14, 0.14], y: [1.05, 1.22], z: [0.25, 0.35], material: 'mirror' },
     panels: {
       wing: { y: [0.9, 1.3], z: [-2.35, -1.75] },
       bumperF: { cut: true, z: [2.05, 2.5], y: [0, 0.55] }, bumperR: { cut: true, z: [-2.4, -1.95], y: [0, 0.55] },
