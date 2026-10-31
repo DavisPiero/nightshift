@@ -167,13 +167,13 @@ def build(bp, trace):
         f = F.on_front(s * .535, .57)
         o2 = F.oval(.3, .072, 40, 3)
         F.boolean(body, F.pocket('c', skin, o2, f, .012, 'black'))
-        extras.append(F.panel('amber', skin, F.oval(.14, .05, 28, 3), F.on_front(s * .535, .57), -.006, 'amber', .003))
+        extras.append(F.panel('amber', skin, F.oval(.14, .05, 28, 3), F.on_front(s * .535, .57), -.006, 'lensamber', .003))
         for dx in (-.11, .11):
-            extras.append(F.panel('lens', skin, F.oval(.07, .052, 20, 3), F.on_front(s * .535 + dx, .57), -.006, 'white', .002))
+            extras.append(F.panel('lens', skin, F.oval(.07, .052, 20, 3), F.on_front(s * .535 + dx, .57), -.006, 'lensclear', .002))
         # Corner indicators, side markers.
-        extras.append(F.panel('amber', skin, F.oval(.05, .036, 16, 4), F.on_front(s * .625, .46), .002, 'amber', .002))
-        extras.append(F.panel('amber', skin, F.oval(.13, .03, 20, 4), F.on_side(s, 1.74, .425), .002, 'amber', .002))
-        extras.append(F.panel('amber', skin, F.oval(.05, .05, 20), F.on_side(s, .77, .52), .001, 'amber', .002))
+        extras.append(F.panel('amber', skin, F.oval(.05, .036, 16, 4), F.on_front(s * .625, .46), .002, 'lensamber', .002))
+        extras.append(F.panel('amber', skin, F.oval(.13, .03, 20, 4), F.on_side(s, 1.74, .425), .002, 'lensamber', .002))
+        extras.append(F.panel('amber', skin, F.oval(.05, .05, 20), F.on_side(s, .77, .52), .001, 'lensamber', .002))
         extras.append(F.panel('tail', skin, F.oval(.13, .03, 20, 4), F.on_side(s, -1.66, .46), .002, 'tail', .002))
 
         # Tail lamp: a black oval with three round lenses.
@@ -181,10 +181,10 @@ def build(bp, trace):
         r = F.on_rear(s * .505, .645)
         F.boolean(body, F.pocket('c', skin, o3, r, .012, 'black'))
         extras.append(F.panel('tailring', skin, F.oval(.31, .135, 48, 2.8), r, -.006, 'tailring', .001))
-        extras.append(F.panel('amber', skin, F.oval(.092, .10, 28), F.on_rear(s * .605, .645), -.004, 'amber', .008))
+        extras.append(F.panel('amber', skin, F.oval(.092, .10, 28), F.on_rear(s * .605, .645), -.004, 'lensamber', .008))
         extras.append(F.panel('tail', skin, F.oval(.092, .106, 28), F.on_rear(s * .505, .645), -.004, 'tail', .009))
         extras.append(F.panel('chrome', skin, F.oval(.092, .10, 28), F.on_rear(s * .405, .645), -.004, 'chrome', .003))
-        extras.append(F.panel('white', skin, F.oval(.07, .08, 24), F.on_rear(s * .405, .645), -.001, 'white', .007))
+        extras.append(F.panel('white', skin, F.oval(.07, .08, 24), F.on_rear(s * .405, .645), -.001, 'lensclear', .007))
 
         # Door handle: a chrome pull in a shallow dish.
         h = F.on_side(s, -.455, .715)
@@ -192,7 +192,7 @@ def build(bp, trace):
         extras.append(F.panel('chrome', skin, F.oval(.125, .022, 20, 4), h, .002, 'chrome', .004))
 
     F.boolean(body, F.pocket('c', skin, F.oval(.31, .15, 40, 8), F.on_rear(0, .625), .008, 'black'))
-    extras.append(F.panel('plate', skin, F.oval(.27, .115, 40, 8), F.on_rear(0, .625), -.004, 'plate'))
+    extras.append(F.panel('plate', skin, F.oval(.27, .115, 40, 8), F.on_rear(0, .625), -.004, 'platedark'))
 
     # Rocker, chin, slats and exhaust: the black parts underneath.
     for s in (1, -1):
@@ -208,6 +208,7 @@ def build(bp, trace):
     extras.append(F.lathe('chrome', [(-1.99, .033), (-1.985, .044), (-1.97, .044), (-1.9, .04)], 'chrome', axis='z', segs=32, at=(-.49, .245, 0)))
 
     build_screen(skin, extras)
+    build_cabin(extras)
     build_top(extras)
     for s in (1, -1):
         extras += build_mirror(s, skin)
@@ -227,6 +228,139 @@ def build(bp, trace):
     for o in bpy.data.objects:
         if o.data.materials and o.data.materials[0].name == 'glass':
             F.face_out(o)
+
+
+WHEEL = np.array((.37, .79, .215))   # the steering wheel's centre
+COLUMN = np.array((0, .36, .933))     # along the column, forward and up
+DIALS = {'centre': (.37, .835, .345), 'r': .058, 'gap': .135}
+
+
+def seat(cx):
+    # A low bucket: a cushion, a back with bolsters, a headrest in one piece.
+    def sec(w, d, side):
+        pts = [(-w / 2, -d / 2), (-w / 2 - .0, d / 2 + side), (-w * .32, d / 2 + side * .7), (-w * .2, d * .24), (w * .2, d * .24), (w * .32, d / 2 + side * .7), (w / 2, d / 2 + side), (w / 2, -d / 2)]
+        return [tuple(q) for q in F.resample(F.chaikin(pts, 3), 40)]
+    out = []
+    # Cushion: up is the seat's face.
+    path = [(cx, .365, -.56), (cx, .375, -.4), (cx, .395, -.2), (cx, .41, -.08)]
+    q = F.resample(F.chaikin(path, 2, False), 16, False)
+    rings = []
+    for i, p in enumerate(q):
+        t = i / 15
+        w = .48 - .1 * t ** 2.4
+        rings.append([(p[0] + a, p[1] + b, p[2]) for a, b in sec(w, .10 - .03 * t ** 3, .028)])
+    out.append(F.fix_normals(F.loft('seat', rings, 'seat')))
+    # Back: from the cushion up, leaning, with the head rest pinched at the top.
+    B0 = np.array((cx, .40, -.56))
+    lean = np.array((0, .93, -.36))
+    side = np.array((0, .36, .93))
+    rings = []
+    for i in range(30):
+        t = i / 29
+        p = B0 + lean * (.68 * t)
+        k = .48 - .06 * t
+        d = .1
+        s = .03
+        if t > .68:
+            n = sstep(.68, .76, t)
+            k = k * (1 - .42 * n)
+            s *= 1 - n
+        if t > .94:
+            k *= 1 - .4 * sstep(.94, 1, t)
+            d *= 1 - .5 * sstep(.94, 1, t)
+        rings.append([tuple(p + np.array((a, 0, 0)) + side * b) for a, b in sec(k, d, s)])
+    out.append(F.fix_normals(F.loft('seat', rings, 'seat')))
+    return out
+
+
+def build_cabin(extras):
+    bx = F.bar_x
+    # Dash: a padded roll across the car, with a lower lip.
+    dash = [(.62, .845), (.46, .868), (.335, .858), (.285, .815), (.285, .715), (.33, .63), (.62, .56)]
+    dashboard = bx('dash', dash, -.74, .74, 'dash')
+    extras.append(dashboard)
+    # Binnacle: a hood over the dials.
+    dx = DIALS['centre'][0]
+    rings = []
+    for z, hgt, w in ((.47, .002, .2), (.42, .05, .205), (.37, .078, .21), (.325, .083, .212), (.3, .075, .21)):
+        rings.append([(dx + w * math.copysign(abs(math.cos(a)) ** .6, math.cos(a)), .866 + hgt * abs(math.sin(a)) ** .7 - .02, z) for a in np.linspace(0, math.pi, 28)] + [(dx - .2, .78, z), (dx + .2, .78, z)])
+    hood = F.fix_normals(F.loft('dash', rings, 'dash'))
+    # The dial pit, then the three dials' faces sit in it.
+    c = DIALS['centre']
+    F.boolean(hood, F.extrude_z('pit', [(dx + a, c[1] + .005 + b) for a, b in F.oval(.37, .135, 40, 3)], .335, .2, 'trim'))
+    F.boolean(dashboard, F.extrude_z('pit', [(dx + a, c[1] + .005 + b) for a, b in F.oval(.37, .135, 40, 3)], .345, .2, 'trim'))
+    extras.append(hood)
+    # Centre: round vents, the radio slot, the heater.
+    def vent(x, y, r=.042):
+        z = .278
+        extras.append(F.lathe('chrome', [(z, r - .006), (z + .001, r + .002), (z + .006, r + .004)], 'trim', axis='z', segs=28, at=(x, y, 0)))
+        extras.append(F.lathe('black', [(z + .008, 0), (z + .008, r)], 'black', axis='z', segs=28, at=(x, y, 0)))
+        for k in (-.5, 0, .5):
+            extras.append(F.sweep('trim', [(x - r * .9, y + k * r, z + .001), (x + r * .9, y + k * r, z + .001)], F.rrect(.004, .012, .001, 1), 'trim', up=(0, 1, 0)))
+    for x in (-.55, -.11, .11, .655):
+        vent(x, .775)
+    extras.append(bx('trim', [(.33, .70), (.283, .70), (.283, .62), (.33, .62)], -.13, .13, 'trim', 1))
+    extras.append(bx('black', [(.3, .69), (.279, .69), (.279, .665), (.3, .665)], -.09, .09, 'black', 0))
+    # The tunnel between the seats, the gear lever, the handbrake.
+    tunnel = [(.58, .46), (.3, .54), (-.2, .46), (-.72, .42), (-.72, .3), (.6, .3)]
+    extras.append(bx('console', tunnel, -.11, .11, 'console'))
+    extras.append(F.bar_path('console', [(-.0, .50, .08), (0, .50, -.42)], F.rrect(.2, .04, .018), 'console'))
+    extras.append(F.lathe('boot', [(.0, .082), (.03, .07), (.06, .036), (.1, .018), (.2, .012)], 'console', axis='y', segs=16, at=(0, .52, .13)))
+    extras.append(F.lathe('knob', [(.0, .012), (.008, .02), (.02, .024), (.036, .018), (.04, 0)], 'seat', axis='y', segs=16, at=(0, .71, .13)))
+    extras.append(F.bar_path('seat', [(-.08, .5, -.28), (-.08, .545, -.1)], F.rrect(.028, .022, .008), 'seat'))
+    # Seats.
+    for x in (.37, -.37):
+        extras += seat(x)
+    # Door cards, and the sill along the top.
+    for s in (1, -1):
+        c = s * .708
+        extras.append(F.bar_path('vinyl', [(s * .72, .845, .5), (s * .715, .85, -.62)], F.rrect(.09, .03, .012), 'trim'))
+        card = [(.5, .82), (.5, .34), (-.56, .34), (-.6, .82)]
+        extras.append(F.fix_normals(F.loft('vinyl', [[(s * x, y, z) for z, y in F.chaikin(card, 2)] for x in (.70, .714)], 'vinyl', smooth=False)))
+        extras.append(F.bar_path('vinyl', [(s * .695, .60, .1), (s * .685, .62, -.1), (s * .695, .61, -.42)], F.rrect(.05, .05, .018), 'trim'))
+        extras.append(F.lathe('chrome', [(0, .03), (.002, .032), (.01, .032)], 'chrome', axis='x', segs=18, at=(s * .695, .70, .13) ) if False else F.bar_path('chrome', [(s * .69, .69, .22), (s * .69, .69, .12)], F.rrect(.012, .02, .006), 'chrome'))
+        # A speaker in each door.
+        extras.append(F.lathe('black', [(0, 0), (0, .07)], 'black', axis='x', segs=24, at=(s * .695, .45, .25)))
+    # Pedals and column.
+    for x, y0 in ((.26, .36), (.38, .34), (.5, .34)):
+        extras.append(F.bar_path('metal', [(x, y0 + .06, .56), (x, y0, .52)], F.rrect(.07, .012, .004), 'pedal', up=(0, .3, -1)))
+    a = WHEEL + COLUMN * .05
+    b = WHEEL + COLUMN * .24
+    extras.append(F.bar_path('console', [tuple(a), tuple(b)], F.oval(.1, .08, 16), 'console', up=(1, 0, 0) if False else (0, 1, 0)))
+    build_wheel(extras)
+    # Sun visors and the mirror on the header.
+    for s in (1, -1):
+        extras.append(F.bar_path('fabric', [(s * .12, 1.16, .03), (s * .5, 1.155, .0)], F.rrect(.15, .012, .005), 'vinyl', up=(0, .9, .4)))
+    extras.append(F.bar_path('black', [(-.1, 1.14, .08), (.1, 1.14, .08)], F.rrect(.055, .02, .008), 'trim'))
+    # The parcel wall behind the seats.
+    extras.append(bx('carpet', [(-.7, .84), (-.84, .86), (-.84, .3), (-.7, .3)], -.7, .7, 'carpet', 1))
+
+
+def build_wheel(extras):
+    # The steering wheel, drawn at the origin of its own plane, then placed:
+    # three spokes and a plain hub, on its own so it can turn.
+    n = F.normalize(COLUMN)
+    u = F.normalize(np.cross((0, 1, 0), n))
+    v = np.cross(n, u)
+    P = lambda a, b, c=0: tuple(WHEEL + u * a + v * b + n * c)
+    R, tube = .182, .0155
+    rings = []
+    for i in range(72):
+        t = 2 * math.pi * i / 72
+        d = np.array((math.cos(t), math.sin(t)))
+        rings.append([P(*(d * (R + tube * math.cos(a))), tube * math.sin(a)) for a in np.linspace(0, 2 * math.pi, 12, endpoint=False)])
+    verts = np.array(rings).reshape(-1, 3)
+    faces = [(i * 12 + j, ((i + 1) % 72) * 12 + j, ((i + 1) % 72) * 12 + (j + 1) % 12, i * 12 + (j + 1) % 12) for i in range(72) for j in range(12)]
+    extras.append(F.fix_normals(F.mesh('steer', verts, faces, 'steer')))
+    for ang in (0, 180, 270):
+        c, s = math.cos(math.radians(ang)), math.sin(math.radians(ang))
+        w = .05 if ang == 270 else .036
+        rs = [[P(c * r - s * a, s * r + c * a, .02 * (1 - r / R) + b) for a, b in F.rrect(w, .012, .005, 2)] for r in (.04, R - .004)]
+        extras.append(F.fix_normals(F.loft('steer', rs, 'steer')))
+    hub = F.oval(.13, .105, 28, 3)
+    rs = [[P(a * k, b * k, d) for a, b in hub] for k, d in ((1, .03), (1, -.01), (.9, -.025), (.0, -.03))]
+    h = F.loft('steer', rs, 'steer', caps=False)
+    extras.append(F.fix_normals(h))
 
 
 def build_screen(skin, extras):
@@ -264,7 +398,7 @@ def top_ring(z, grow=0.0):
     y_top = pchip([(-1.26, .86), (-1.06, .99), (-.91, 1.085), (-.75, 1.185), (-.6, 1.22), (-.3, 1.232), (-.13, 1.232), (.02, 1.215), (.1, 1.195)])
     w_top = pchip([(-1.26, .6), (-.9, .56), (-.6, .54), (.1, .52)])
     w_low = pchip([(-1.26, .73), (-.9, .74), (-.6, .735), (.1, .70)])
-    t = float(y_top(z)) + grow
+    t = float(y_top(z)) + grow + (.005 * (bump(-.72, .035, z) + bump(-.26, .035, z)) if grow == 0 else 0)
     a, b = float(w_top(z)) + grow, float(w_low(z)) + grow
     base = .80
     pts = []
@@ -297,6 +431,11 @@ def build_top(extras):
     pane = [[(a, 1.05 + b * .72 + .004, -.95 + b * .7 - .004) for a, b in F.oval(1.0, .29, 40, 4.5)]]
     p2 = [[(x * t, 1.05 + (y - 1.05) * t + .004, -.95 + (z + .95) * t - .004) for x, y, z in pane[0]] for t in (1, .5, .02)]
     extras.append(F.loft('glass', p2, 'glass', caps=False))
+    hem = [(x, 1.05 + b * .72 + .012, -.95 + b * .7 - .012) for x, b in F.oval(1.02, .3, 60, 4.5)]
+    extras.append(F.sweep('trim', hem, F.rrect(.018, .01, .004), 'trim', closed=True, up=(0, .7, -.7)))
+    lo = [(math.copysign(a, x), .808, z) for x, a, z in [(1, .742, .1), (1, .75, -.6), (1, .745, -.95), (1, .72, -1.2), (1, .5, -1.285), (-1, 0, -1.3)]]
+    lo = lo[:-1] + [(0, .81, -1.3)] + [(-x, y, z) for x, y, z in lo[-2::-1]]
+    extras.append(F.bar_path('trim', lo, F.rrect(.02, .012, .004), 'trim'))
     # Door glass: one pane, leaning in with the top.
     def gx(y):
         return .772 - (y - .84) * .6
@@ -309,7 +448,7 @@ def build_top(extras):
             rings.append([(s * gx(c[1] + (y - c[1]) * t), c[1] + (y - c[1]) * t, c[0] + (z - c[0]) * t) for z, y in pts])
         extras.append(F.loft('glass', rings, 'glass', caps=False))
         # The little divider and the chrome post.
-        extras.append(F.sweep('trim', [(s * gx(.84), .84, .03), (s * gx(1.17), 1.17, .085)], F.rrect(.02, .02, .005), 'trim'))
+        extras.append(F.sweep('trim', [(s * gx(.84), .84, .03), (s * gx(1.17), 1.17, .085)], F.rrect(.008, .008, .003), 'trim'))
         extras.append(F.sweep('chrome', [(s * gx(.84), .84, -.57), (s * gx(1.03), 1.03, -.585), (s * gx(1.16), 1.16, -.54)], F.rrect(.012, .012, .004), 'chrome'))
         extras.append(F.sweep('trim', [(s * gx(.84), .842, .48), (s * gx(.84), .842, -.6)], F.rrect(.014, .02, .005), 'trim'))
         # Rail along the top of the door.
@@ -382,3 +521,12 @@ def mats(bp):
     mat('rim', (.65, .66, .67, 1), .8, .3)
     mat('disc', (.35, .35, .36, 1), .9, .35)
     mat('caliper', (.04, .04, .045, 1), .3, .45)
+    mat('lensamber', (.62, .2, .02, 1), 0, .22)
+    mat('lensclear', (.5, .52, .52, 1), .3, .15)
+    mat('platedark', (.012, .012, .014, 1), .2, .4)
+    mat('dash', (.028, .028, .03, 1), 0, .7)
+    mat('console', (.02, .02, .022, 1), 0, .6)
+    mat('seat', (.035, .035, .037, 1), 0, .85)
+    mat('vinyl', (.035, .034, .034, 1), 0, .65)
+    mat('pedal', (.03, .03, .032, 1), .4, .6)
+    mat('steer', (.018, .018, .02, 1), 0, .55)

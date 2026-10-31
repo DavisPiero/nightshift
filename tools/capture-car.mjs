@@ -445,9 +445,12 @@ function capture(R) {
     steering = { c: c.map((v) => +v.toFixed(4)), axis: ax.map((v) => +v.toFixed(4)), found: g.tris.length, hub: +hub.toFixed(4), padR: R.padR ?? 0 };
   }
 
+  // A foundry car says where its wheel is: it is already its own part.
+  if (R.steeringAt) steering = { c: R.steeringAt.c, axis: R.steeringAt.axis, hub: 0, padR: 0 };
+
   // 8. Simplify and write.
   mkdirSync(join(OUT, 'tex'), { recursive: true });
-  const header = { id: R.id, source: R.credit, def, lid, wheels: wheelAt, steering, eye: R.eye, needles: R.needles, exhausts: R.exhausts, popups: R.popups, headLamp: R.headLamp, ownWing: !!R.ownWing, engineRear: !!R.engineRear, parts: [] };
+  const header = { id: R.id, source: R.credit, def, lid, wheels: wheelAt, steering, eye: R.eye, needles: R.needles, exhausts: R.exhausts, popups: R.popups, dials: R.dials, headLamp: R.headLamp, ownWing: !!R.ownWing, engineRear: !!R.engineRear, parts: [] };
   const blobs = [];
   let offset = 0, total = 0;
   const push = (arr) => { const pad = (4 - (offset % 4)) % 4; if (pad) { blobs.push(Buffer.alloc(pad)); offset += pad; } const b = Buffer.from(arr.buffer, arr.byteOffset, arr.byteLength); blobs.push(b); const at = offset; offset += b.length; return at; };

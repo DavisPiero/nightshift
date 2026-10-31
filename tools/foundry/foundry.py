@@ -381,6 +381,29 @@ def _surface_normal(rm, rn, idx, p):
     return (rn[t[0]].vector * u + rn[t[1]].vector * v + rn[t[2]].vector * w).normalized()
 
 
+def normalize(v):
+    v = np.array(v, float)
+    return v / (np.linalg.norm(v) or 1)
+
+
+def bar_x(name, section, x0, x1, material=None, rounds=2):
+    # A smooth section ([z, y]) run straight across the car.
+    sec = F_round(section, rounds)
+    rings = [[(x, y, z) for z, y in sec] for x in (x0, x1)]
+    return fix_normals(loft(name, rings, material))
+
+
+def F_round(section, rounds):
+    return [tuple(p) for p in chaikin(section, rounds)]
+
+
+def bar_path(name, path, section, material=None, up=(0, 1, 0), scale=None, rounds=1):
+    # A rounded bar along a rounded path.
+    p = resample(chaikin(path, 2, False), max(len(path) * 5, 8), False)
+    k = None if scale is None else np.interp(np.linspace(0, 1, len(p)), np.linspace(0, 1, len(scale)), scale)
+    return fix_normals(sweep(name, p, section, material, up=up, scale=k))
+
+
 def face_out(ob, centre=(0, .8, -.1)):
     # A single-sided sheet (glass) should face away from the cabin.
     me = ob.data

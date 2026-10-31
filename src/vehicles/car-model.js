@@ -986,10 +986,30 @@ function capturedCabin(cockpit, cap, mats) {
     pad.position.z = -cap.steering.hub - 0.006;
     steeringWheel.add(pad);
   }
+  // Dials a foundry car leaves room for: the gauge picture with real needles.
+  const needles = [];
+  if (cap.dials) {
+    const { c, r, gap } = cap.dials;
+    const face = new THREE.Mesh(new THREE.PlaneGeometry(gap * 2 + r * 2, r * 2.6), new THREE.MeshBasicMaterial({ map: Tex.gauges(), color: 0xe4e8e8 }));
+    face.rotation.y = Math.PI;
+    face.position.set(...c);
+    cockpit.add(face);
+    const needleMat = new THREE.MeshBasicMaterial({ color: 0xff4a2a, side: THREE.DoubleSide });
+    for (const s of [1, -1]) {
+      const pivot = new THREE.Group();
+      pivot.position.set(c[0] + s * (gap + r) * 0.4375, c[1], c[2] - 0.004);
+      pivot.rotation.y = Math.PI;
+      const needle = new THREE.Mesh(new THREE.PlaneGeometry(0.005, r * 0.9), needleMat);
+      needle.position.y = r * 0.4;
+      pivot.add(needle);
+      cockpit.add(pivot);
+      needles.push(pivot);
+    }
+  }
   const dome = new THREE.PointLight(0xffe6c0, 0, 1.9, 1.4);
   dome.position.set(0, 1.15, 0);
   cockpit.add(dome);
-  return { steeringWheel, needles: [], dome };
+  return { steeringWheel, needles, dome };
 }
 
 // Each car's shape. The driver sits at driverX (negative = right-hand

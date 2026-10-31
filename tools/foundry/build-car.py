@@ -20,10 +20,13 @@ trace = json.load(open(os.path.join(HERE, 'cars', f'{car_id}-trace.json')))
 blueprint.build(bp, trace)
 
 out = os.path.join(ROOT, 'GLB', f'{car_id}.glb')
-bpy.ops.export_scene.gltf(filepath=out, export_format='GLB', export_yup=True, export_apply=False, export_normals=True, export_tangents=False, export_materials='EXPORT', export_image_format='NONE' if False else 'AUTO')
+bpy.ops.export_scene.gltf(filepath=out, export_format='GLB', export_yup=True, export_apply=False, export_normals=True, export_tangents=False, export_materials='EXPORT', export_image_format='AUTO')
 print('wrote', out, os.path.getsize(out) // 1024, 'KB')
 tris = sum(sum(len(p.vertices) - 2 for p in o.data.polygons) for o in bpy.data.objects if o.type == 'MESH')
 print('triangles', tris)
+
+import score
+score.score(os.path.join(HERE, 'cars', f'{car_id}-trace.json'), bp['length'])
 
 if 'render' in args:
     import preview
