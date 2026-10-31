@@ -1,9 +1,9 @@
 # NIGHTSHIFT: state
 
-_Last updated 2026-10-31, end of session 13. Work is on branch `m6-car-foundry`, not merged: waiting for David's sign-off. `main` is still the old live site._
+_Last updated 2026-10-31, end of session 13. Signed off and merged: `main` is the live site, nothing is on a branch._
 
 ## Where we are
-Milestone 6, the realism overhaul. On the branch:
+Milestone 6, the realism overhaul. Live now:
 - Car foundry (`tools/foundry/`): a reference sheet goes in, a detailed car comes out through the same capture as the bought-in cars. `./tools/foundry/make-car.sh <id>`.
 - The Miata rebuilt with it: outside, cabin, working pop-ups, moving dials. 99% match to the sheet's outline.
 - Garage rims are real 3D wheels on every car; the car keeps its tyres and brakes. The four bought-in car files are unchanged.
@@ -12,9 +12,8 @@ Milestone 6, the realism overhaul. On the branch:
 - Garage lens softened.
 
 ## Next
-1. David judges the Miata, the rims and the UI on a real iPad, then signs off.
-2. Rebuilding the maps and environment assets (David: next, replaces Parabolica remake and Mountain Edge in the old order).
-3. Later: real kits on the other four cars through the same parts system; the R34 through the foundry when it is wanted.
+1. Rebuilding the maps and environment assets (David: next, replaces Parabolica remake and Mountain Edge in the old order).
+2. Later: real kits on the other four cars through the same parts system; the R34 through the foundry when it is wanted.
 
 Also not done: exhaust flame/smoke/spark upgrades, ambient occlusion, exposure adaptation, headlight pools and wet roads, the sun raise. Racing is parked until after this.
 

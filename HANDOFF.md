@@ -1,11 +1,11 @@
 # Hand-off: end of session 13 (2026-10-31)
 
 ## Repo state
-- On branch `m6-car-foundry`, everything committed, not merged. `main` is the old live site. Merge only when David signs off (he says "push" for merge everything and push).
+- On `main`, everything committed and pushed: session 13 was signed off and `m6-car-foundry` is merged and deleted. `main` is the live site. Next work goes on a new branch; merge only when David signs off (he says "push" for merge everything and push).
 
 ## What comes next
-1. David tests the branch (`./run.sh`) and brings notes. Take those first (use `/notes`).
-2. Then the maps and environment rebuild he named as next.
+1. If David brings notes from playing the live site (the iPad especially), take those first (use `/notes`).
+2. Then the maps and environment rebuild he named as next. Plan it and wait for his go-ahead.
 
 ## How the foundry works
 - `tools/foundry/make-car.sh <id>` runs it all. `Reference/Cars/<id>-sheet` is the sheet; `tools/foundry/cars/<id>.json` says where each view sits on it.
