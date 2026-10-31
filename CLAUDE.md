@@ -20,15 +20,17 @@ way they are, HANDOFF.md for how the last session ended. BRIEF.md is the origina
   white lamps), with neon signs and Japanese text as accents. Cars have clear-coated paint that reflects the lights round them; the world
   stays matte.
 - Cars have near-miss names ("Nissani GT-Ar") and no real badges, logos or exact real names.
-  Four are captured from detailed models (David, 2026-10-30): `tools/capture-car.mjs` turns a GLB
-  in `GLB/` (git-ignored) into `assets/cars/`, removing badges; the authors are credited in
-  README.md. The Miata and the hidden R34 are still drawn from curves.
-- UI: neon Japan by way of an early-2000s street racer (David's Street-Spec logo, 2026-10-26):
-  pixel fonts (Jersey 10 for titles, DotGothic16 for text), a chrome italic logo with a pink
-  夜勤 stamp, italic titles, dark glass panels with thin frames, a vignette. No window title
-  bars. Japanese text only on screen titles and in the world. Hot pink is the main action,
-  turquoise is selected or focused (a bar and a wash, not a solid block). See SPEC.md, "Look
-  of the menus". References: `Reference/User Interface`.
+  New cars come from a reference sheet, the many-angle picture in `Reference/Cars/` (David,
+  2026-10-31), through the foundry (`tools/foundry/`), which models them in Blender with no
+  window; the Miata is the first. Four came from bought-in models (`tools/capture-car.mjs` turns a
+  GLB in `GLB/`, git-ignored, into `assets/cars/`, removing badges; authors credited in README.md):
+  never change those four base models unless David asks. The hidden R34 is still drawn from curves.
+- UI: the old Microsoft desktop, after the notice board (David, 2026-10-31; replaces the street-racer
+  dark glass look): same pixel fonts and sizes (Jersey 10 for titles, DotGothic16 for text), grey raised
+  windows and buttons, navy title bars, white sunken lists with a navy selected row, toggles pressed in
+  on a fine check. The HUD is two little windows. Hot pink only for the main action; the chrome logo
+  with its pink 夜勤 stamp stays. Japanese text only on screen titles and in the world. See SPEC.md,
+  "Look of the menus". References: `Reference/User Interface`.
 - Control hints appear only in Settings > Controls.
 - Sound only from code or from recordings we are allowed to redistribute (credit them).
 - `Reference/` holds David's reference images (`User Interface`, `Cars`, `Tracks`). It is
@@ -50,6 +52,7 @@ way they are, HANDOFF.md for how the last session ended. BRIEF.md is the origina
   assists, bot laps on every track in each weather and car, weather patches, ratings and parts,
   wall hits): `node tools/drive-bench.mjs`. Run it after any physics, car-spec or track change.
 - Look at a car from every side: `node tools/turnaround.mjs gtar-r35` (add `cockpit` first for the driver's seat), saved in `review/turn/`. Recapture cars: `npm install`, then `node tools/capture-car.mjs`.
+- Make a car from its sheet: `./tools/foundry/make-car.sh miata-na` (add `render` for Blender pictures in `review/foundry/`). It prints a score against the sheet.
 - New props go in the asset library (`src/world/assets.js`) and are placed through a `Placer`;
   check each one on the `?library` page.
 
@@ -58,7 +61,7 @@ way they are, HANDOFF.md for how the last session ended. BRIEF.md is the origina
 - `src/core/` fixed-step loop, graphics presets, effect list and URL switches
 - `src/input/` the shared control state, keyboard (rebindable), touch (joystick, buttons, layout editor), gamepad
 - `src/physics/` car physics (`vehicle.js`), gearbox, wall collisions, weather grip table (with weather patches)
-- `src/vehicles/` car list with specs (`cars.js`), parts (`parts.js`), looks: paint, finish, decals, wheels, ride height (`looks.js`), the final-numbers pipeline (`tuning.js`), ratings (`stats.js`), car bodies from profile curves (`body.js`), each car's shape and details (`car-model.js`), cars captured from detailed models (`captured.js`, files in `assets/cars/`), the cabin seen from the driver's seat (`cabin.js`), the bonnet and engine bay (`engine-bay.js`)
+- `src/vehicles/` car list with specs (`cars.js`), parts (`parts.js`), looks: paint, finish, decals, wheels, ride height (`looks.js`), the final-numbers pipeline (`tuning.js`), ratings (`stats.js`), car bodies from profile curves (`body.js`), each car's shape and details (`car-model.js`), cars from detailed models (`captured.js`, files in `assets/cars/`), real 3D rims (`wheels.js`), the cabin seen from the driver's seat (`cabin.js`), the bonnet and engine bay (`engine-bay.js`)
 - `src/world/` track centre-line maths and the turtle that draws tracks (`track-path.js`), the track list and points, the asset library and Placer (`assets.js`), shared scenery pieces (`scene-kit.js`), the harbour scenery and the city backdrop (`track-scene.js`), the Underground (`underground.js`, `underground-scene.js`), Parabolica Street (`parabolica.js`, `parabolica-scene.js`), the garage scene (`garage.js`), time of day (`time-of-day.js`), weather visuals and snow (`weather.js`)
 - `src/graphics/` renderer with colour grade, dither, bloom (FFT convolution on High, a blur chain on Medium), lens dirt and reflections, speed blur with a cockpit mask and the low sun's glare, painted textures, vector pictures turned into pixel bitmaps (`pixel-art.js`), effects (sprite smoke, spark streaks, skid marks), paint reflections (`reflections.js`), the sky dome shader (`sky.js`)
 - `src/cameras/` chase and cockpit cameras, camera shake
@@ -66,7 +69,7 @@ way they are, HANDOFF.md for how the last session ended. BRIEF.md is the origina
 - `src/race/` race AI, not in the game yet: the racing line (`racing-line.js`), AI drivers (`ai-driver.js`), the race manager: grid, countdown, laps, places (`race.js`)
 - `src/ui/` screens (menus, Drive modes, race settings, loading into a race, pause), the start-up and loading boot text (`boot-log.js`, a plain script), loading tips (`tips.js`), the asset library page (`library.js`), the garage screen (`garage.js`), the ratings display (`stats-view.js`), settings tabs, HUD rev counter and minimap, debug panel (F3), Feel panel (F4)
 - `src/save/` versioned localStorage save (version 3: up to 3 named builds per car; migrates 1 and 2)
-- `tools/` car capture (`capture-car.mjs`, each car's recipe in `car-recipes.mjs`), eight-angle car pictures (`turnaround.mjs`), smoke test, driving bench, AI bench (`ai-bench.mjs`: six AI cars race two laps on every track), headless screenshots (`shot.mjs`), the race loading stills (`loading-stills.sh`, writes `assets/loading/`)
+- `tools/` the foundry (`foundry/`: sheet tracer, builder, score, one blueprint per car in `foundry/cars/`), car capture (`capture-car.mjs`, each car's recipe in `car-recipes.mjs`), eight-angle car pictures (`turnaround.mjs`), smoke test, driving bench, AI bench (`ai-bench.mjs`: six AI cars race two laps on every track), headless screenshots (`shot.mjs`), the race loading stills (`loading-stills.sh`, writes `assets/loading/`)
 
 ## Out of scope (unless David asks)
 Damage models, simulation-grade tyre or suspension physics, online play, licensed cars or

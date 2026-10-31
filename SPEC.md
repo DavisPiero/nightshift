@@ -16,23 +16,25 @@
 6. **Cars worth looking at.** Each car is recognisably its real cousin from any angle, and its
    paint shines with the lights round it, so even a black car shows its shape.
 7. **A garage worth coming back to**: a lock-up workshop with the car on a turntable; paint
-   and (later) upgrades that visibly and noticeably change the car.
+   and upgrades that visibly and noticeably change the car, built as real parts (rims, kits).
 8. **Cruising is allowed.** Timed laps will come, but you are never forced to race.
 
 ## Look of the menus
-The one style sheet for every screen (fix for "it still looks like Courtside", 2026-10-26).
-- Logo: NIGHTSHIFT in chrome (white to grey with a dark band), leaning forward, with a pink
-  夜勤 stamp. After the Street-Spec logo in `Reference/`.
-- Fonts: Jersey 10 for titles and buttons, DotGothic16 for text. Titles lean (skewed).
-- Panels: dark glass, a thin pale frame, a light top edge, faint scanlines. A panel's label is
-  small italic capitals with a pink tick and a thin rule under it. No fake window title bars.
-- Buttons: dark with a light top edge. Main action solid hot pink. Selected: a turquoise bar
-  on the left and a turquoise wash. Hover or focus: a turquoise outline, nudged right.
-- Behind every menu: the 3D scene with a vignette.
+The one style sheet for every screen: the old Microsoft desktop, after the notice board and
+David's Windows 98 reference (2026-10-31; replaces the street-racer look).
+- Logo: NIGHTSHIFT in chrome, leaning forward, with a pink 夜勤 stamp, as before.
+- Fonts: Jersey 10 for titles and buttons, DotGothic16 for text, same sizes as before.
+- Windows: grey (#c0c0c0) with a raised edge and a navy-to-blue title bar. Every panel is one.
+- Buttons: grey and raised, pressed in when held, a dotted box on focus. A toggle that is on
+  stays pressed in on a fine grey-and-white check. Main action solid hot pink.
+- Lists: a white sunken box; rows are flat, the picked one solid navy with white text.
+- Meters are block progress bars. Tips are pale yellow tooltips.
+- HUD: two small windows, Rev counter (block bar, green gear and speed on a black display) and
+  Map (on the classic teal desktop).
+- Behind every menu: the 3D scene.
 - Japanese: on screen titles and in the world only, never on buttons or rows.
 - Motion: quick and stepped. Lists slide in when a screen or tab opens, never on every click.
-- Banned: solid turquoise blocks, window-button icons, glossy gradients outside the logo and
-  pink buttons, control hints outside Settings > Controls.
+- Banned: control hints outside Settings > Controls.
 
 ## Milestones
 1. Foundation: loop, platform screen. **Done.**

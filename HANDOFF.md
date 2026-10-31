@@ -1,29 +1,22 @@
-# Hand-off: end of session 12 (2026-10-31)
+# Hand-off: end of session 13 (2026-10-31)
 
 ## Repo state
-- On `main`, clean, pushed and live. No other branches. David signed off the four GLB cars and the speed and effects block; `m6-speed-fx` is merged and deleted.
-- Before starting work, make a branch: David's rule is that `main` is the live site.
+- On branch `m6-car-foundry`, everything committed, not merged. `main` is the old live site. Merge only when David signs off (he says "push" for merge everything and push).
 
 ## What comes next
-1. David brings new notes to the next session. Take those first (use `/notes`).
-2. Soften the blue lens spots and the hard white flare (David asked for this next round). Seen in the garage shot of the Mustank: dark blue spots on the floor behind the car, a hard white flare on its rear window. They come from lamps reflecting in the paint. Look in `drawBloom` and the ghosts in `src/graphics/renderer.js`, and in `setLens`, where `main.js` can pass a lower value for the garage. Keep the driving look.
-3. Then the rest of the Visual Realism brief, in order, with the recommendations David has seen:
-   - Parabolica Street: same road, surroundings replaced with blossom.
-   - Mountain Edge: height is for looks only, physics stays flat; closed loop.
-   - Old-Microsoft UI: overturns "No window title bars" in CLAUDE.md and SPEC.md; rewrite those with it.
+1. David tests the branch (`./run.sh`) and brings notes. Take those first (use `/notes`).
+2. Then the maps and environment rebuild he named as next.
 
-## How captured cars work
-- `tools/car-recipes.mjs`: one recipe per car (which material is paint, glass, lamps; what is dropped; axle positions; where the steering wheel and eye are; emblems to erase).
-- `tools/capture-car.mjs`: GLB to `assets/cars/<id>.bin` and `assets/cars/tex/`. Needs `npm install` and `GLB/` (git-ignored). The game needs neither.
-- `src/vehicles/captured.js` loads them at start-up (main.js waits for `carsReady`). `buildCar` uses them when a capture exists, otherwise the old curve body.
-- A new car: add the GLB, write a recipe (`findSteering: true` lists steering wheel candidates), add its id to `IDS` in `captured.js`.
+## How the foundry works
+- `tools/foundry/make-car.sh <id>` runs it all. `Reference/Cars/<id>-sheet` is the sheet; `tools/foundry/cars/<id>.json` says where each view sits on it.
+- `trace-sheet.py` measures outlines into `cars/<id>-trace.json` (committed, so the sheet is not needed to rebuild).
+- `cars/<id with underscores>.py` is the blueprint: outlines, cuts, parts. `foundry.py` is its toolbox: `loft`, `boolean`, `gap`, `seam`, `pocket`, `panel`, `bar_path`, `wheel_set`.
+- `build-car.py` writes `GLB/<id>.glb`, prints the score (`score.py`). `tools/capture-car.mjs` then takes it like any bought-in GLB; the recipe in `tools/car-recipes.mjs` just names slots.
+- Name a Blender object `pop`, `kitstreet`, `kitwide` and recipe rules put it in those groups. `popups`, `dials`, `steeringAt`, `headLamp`, `kits` in a recipe switch those features on in `car-model.js`.
+- Check material names before adding a rule: rules go by `material|object`, first match wins.
 
 ## Read first
 `CLAUDE.md`, `STATE.md`, the last 10 lines of `DECISIONS.md`.
 
 ## Open with David
-- Does anything about the four cars need changing? First thing to ask.
-- The feel of the slower cars, drifts especially.
-- Frame rate with the new bloom, and an iPad run with the new cars. Neither has been measured.
-- Near-miss names, left-hand R35, hub pads, Mustang interior darkness (guesses).
-- Older guesses in STATE.md.
+- See STATE.md: the session 13 guesses first, then the iPad frame rate.

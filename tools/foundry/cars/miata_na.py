@@ -2,6 +2,12 @@
 # the sheet's outlines (cars/miata-na-trace.json); the wheels sit where physics
 # has them. The sheet's own wheelbase is a little long, so the arches follow
 # the game rather than the picture.
+#
+# A new car is this file again: copy it, name the sheet's views in cars/<id>.json,
+# run make-car.sh once to measure the sheet, then set the outlines (TOP, BOT,
+# PLAN), the panel gaps and the parts from the sheet. The score it prints says
+# how close the outline is. Add the car to tools/car-recipes.mjs and to IDS in
+# src/vehicles/captured.js.
 
 import math
 import numpy as np
@@ -198,14 +204,12 @@ def build(bp, trace):
     for s in (1, -1):
         path = [(s * .775, .205, z) for z in (.82, -.82)]
         extras.append(F.sweep('trim', path, F.rrect(.09, .08, .02), 'trim'))
-    pl = pchip(PLAN)
     chin = [(x, .235, z) for x, z in [(-.6, 1.6), (-.52, 1.74), (-.38, 1.83), (0, 1.875), (.38, 1.83), (.52, 1.74), (.6, 1.6)]]
     extras.append(F.sweep('trim', F.resample(F.chaikin(chin, 2, False), 40, False), F.rrect(.09, .04, .015), 'trim'))
     for y in (.27, .305, .34):
         extras.append(F.sweep('black', [(-.37, y, 1.84), (0, y, 1.87), (.37, y, 1.84)], F.rrect(.012, .012, .004), 'trim'))
-    ex = [(-.49, .25, -2.0), (-.49, .25, -1.8)]
-    extras.append(F.lathe('chrome', [(-1.99, .0), (-1.99, .034), (-1.985, .042), (-1.98, .044), (-1.8, .044), (-1.8, .0)], 'black', axis='z', segs=28, at=(-.49, .245, 0)))
-    extras.append(F.lathe('chrome', [(-1.99, .033), (-1.985, .044), (-1.97, .044), (-1.9, .04)], 'chrome', axis='z', segs=32, at=(-.49, .245, 0)))
+    extras.append(F.lathe('chrome', [(-1.945, .0), (-1.945, .034), (-1.94, .042), (-1.935, .044), (-1.8, .044), (-1.8, .0)], 'black', axis='z', segs=28, at=(-.49, .262, 0)))
+    extras.append(F.lathe('chrome', [(-1.945, .033), (-1.94, .044), (-1.925, .044), (-1.86, .04)], 'chrome', axis='z', segs=32, at=(-.49, .262, 0)))
 
     build_screen(skin, extras)
     build_cabin(extras)
@@ -276,7 +280,6 @@ def seat(cx):
 
 def build_kits(skin, bp):
     # Parts the garage can fit. Each is its own group in the car file.
-    pl = pchip(PLAN)
     # Street: a lip, skirts and a rear valance, in paint.
     lip = [(x, .225, z) for x, z in [(-.72, 1.56), (-.62, 1.74), (-.42, 1.87), (0, 1.925), (.42, 1.87), (.62, 1.74), (.72, 1.56)]]
     F.bar_path('paint', lip, F.rrect(.09, .028, .012), 'paint').name = 'kitstreet'

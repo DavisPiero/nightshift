@@ -30,7 +30,8 @@ layout can be dragged into place there too.
 
 ## Credits
 
-Four car bodies and cabins are captured from these 3D models (simplified, resized, badges
+The Miata is modelled for this game by its own car foundry (`tools/foundry/`), from a reference
+sheet. Four car bodies and cabins are captured from these 3D models (simplified, resized, badges
 and logos removed, sorted into the game's own materials, see `tools/capture-car.mjs`). All are
 from Sketchfab, used under Creative Commons licences. Thank you to the authors.
 
