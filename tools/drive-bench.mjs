@@ -5,13 +5,15 @@
 // can't be finished, and so on).
 
 import { NOS_SECONDS } from '../src/career/upgrades.js';
-import { Vehicle, DEFAULT_ASSISTS } from '../src/physics/vehicle.js';
+import { Vehicle, DEFAULT_ASSISTS, LAUNCH_SECONDS } from '../src/physics/vehicle.js';
 import { SKYLINER_R34 as CAR } from "../src/vehicles/cars.js";
 import { TrackPath } from '../src/world/track-path.js';
-import { STARTER_TRACK as TEST_ROAD } from '../src/world/starter-track.js';
+import { STARTER_TRACK as TEST_ROAD, STARTER_TRACK } from '../src/world/starter-track.js';
+import { RacingLine } from '../src/race/racing-line.js';
+import { FinishDriver } from '../src/race/finish-driver.js';
 import { keepOnTrack } from '../src/physics/walls.js';
 import { applyWeather } from '../src/physics/weather.js';
-import { CHALLENJER_SRT8, COUNTACH_QV, CARS } from '../src/vehicles/cars.js';
+import { CHALLENJER_SRT8, COUNTACH_QV, CARS, ALL_CARS } from '../src/vehicles/cars.js';
 import { UNDERGROUND_TRACK } from '../src/world/underground.js';
 import { PARABOLICA_TRACK } from '../src/world/parabolica.js';
 import { MOUNTAIN_TRACK } from '../src/world/mountain.js';
@@ -123,6 +125,74 @@ for (const [name, speed, script, secs] of tests) {
   console.log(`  ${name.padEnd(36)} on: max slide ${deg(on.maxBeta).padStart(3)}°${on.spun ? ' SPUN' : '     '} end ${on.endKmh.toFixed(0).padStart(3)} km/h | off: ${deg(off.maxBeta).padStart(3)}°${off.spun ? ' SPUN' : ''}`);
   check(!on.spun, name + ' should not spin with assists on');
   check(on.maxBeta < 1.25, name + ' should stay under ~70° of slide with assists on');
+}
+
+console.log('Handbrake drift');
+{
+  // A tap of the handbrake with the wheel over: a clean slide, kept, and straight
+  // again when you let go. Every car, dry and wet, never a spin.
+  for (const car of ALL_CARS) for (const w of ['clear', 'rain']) {
+    const v = new Vehicle(car, DEFAULT_ASSISTS);
+    applyWeather(v, w);
+    while (kmh(v) < 100) v.step(DT, controls({ throttle: 1 }));
+    const start = v.speed, h0 = v.heading;
+    let max = 0, t = 0, entered = false;
+    for (; t < 3; t += DT) { v.step(DT, controls({ steer: -1, throttle: 0.8, handbrake: t < 0.2 })); max = Math.max(max, Math.abs(v.slipAngle)); entered ||= !!v.drift; }
+    const held = v.speed, turned = v.heading - h0, slide = Math.abs(v.slipAngle);
+    let back = 0;
+    while (v.drift && back < 2) { v.step(DT, controls({ throttle: 0.8 })); back += DT; }
+    console.log(`  ${car.model.padEnd(22)} ${w.padEnd(5)} slide ${deg(max)} deg, held ${deg(slide)}, turned ${deg(turned)} deg, speed kept ${(held / start * 100).toFixed(0)}%, straight in ${back.toFixed(2)} s`);
+    check(entered, `${car.model}: a handbrake tap should start a drift`);
+    check(max > 0.45 && max < 0.8, `${car.model}: the slide should be a clean 25 to 45 degrees`);
+    check(slide > 0.45, `${car.model}: the drift should hold while the wheel is over`);
+    check(held / start > 0.7, `${car.model}: a drift should keep most of its speed`);
+    check(back < 1.2 && !v.drift, `${car.model}: it should straighten by itself`);
+    let spun = 0; for (let n = 0; n < 240; n++) { v.step(DT, controls({ throttle: 0.8 })); spun = Math.max(spun, Math.abs(v.slipAngle)); }
+    check(spun < 0.3, `${car.model}: no swing back after a drift`);
+  }
+}
+
+console.log('Finish slide');
+{
+  // After the flag the car slides to a stop, from the line at any speed, on any track.
+  for (const def of [STARTER_TRACK, UNDERGROUND_TRACK, PARABOLICA_TRACK, MOUNTAIN_TRACK]) {
+    const track = new TrackPath(def), line = new RacingLine(track);
+    let worst = 0, hits = 0, late = 0, side = 0, n = 0;
+    for (const o of [-3, -1.5, 0, 1.5, 3]) for (const speed of [18, 26, 34, 42, 50]) {
+      const v = new Vehicle(CAR, DEFAULT_ASSISTS), i = def.start;
+      v.reset(track.x[i] + track.leftX(i) * o, track.z[i] + track.leftZ(i) * o, track.headingAt(i));
+      v.vx = Math.sin(v.heading) * speed; v.vz = Math.cos(v.heading) * speed;
+      const d = new FinishDriver(line);
+      let near = { index: i, offset: o }, t = 0, hit = 0;
+      for (; t < 12 && !d.parked; t += DT) {
+        const c = d.drive(v, near, [], DT);
+        v.step(DT, c);
+        const r = keepOnTrack(v, track, near.index);
+        near = { index: r.index, offset: r.offset };
+        if (r.impact > 1) hit++;
+      }
+      n++; worst = Math.max(worst, t); hits += hit ? 1 : 0; late += d.parked ? 0 : 1;
+      const off = Math.abs(Math.sin(v.heading - track.headingAt(near.index)));
+      if (off > 0.5) side++;
+    }
+    console.log(`  ${def.name.padEnd(18)} stopped in up to ${worst.toFixed(1)} s, side-on ${side} of ${n}, touched a wall ${hits}, never stopped ${late}`);
+    check(!late, `${def.name}: the finish should always end in a stop`);
+    check(hits <= n / 4, `${def.name}: the finish should rarely touch a wall`);
+    check(side >= n * 0.6, `${def.name}: the finish should usually end side-on`);
+  }
+}
+
+console.log('Warm tyres');
+{
+  const run = (warm) => {
+    const v = new Vehicle(CAR, DEFAULT_ASSISTS);
+    v.launchLeft = warm ? LAUNCH_SECONDS : 0;
+    let t = 0; while (t < 6) { v.step(DT, controls({ throttle: 1 })); t += DT; }
+    return Math.hypot(v.x, v.z);
+  };
+  const cold = run(false), warm = run(true);
+  console.log(`  6 s from the green: ${cold.toFixed(1)} m cold, ${warm.toFixed(1)} m warm, ${(warm - cold).toFixed(1)} m ahead`);
+  check(warm - cold > 3 && warm - cold < 9, 'warm tyres should be worth about a car length');
 }
 
 console.log('NOS');

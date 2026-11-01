@@ -7,8 +7,8 @@
 //
 // An event pays CR and XP by your place, scaled by the difficulty. A top three
 // finish clears it and opens the next one (some need you ahead of Max). Replays pay 60%, so there is always
-// something to do when a level or a car is out of reach; you can never lose
-// money. The rivals race at the event's level, or just under your car's if
+// something to do when a level or a car is out of reach, and an event can never
+// lose you money (only Sonny's invites cost anything: invites.js). The rivals race at the event's level, or just under your car's if
 // that is higher: a better car helps, but never makes a race a walkover.
 
 import { getDifficulty } from '../race/difficulty.js';
@@ -46,23 +46,24 @@ export const EVENTS = [
   E(0, 'first-run', 'After the Last Shift', 'starter', 3, 0, 490, { before: 'intro', after: 'first-run' }),
   E(0, 'dock-road', 'Dock Road Sprint', 'starter', 3, 2, 495),
   E(0, 'containers', 'Container Alley', 'starter', 3, 4, 505, { weather: 'fog' }),
-  E(0, 'johnnys-bet', 'Johnny\'s Bet', 'starter', 3, 7, 515, { time: 'sunset', after: 'johnnys-story' }),
+  E(0, 'johnnys-bet', 'Johnny\'s Bet', 'mountain', 2, 7, 515, { before: 'the-pass', after: 'johnnys-story' }),
   E(0, 'harbor-kings', 'Harbor Kings', 'starter', 3, 10, 530, { weather: 'rain', rival: true, before: 'meet-max', after: 'max-laughs' }),
   E(1, 'first-tokyo', 'First Night in Tokyo', 'underground', 3, 14, 560, { before: 'to-tokyo' }),
   E(1, 'turquoise', 'Turquoise Mile', 'underground', 3, 18, 590),
-  E(1, 'junction', 'Junction Loop', 'underground', 3, 22, 610, { weather: 'fog' }),
+  E(1, 'junction', 'A Look at the Ring', 'parabolica', 2, 22, 610, { weather: 'fog', before: 'first-look' }),
   E(1, 'old-line', 'Johnny\'s Old Line', 'underground', 5, 26, 630, { after: 'old-line' }),
   E(1, 'under-city', 'Under the City', 'underground', 5, 30, 650, { rival: true, beat: true, before: 'max-in-tokyo', after: 'max-beaten-once' }),
   E(2, 'wet-docks', 'Rain on the Docks', 'starter', 5, 35, 670, { weather: 'rain', before: 'back-home' }),
-  E(2, 'snow-night', 'Snow Night', 'starter', 3, 40, 690, { weather: 'snow' }),
+  E(2, 'snow-night', 'Snow Night', 'mountain', 2, 40, 690, { weather: 'snow' }),
   E(2, 'tunnel-vision', 'Tunnel Vision', 'underground', 5, 44, 700, { weather: 'fog' }),
-  E(2, 'dawn-patrol', 'Dawn Patrol', 'starter', 5, 48, 720, { time: 'dawn' }),
-  E(2, 'double-shift', 'Double Shift', 'underground', 5, 52, 735),
+  E(2, 'dawn-patrol', 'Dawn Patrol', 'mountain', 2, 48, 720, { time: 'dawn' }),
+  E(2, 'double-shift', 'Double Shift', 'parabolica', 3, 52, 735),
   E(2, 'maxs-invite', 'Max\'s Invite', 'starter', 5, 56, 750, { rival: true, time: 'sunset', before: 'max-calls', after: 'the-ring' }),
   E(3, 'long-straight', 'The Long Straight', 'parabolica', 3, 60, 765),
   E(3, 'two-chicanes', 'Two Chicanes', 'parabolica', 3, 65, 775),
   E(3, 'park-sunset', 'Sunset at the Park', 'parabolica', 5, 70, 785, { time: 'sunset', after: 'clipboard' }),
   E(3, 'wet-lesmos', 'Wet Lesmos', 'parabolica', 3, 74, 795, { weather: 'rain' }),
+  E(3, 'cold-gates', 'Cold Gates', 'mountain', 2, 77, 800, { weather: 'fog' }),
   E(3, 'watching', 'The Scout Is Watching', 'parabolica', 5, 80, 805, { before: 'meet-aoi' }),
   E(4, 'neon-ring', 'Ring of Neon', 'parabolica', 5, 85, 815),
   E(4, 'snow-ring', 'Snow on the Ring', 'parabolica', 3, 90, 825, { weather: 'snow', after: 'johnnys-talk' }),

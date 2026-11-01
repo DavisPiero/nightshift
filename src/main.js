@@ -17,7 +17,6 @@ import { RaceView, GhostView, placeOnRoad } from './race/race-view.js';
 import { TimeTrial } from './race/ghost.js';
 import { pickField, makeDriver } from './race/opponents.js';
 import { getDifficulty } from './race/difficulty.js';
-import { AIDriver } from './race/ai-driver.js';
 import { applyWeather, WEATHER } from './physics/weather.js';
 import { getCar } from './vehicles/cars.js';
 import { buildSpec } from './vehicles/tuning.js';
@@ -30,6 +29,8 @@ import { carsReady, fullDetail } from './vehicles/captured.js';
 import { getTrack, trackWeathers } from './world/tracks.js';
 import { buildGarage } from './world/garage.js';
 import { Reflections } from './graphics/reflections.js';
+import { FinishDriver } from './race/finish-driver.js';
+import { clock } from './career/contacts.js';
 import { buildTrackScene, placeBackdrop } from './world/track-scene.js';
 import { setSceneDetail } from './world/assets.js';
 import { WeatherView } from './world/weather.js';
@@ -47,6 +48,7 @@ import { Laptop } from './ui/laptop.js';
 import { showNotice } from './ui/notice.js';
 import { upgradedSpec, NOS_SECONDS } from './career/upgrades.js';
 
+const FINISH_MAX = 8, FINISH_PAUSE = 0.9; // seconds: the longest slide to a stop, and the beat after it before the pay
 const ARRIVE_ROLL = 3; // seconds rolling up to the grid; a moment's stop follows
 
 const _sun = new THREE.Vector3(), _dir = new THREE.Vector3();
@@ -108,6 +110,7 @@ class Game {
     this.raceView = new RaceView(this.scene);
     this.ghost = new GhostView(this.scene);
     this.lines = {}; // racing lines, worked out once per track
+    clock.skew = URL_FLAGS.hours * 3600 * 1000;
     this.audio = new GameAudio();
     this.audio.setEngine(this.carSpec);
     this.audio.setMuted(URL_FLAGS.mute);
@@ -533,6 +536,8 @@ class Game {
     this.race = null;
     this.raceView.clear();
     this.finishClock = 0;
+    this.heardPlace = 0; this.heardLap = 0;
+    this.cameras?.finish(false);
     this.hud.setRace(null);
     this.trial = null;
     this.ghost.clear();
@@ -547,7 +552,8 @@ class Game {
     cars.splice(Math.min(d.start - 1, cars.length), 0, { id: 'you', name: this.save.career.racer.name || 'You', car: `${this.carSpec.make} ${this.carSpec.model}`, vehicle: this.vehicle, driver: null });
     this.race = new Race(this.track, line, cars, {
       laps: r.laps, weather: this.weatherId, band: d.band,
-      takeover: (c) => new AIDriver(line, c.vehicle.spec, { pace: 0.7, aggression: 0.2, consistency: 1 }, { weatherGrip: grip }),
+      hunt: d.hunt,
+      takeover: () => new FinishDriver(line),
     });
     this.race.grid(this.trackInfo.def.start);
     this.trackIndex = this.race.player.index;
@@ -590,6 +596,7 @@ class Game {
   pauseGame() {
     if (this.state !== 'driving' || this.smoke) return;
     this.state = 'paused';
+    document.querySelector('#pause-restart').hidden = !!this.raceSetup?.event?.invite; // one try
     this.controls.releaseAll();
     this.touch.show(false);
     this.screens.reset('pause');
@@ -674,6 +681,16 @@ class Game {
     }
   }
 
+  // The lever, and kerbs drumming under the tyres at the road's edge.
+  roadSounds(dt, v) {
+    const lever = this.state === 'driving' && this.controls.state.handbrake;
+    if (lever && !this.leverOn) this.audio.fx('ratchet');
+    this.leverOn = lever;
+    if (this.state !== 'driving' || v.speed < 8 || Math.abs(this.lastOffset) < this.track.halfWidth - 0.7) return;
+    this.kerbIn = (this.kerbIn ?? 0) - dt;
+    if (this.kerbIn <= 0) { this.audio.fx('kerb', Math.min(1, v.speed / 40)); this.kerbIn = 1.5 / v.speed; }
+  }
+
   onHit(r) {
     if (!r.impact) return;
     this.audio.impact(r.impact);
@@ -691,13 +708,24 @@ class Game {
     this.patch = this.weatherId === 'clear' ? 0 : this.track.patchAt(p.index);
     if (race.playerHit) this.onHit(race.playerHit);
     if (race.playerKnock > 1) {
-      this.audio.impact(race.playerKnock + 2); // a light tap still makes a noise
+      this.audio.impact(race.playerKnock + 2, 'knock'); // a light tap still makes a noise
       this.effects.hit(race.playerContact, race.playerKnock + 1, this.vehicle);
       this.cameras.bump(race.playerKnock + 2);
     }
+    if (race.otherHit) { // two rivals touching, as loud as it is close
+      const h = race.otherHit, near = 1 / (1 + (Math.hypot(h.x - this.vehicle.x, h.z - this.vehicle.z) / 18) ** 2);
+      if (near > 0.1) this.audio.fx('knock', Math.min(1, h.closing / 15) * near);
+    }
+    if (race.state === 'racing') { // a place gained or lost, a lap done
+      if (this.heardPlace && p.place !== this.heardPlace) this.audio.ui(p.place < this.heardPlace ? 'gain' : 'lose');
+      this.heardPlace = p.place;
+      if (p.lap > this.heardLap && !p.done) this.audio.ui(p.best === p.lapTimes.at(-1) && p.lap > 1 ? 'best' : 'lap');
+      this.heardLap = p.lap;
+    }
     if (race.lights !== was && race.state === 'countdown' && race.lights <= 3) this.audio.ui('count');
     if (was > 0 && race.state === 'racing') this.audio.ui('go');
-    if (race.state === 'finished' && !this.finishClock) { this.finishClock = 2.6; this.audio.ui('flag'); }
+    if (race.state === 'finished' && !this.finishClock) { this.finishClock = FINISH_MAX; this.audio.ui('flag'); if (!this.smoke) this.cameras.finish(true); }
+    if (p.driver?.parked) this.finishClock = Math.min(this.finishClock, FINISH_PAUSE); // stopped: a beat, then the pay
     if (this.finishClock > 0 && (this.finishClock -= dt) <= 0 && !this.smoke) {
       this.state = 'results';
       this.touch.show(false);
@@ -771,11 +799,14 @@ class Game {
       if (room?.daveAt) this.screens.shop.place(room.daveAt, this.camera);
       this.model.setInterior(false);
       this.audio.update(dt, v, this.weatherId, garage ? 0 : 0.25);
+      this.audio.rivals?.update(dt, null, v);
     } else {
       if (this.state === 'arrive') this.arriveFrame(dt);
       else if (this.state !== 'paused' && this.state !== 'fading') this.cameras.update(this.carRef(), dt);
-      this.model.setInterior(this.cameras.mode === 'cockpit' && this.state !== 'arrive');
+      this.model.setInterior(this.cameras.mode === 'cockpit' && !this.cameras.over && this.state !== 'arrive');
       this.audio.update(dt, v, this.weatherId, 1, this.weather.k);
+      this.audio.rivals?.update(dt, this.race?.cars, v);
+      this.roadSounds(dt, v);
       this.hud.draw(v, dt);
       this.touch.setFuel(v);
     }
@@ -804,7 +835,7 @@ class Game {
     // Subaro should feel fast).
     const fast = Math.max(v.nosOn ? 0.75 : 0, Math.min(1, (v.speed * 3.6 - 80) / 100));
     const blur = fxs.motionBlur === false || garage || this.state !== 'driving' ? 0 : fast ** 1.3 * 0.72 * CAMERA_FEEL.rush;
-    this.renderer.setLens({ blur, aberration: fxs.lens, bloom: fxs.bloom !== false, cabin: this.cameras.mode === 'cockpit' && this.state !== 'arrive' ? this.model.root : null, soft: garage ? 0.25 : 1 });
+    this.renderer.setLens({ blur, aberration: fxs.lens, bloom: fxs.bloom !== false, cabin: this.cameras.mode === 'cockpit' && !this.cameras.over && this.state !== 'arrive' ? this.model.root : null, soft: garage ? 0.25 : 1 });
     this.renderer.render(scene, this.camera);
 
     if (this.hud.debugOn) {

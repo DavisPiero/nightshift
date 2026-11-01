@@ -113,6 +113,35 @@ for (const def of [STARTER_TRACK, UNDERGROUND_TRACK]) {
     if (id === 'hard') check(gains.every((g) => g < 7), 'on Hard nobody should pass the whole field in one lap');
   }
 }
+// Take P1 and they come after you. A limit car starts on pole; how close does the
+// next car stay, and how often is it passed, with the hunt on and off?
+console.log('Fighting for P1');
+{
+  const def = STARTER_TRACK, track = new TrackPath(def), line = new RacingLine(track);
+  for (const hunt of [0, 1]) {
+    let passes = 0, gap = 0, n = 0, resets = 0;
+    for (let seed = 1; seed <= 6; seed++) {
+      const d = DIFFICULTY.hard, field = pickField({ count: 7, pi: 515, difficulty: 'hard', seed: seed * 31 });
+      const cars = field.map((f, i) => ({ id: f.id, name: f.name, vehicle: new Vehicle(f.spec), driver: makeDriver(line, f, 'hard', 1, seed + i) }));
+      const spec = tunedSpec(CARS[0], 510);
+      cars.unshift({ id: 'hunter', name: 'Hunter', vehicle: new Vehicle(spec), driver: new AIDriver(line, spec, { name: 'Hunter', pace: 1, aggression: 0.6, consistency: 0.97, style: 'plain' }, { skill: { pace: 1, grip: 0.9, brake: 1.25, mistakes: 0.2, spread: 1 } }) });
+      const race = new Race(track, line, cars, { laps: 3, band: d.band, hunt });
+      race.grid(def.start); race.go();
+      const h = race.cars[0]; h.isPlayer = true; race.player = h;
+      let t = 0, led = false;
+      while (t < 240 && !h.done) {
+        race.step(DT); t += DT;
+        if (race.state !== 'racing') continue;
+        if (led && h.place > 1) passes++;
+        led = h.place === 1;
+        if (led && h.lap >= 1) { const next = race.order[1]; gap += h.covered - next.covered; n++; }
+      }
+      resets += race.cars.reduce((a, c) => a + c.resets, 0);
+    }
+    console.log(`  hunt ${hunt}: lost P1 ${passes} times in 6 races, lead averaged ${n ? (gap / n).toFixed(0) : '-'} m, put back ${resets}`);
+  }
+}
+
 // The laptop's predicted standings against real races of eight AI drivers. 1 is
 // the exact order, 0 is no better than a guess.
 console.log('Predicted standings');

@@ -39,6 +39,7 @@ export class Desk {
     const [sel, w, h] = PANELS[this.at];
     this.model ??= buildLaptop();
     this.up = true;
+    this.game.audio.ui('laptop-open');
     $(sel).hidden = false;
     this.stage.show(this.model, (a) => this.pose(a), { behind: true });
     this.stage.pin($(sel), w, h);
@@ -48,6 +49,7 @@ export class Desk {
 
   lower() {
     if (!this.up) return;
+    this.game.audio.ui('laptop-close');
     this.up = false;
     $(PANELS[this.at][0]).hidden = true;
     this.stage.pin(null);
@@ -58,7 +60,6 @@ export class Desk {
 
   toggle() {
     if (!this.at) return;
-    this.game.audio.ui(this.up ? 'back' : 'select');
     if (this.up) this.lower(); else this.lift();
   }
 

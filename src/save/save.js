@@ -51,6 +51,10 @@ export function defaultSave() {
       tracks: ['starter'],       // tracks played (the Race menu now opens them by stage)
       seen: [],                  // story scenes already shown
       racer: { name: '', flag: '' }, // who you are: made before the first race
+      favours: {},               // per person: the last favour called in (career/contacts.js)
+      sonny: { since: 0, used: -1 }, // when you met him, the last invite used (career/invites.js)
+      quest: 0,                  // Dave's job in hand (career/quests.js)
+      vouchers: 0,               // Dave's discounts not yet spent
     },
     lastRace: { track: 'starter', weather: 'clear', time: 'night', mode: 'race', laps: 3, difficulty: 'normal', rivals: 7 },
     bestLaps: {},                // per 'track:car': the best Time Trial lap and its ghost

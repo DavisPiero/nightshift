@@ -22,13 +22,16 @@
 // recordings later, replace EngineVoice with a sample player that takes the
 // same update() call.
 //
-// Menu sounds are in ui-sounds.js; they go round the world sounds, so the
+// One-off sounds are in sfx.js, the other cars' engines in rivals.js. Menu sounds
+// are in ui-sounds.js; they go round the world sounds, so the
 // pause menu can hush the car and still click.
 //
 // Browsers only allow sound after a tap or key press, so start() is called
 // from the first one.
 
 import { playUi } from './ui-sounds.js';
+import { playFx, hasFx } from './sfx.js';
+import { RivalSounds } from './rivals.js';
 
 // Each car's engine has a profile (spec.sound): cylinders, how lumpy it
 // burbles (a cross-plane V8 lopes, a straight six is smooth), how dark it is,
@@ -134,7 +137,7 @@ export class EngineVoice {
 
     // Exhaust rasp: noise through a band, its level chopped by a square wave
     // at firing speed.
-    const rasp = ctx.createBufferSource(); rasp.buffer = noise; rasp.loop = true;
+    const rasp = this.raspSrc = ctx.createBufferSource(); rasp.buffer = noise; rasp.loop = true;
     this.raspFilter = ctx.createBiquadFilter(); this.raspFilter.type = 'bandpass'; this.raspFilter.Q.value = 1.4;
     this.raspGain = ctx.createGain(); this.raspGain.gain.value = 0;
     this.raspChop = ctx.createGain(); this.raspChop.gain.value = 0.5;
@@ -224,6 +227,17 @@ export class EngineVoice {
     this.lastRpm = rpm;
   }
 
+  // Fade out and stop every source.
+  dispose() {
+    const ctx = this.ctx, t = ctx.currentTime;
+    this.out.gain.cancelScheduledValues(t);
+    this.out.gain.setTargetAtTime(0, t, 0.05);
+    setTimeout(() => {
+      for (const n of [this.lfo, this.sub, this.intake, this.raspSrc, this.raspOsc, this.whistle, ...this.layers.flatMap((l) => [l.osc, l.osc2])]) n.stop();
+      this.out.disconnect();
+    }, 300);
+  }
+
   burst(duration, filterType, freq, q, gain, freqEnd) {
     const ctx = this.ctx, t = ctx.currentTime;
     const src = ctx.createBufferSource();
@@ -294,11 +308,11 @@ export class EngineVoice {
   // the note cuts; going up, the power comes back with a bark (and a turbo
   // car chuffs a little air); going down, the throttle blips.
   shift(up, turbo = false) {
-    const t = this.ctx.currentTime;
+    const t = this.ctx.currentTime, r = 0.85 + Math.random() * 0.3; // no two changes quite alike
     this.dip = 1;
-    this.burstAt(t, 0.025, 'bandpass', 2300, 3, 0.16);
-    this.burstAt(t + 0.03, 0.03, 'bandpass', 1300, 3, 0.12);
-    this.burstAt(t, 0.09, 'lowpass', 170, 0.7, up ? 0.4 : 0.3);
+    this.burstAt(t, 0.025, 'bandpass', 2300 * r, 3, 0.16);
+    this.burstAt(t + 0.03 * r, 0.03, 'bandpass', 1300 / r, 3, 0.12);
+    this.burstAt(t, 0.09, 'lowpass', 170 * r, 0.7, up ? 0.4 : 0.3);
     if (up) {
       setTimeout(() => { this.bark = 1; }, 140);
       if (turbo) this.burst(0.18, 'bandpass', 3200, 2, 0.06, 1400);
@@ -366,6 +380,20 @@ export class GameAudio {
     rd.connect(rdTyre).connect(this.tyreGain).connect(this.fxBus);
     rd.start(0, 0.8);
 
+    // Metal dragging along a wall.
+    const sc = ctx.createBufferSource(); sc.buffer = this.noise; sc.loop = true;
+    this.scrapeBand = ctx.createBiquadFilter(); this.scrapeBand.type = 'bandpass'; this.scrapeBand.frequency.value = 1900; this.scrapeBand.Q.value = 2.2;
+    const scLow = ctx.createBiquadFilter(); scLow.type = 'bandpass'; scLow.frequency.value = 520; scLow.Q.value = 3;
+    this.scrapeGain = ctx.createGain(); this.scrapeGain.gain.value = 0;
+    sc.connect(this.scrapeBand).connect(this.scrapeGain);
+    sc.connect(scLow).connect(this.scrapeGain);
+    this.scrapeGain.connect(this.fxBus);
+    sc.start(0, 0.2);
+    this.scrape = 0; // 0..1, fed by impact()
+
+    // The rivals' engines.
+    this.rivals = new RivalSounds(ctx, this.engineLevel, this.noise);
+
     // Wet tyres hiss instead of squealing.
     const hs = ctx.createBufferSource(); hs.buffer = this.noise; hs.loop = true;
     this.hissFilter = ctx.createBiquadFilter(); this.hissFilter.type = 'highpass'; this.hissFilter.frequency.value = 2500;
@@ -403,9 +431,7 @@ export class GameAudio {
   setEngine(spec) {
     this.sound = spec.sound;
     if (!this.ctx || !this.engine) return;
-    const old = this.engine;
-    old.out.gain.setTargetAtTime(0, this.ctx.currentTime, 0.05);
-    setTimeout(() => old.out.disconnect(), 300);
+    this.engine.dispose();
     this.engine = new EngineVoice(this.ctx, this.engineLevel, this.noise, this.sound);
   }
 
@@ -422,9 +448,10 @@ export class GameAudio {
   }
 
   // A menu sound (see ui-sounds.js for the kinds).
-  ui(kind) {
+  ui(kind, k) {
     if (!this.ctx || this.ctx.state !== 'running') return;
-    playUi(this.ctx, this.uiBus, this.noise, kind);
+    if (hasFx(kind)) playFx(this.ctx, this.uiBus, this.noise, kind, k);
+    else playUi(this.ctx, this.uiBus, this.noise, kind, k);
   }
 
   // Paused: the car and the world go quiet, the menu sounds still play.
@@ -455,10 +482,19 @@ export class GameAudio {
       if (this._shifts !== undefined && v.gearbox.gear > 0) this.engine.shift(v.gearbox.lastShift > 0, !!v.spec.turbo);
       this._shifts = v.gearbox.shiftCount;
     }
+    // The car's own events: the lever, the tail letting go, the bottle opening.
+    if (v.drift && !this._drift) this.fx('chirp');
+    this._drift = !!v.drift;
+    if (v.nosOn && !this._nos) this.fx('nos');
+    this._nos = v.nosOn;
+    this.scrape *= Math.exp(-dt * 7);
+    const scraping = v.speed > 3 ? this.scrape : 0;
+    this.scrapeGain.gain.setTargetAtTime(scraping * 0.3 * level, t, 0.03);
+    this.scrapeBand.frequency.setTargetAtTime(1200 + Math.min(1, v.speed / 40) * 1500 + Math.sin(t * 37) * 160, t, 0.03);
     const slide = Math.max(v.rearSlide, v.frontSlide * 0.7);
     // Squeal when sliding, and when braking right at the limit at speed.
     const hardStop = v.brakeGrip > 0.85 && v.speed > 12 ? (v.brakeGrip - 0.85) * 4 : 0;
-    const squeal = v.speed > 4 ? Math.min(1, Math.max(slide, hardStop)) * Math.min(1, v.speed / 15) : 0;
+    const squeal = v.burnout ? 0.8 : v.speed > 4 ? Math.min(1, Math.max(slide, hardStop)) * Math.min(1, v.speed / 15) : 0;
     this.squealGain.gain.setTargetAtTime(squeal * (wet ? 0.07 : 0.22) * level, t, 0.05);
     this.hissGain.gain.setTargetAtTime(Math.max(wet ? Math.min(1, v.speed / 30) * 0.12 : 0, v.nosOn ? 0.16 : 0) * level, t, 0.1);
     for (const { o, m } of this.nosVoices) o.frequency.setTargetAtTime(Math.max(40, v.rpm / 30 * m), t, 0.03);
@@ -494,29 +530,20 @@ export class GameAudio {
     src.start(t, Math.random()); src.stop(t + 0.05);
   }
 
-  impact(speed) {
-    if (!this.ctx || speed < 1.5) return;
-    const ctx = this.ctx, t = ctx.currentTime;
-    // Scraping along a wall touches it every physics step: one sound at a time.
-    if (t - (this.lastImpact || 0) < 0.12 && speed < (this.lastImpactSpeed || 0) * 1.5) return;
+  // A hit. Rubbing along a wall touches it every physics step: one crash at a
+  // time, and the scrape carries the rest.
+  impact(speed, kind = 'wall') {
+    if (!this.ctx || speed < 1.5 || this.ctx.state !== 'running') return;
+    const t = this.ctx.currentTime;
+    if (kind === 'wall') this.scrape = Math.max(this.scrape, Math.min(1, speed / 12 + 0.3));
+    if (t - (this.lastImpact || 0) < 0.14 && speed < (this.lastImpactSpeed || 0) * 1.5) return;
     this.lastImpact = t; this.lastImpactSpeed = speed;
-    const v = Math.min(1, speed / 15);
-    const src = ctx.createBufferSource(); src.buffer = this.noise;
-    const f = ctx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 350 + v * 900;
-    const g = ctx.createGain();
-    g.gain.setValueAtTime(0.25 + v * 0.7, t);
-    g.gain.exponentialRampToValueAtTime(0.001, t + 0.25 + v * 0.3);
-    src.connect(f).connect(g).connect(this.fxBus);
-    src.start(t, Math.random()); src.stop(t + 0.7);
-    // Metal scrape on top for hard hits.
-    if (v > 0.3) {
-      const s2 = ctx.createBufferSource(); s2.buffer = this.noise;
-      const b = ctx.createBiquadFilter(); b.type = 'bandpass'; b.frequency.value = 2400; b.Q.value = 4;
-      const g2 = ctx.createGain();
-      g2.gain.setValueAtTime(0.12 * v, t);
-      g2.gain.exponentialRampToValueAtTime(0.001, t + 0.4);
-      s2.connect(b).connect(g2).connect(this.fxBus);
-      s2.start(t, Math.random()); s2.stop(t + 0.5);
-    }
+    playFx(this.ctx, this.fxBus, this.noise, kind, Math.min(1, speed / 15));
+  }
+
+  // A sound in the world: wall, knock, ratchet, chirp, kerb, whoosh, nos.
+  fx(kind, v = 1, pan = 0) {
+    if (!this.ctx || this.ctx.state !== 'running') return;
+    playFx(this.ctx, this.fxBus, this.noise, kind, v, pan);
   }
 }

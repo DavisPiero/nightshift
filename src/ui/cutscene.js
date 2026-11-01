@@ -159,7 +159,10 @@ export class Cutscene {
     if (this.shown < this.full.length) {
       this.typed += dt * CPS;
       const next = Math.min(this.full.length, Math.floor(this.typed));
-      if (next !== this.shown) { this.shown = next; this.text.textContent = this.full.slice(0, next); }
+      if (next !== this.shown) {
+        this.shown = next; this.text.textContent = this.full.slice(0, next);
+        if (this.who && next % 3 === 0) this.game.audio.ui('voice', PEOPLE[this.who].voice ?? 0.5);
+      }
     }
     this.blink -= dt;
     const blinks = this.who && !PEOPLE[this.who].sprite;

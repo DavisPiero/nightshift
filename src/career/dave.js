@@ -52,6 +52,12 @@ const LIFE = [
   ['aside', 'Vending machine\'s got iced coffee in it. And my spare keys. Long story.'],
 ];
 
+// The job in hand, or a nudge about a voucher you are sitting on.
+export function daveOnJob(vouchers, quest) {
+  if (vouchers) return line(['thumbs', 'You\'ve got a voucher burning a hole in your phone, mate. Fifteen percent, any car.']);
+  return quest ? line(['aside', `Still need that job done. ${quest.name}. Ring me if you\'ve forgotten.`]) : null;
+}
+
 // `n` counts up as he talks, so he works through his lines without repeating.
 const line = ([mood, text]) => ({ mood, text });
 export const daveOnCar = (id, n) => { const l = CARS[id] || FALLBACK; return line(l[n % l.length]); };

@@ -319,7 +319,7 @@ export class Effects {
     model.root.updateMatrixWorld(true);
 
     // Rear wheels: smoke when sliding or spinning, spray when wet.
-    const slide = Math.max(v.rearSlide - 0.25, v.spin) * Math.min(1, v.speed / 6);
+    const slide = Math.max(v.rearSlide - 0.25, v.spin) * (v.burnout ? 1 : Math.min(1, v.speed / 6));
     for (let w = 0; w < 2; w++) {
       const wheel = model.wheels[2 + w];
       wheel.steer.getWorldPosition(_v);

@@ -11,7 +11,7 @@ const env = (g, t, peak, attack, release) => {
   g.gain.exponentialRampToValueAtTime(0.0001, t + attack + release);
 };
 
-function tone(ctx, out, { type = 'square', f0, f1 = f0, t = 0, dur = 0.08, peak = 0.1, lp = 4000 }) {
+export function tone(ctx, out, { type = 'square', f0, f1 = f0, t = 0, dur = 0.08, peak = 0.1, lp = 4000 }) {
   const at = ctx.currentTime + t;
   const o = ctx.createOscillator(); o.type = type;
   o.frequency.setValueAtTime(f0, at);
@@ -23,7 +23,7 @@ function tone(ctx, out, { type = 'square', f0, f1 = f0, t = 0, dur = 0.08, peak 
   o.start(at); o.stop(at + dur + 0.05);
 }
 
-function hiss(ctx, out, noise, { t = 0, dur = 0.1, peak = 0.1, type = 'bandpass', f0 = 3000, f1 = f0, q = 1 }) {
+export function hiss(ctx, out, noise, { t = 0, dur = 0.1, peak = 0.1, type = 'bandpass', f0 = 3000, f1 = f0, q = 1 }) {
   const at = ctx.currentTime + t;
   const s = ctx.createBufferSource(); s.buffer = noise;
   const f = ctx.createBiquadFilter(); f.type = type; f.Q.value = q;
@@ -35,20 +35,24 @@ function hiss(ctx, out, noise, { t = 0, dur = 0.1, peak = 0.1, type = 'bandpass'
   s.start(at, Math.random()); s.stop(at + dur + 0.05);
 }
 
-export function playUi(ctx, out, noise, kind) {
-  const r = 1 + (Math.random() - 0.5) * 0.06;
+export function playUi(ctx, out, noise, kind, k = 0) {
+  const r = 1 + (Math.random() - 0.5) * 0.06, v = Math.floor(Math.random() * 3); // the same action, never quite the same sound
   switch (kind) {
     case 'move':
-      tone(ctx, out, { type: 'triangle', f0: 1900 * r, dur: 0.025, peak: 0.035 });
+      tone(ctx, out, { type: 'triangle', f0: [1900, 1700, 2150][v] * r, dur: 0.025, peak: 0.035 });
       break;
-    case 'select':
-      tone(ctx, out, { f0: 880 * r, f1: 1320 * r, dur: 0.06, peak: 0.06, lp: 3000 });
+    case 'select': {
+      const [a, b] = [[880, 1320], [988, 1319], [784, 1175]][v];
+      tone(ctx, out, { f0: a * r, f1: b * r, dur: 0.06, peak: 0.06, lp: 3000 });
       break;
-    case 'back':
-      tone(ctx, out, { f0: 700 * r, f1: 420 * r, dur: 0.08, peak: 0.06, lp: 2200 });
+    }
+    case 'back': {
+      const [a, b] = [[700, 420], [660, 440], [760, 400]][v];
+      tone(ctx, out, { f0: a * r, f1: b * r, dur: 0.08, peak: 0.06, lp: 2200 });
       break;
+    }
     case 'confirm':
-      for (const [i, f] of [523, 659, 988].entries()) tone(ctx, out, { f0: f * r, t: i * 0.045, dur: 0.07, peak: 0.07, lp: 3500 });
+      for (const [i, f] of [[523, 659, 988], [523, 784, 1047], [587, 740, 988]][v].entries()) tone(ctx, out, { f0: f * r, t: i * 0.045, dur: 0.07, peak: 0.07, lp: 3500 });
       break;
     case 'race':
       // A low revving chord under a whoosh, like an engine catching.
@@ -75,16 +79,43 @@ export function playUi(ctx, out, noise, kind) {
       break;
     case 'count':
       tone(ctx, out, { f0: 440, dur: 0.16, peak: 0.1, lp: 2400 });
+      tone(ctx, out, { type: 'sine', f0: 220, dur: 0.2, peak: 0.06, lp: 1200 });
       break;
     case 'go':
       tone(ctx, out, { f0: 880, dur: 0.5, peak: 0.12, lp: 3000 });
+      tone(ctx, out, { type: 'sine', f0: 440, dur: 0.5, peak: 0.08, lp: 1800 });
       break;
     case 'flag':
       for (const [i, f] of [523, 659, 784, 1047].entries()) tone(ctx, out, { f0: f, t: i * 0.09, dur: 0.14, peak: 0.08, lp: 3500 });
       break;
     case 'cash':
-      for (const [i, f] of [1319, 1760, 2093].entries()) tone(ctx, out, { type: 'triangle', f0: f * r, t: i * 0.06, dur: 0.1, peak: 0.08 });
+      for (const [i, f] of [[1319, 1760, 2093], [1568, 2093, 2637], [1319, 1568, 2349]][v].entries()) tone(ctx, out, { type: 'triangle', f0: f * r, t: i * 0.06, dur: 0.1, peak: 0.08 });
       hiss(ctx, out, noise, { t: 0.02, dur: 0.05, peak: 0.05, f0: 6000, q: 4 });
+      break;
+    case 'lap':
+      tone(ctx, out, { f0: 988, dur: 0.07, peak: 0.07, lp: 3000 });
+      tone(ctx, out, { f0: 1319, t: 0.08, dur: 0.1, peak: 0.07, lp: 3000 });
+      break;
+    case 'best':
+      for (const [i, f] of [988, 1319, 1760].entries()) tone(ctx, out, { type: 'triangle', f0: f, t: i * 0.07, dur: 0.14, peak: 0.1, lp: 6000 });
+      break;
+    case 'gain': // a place up
+      tone(ctx, out, { type: 'triangle', f0: 660 * r, f1: 990 * r, dur: 0.09, peak: 0.08, lp: 4000 });
+      break;
+    case 'lose': // a place down
+      tone(ctx, out, { type: 'triangle', f0: 440 * r, f1: 300 * r, dur: 0.11, peak: 0.06, lp: 2400 });
+      break;
+    case 'tick': // k 0..1: climbs as the number runs up
+      tone(ctx, out, { type: 'triangle', f0: (900 + k * 900) * r, dur: 0.022, peak: 0.05, lp: 5000 });
+      break;
+    case 'stamp':
+      tone(ctx, out, { type: 'sine', f0: 170, f1: 70, dur: 0.14, peak: 0.2, lp: 900 });
+      hiss(ctx, out, noise, { dur: 0.04, peak: 0.1, f0: 1800, q: 1 });
+      break;
+    case 'level':
+      for (const [i, f] of [523, 784, 1047, 1319, 1568].entries()) tone(ctx, out, { f0: f, t: i * 0.055, dur: 0.16, peak: 0.075, lp: 4200 });
+      tone(ctx, out, { type: 'sine', f0: 262, t: 0, dur: 0.5, peak: 0.1, lp: 1500 });
+      hiss(ctx, out, noise, { t: 0.2, dur: 0.4, peak: 0.05, type: 'highpass', f0: 6000, f1: 9000, q: 0.7 });
       break;
     case 'nope':
       tone(ctx, out, { type: 'square', f0: 140, dur: 0.12, peak: 0.06, lp: 600 });

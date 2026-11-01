@@ -10,7 +10,9 @@ import { levelFor, cr } from '../career/career.js';
 import { buildSpec } from '../vehicles/tuning.js';
 import { fillStats } from './stats-view.js';
 import { carCard, lockedCard } from './car-cards.js';
-import { daveOnCar, daveOnLife } from '../career/dave.js';
+import { daveOnCar, daveOnLife, daveOnJob } from '../career/dave.js';
+import { priceOf, paid } from '../career/contacts.js';
+import { currentQuest } from '../career/quests.js';
 
 const $ = (sel) => document.querySelector(sel);
 const _at = new THREE.Vector3();
@@ -32,6 +34,9 @@ export class Shop {
   owned(id) { return this.game.save.garage.owned.includes(id); }
 
   open() {
+    // Meeting Dave puts him in your phone, and he has jobs.
+    const c = this.game.save.career;
+    if (!c.seen.includes('dave-lot')) { c.seen.push('dave-lot'); this.game.saveNow(); this.game.phone.refresh(); }
     this.fill();
     this.say();
   }
@@ -42,7 +47,8 @@ export class Shop {
     clearTimeout(this.chat);
     if (this.screens.top && this.screens.top !== 'shop') return;
     this.said++;
-    this.talk(onCar ? daveOnCar(this.picked, this.said) : daveOnLife(this.said));
+    const c = this.game.save.career, job = this.said % 5 === 1 && !this.owned(this.picked) ? daveOnJob(c.vouchers, currentQuest(c)) : null;
+    this.talk(job ?? (onCar ? daveOnCar(this.picked, this.said) : daveOnLife(this.said)));
     this.chat = setTimeout(() => this.say(this.said % 3 === 0), CHAT_SECONDS * 1000);
   }
 
@@ -50,6 +56,7 @@ export class Shop {
   // when the face he is pulling has open eyes to shut.
   talk({ mood, text }) {
     $('#dave-say').textContent = text;
+    for (let i = 0, n = 3 + Math.floor(text.length / 25); i < n; i++) setTimeout(() => { if (this.screens.top === 'shop') this.game.audio.ui('voice', 0.1); }, i * 110);
     const lot = this.game.lot;
     lot?.setDave(mood);
     clearTimeout(this.blinkAt);
@@ -110,7 +117,7 @@ export class Shop {
     if (!shown.some((c) => c.id === this.picked)) this.picked = shown[0]?.id;
     if (this.picked) this.game.showCar(this.picked);
     for (const c of shown) {
-      const card = carCard(c, { owned: this.owned(c.id), on: c.id === this.picked });
+      const card = carCard(c, { owned: this.owned(c.id), on: c.id === this.picked, deal: priceOf(this.game.save, c) });
       card.addEventListener('click', () => this.look(c.id));
       grid.appendChild(card);
     }
@@ -126,7 +133,7 @@ export class Shop {
       el.innerHTML = `<div class="ttl"><span>${t.name}</span></div><p class="big-note">To be continued</p><p class="muted small">${t.name} opens at level ${t.level}. The cars are still on the way.</p>`;
       return;
     }
-    const money = this.game.save.career.cr, have = this.owned(c.id);
+    const money = this.game.save.career.cr, have = this.owned(c.id), deal = priceOf(this.game.save, c);
     el.innerHTML = `<div class="ttl"><span>${c.make}</span></div>`
       + `<div class="car-name"><span class="sub">${c.year} · ${c.code}</span><span class="name">${c.model}</span></div>`
       + `<p class="muted small">${c.blurb}</p><div class="stats"></div><div class="shop-buy"></div>`;
@@ -135,30 +142,32 @@ export class Shop {
     buy.className = 'btn go pri';
     if (have) { buy.textContent = 'Owned'; buy.disabled = true; buy.classList.remove('pri'); }
     else {
-      buy.textContent = cr(c.price);
-      if (money < c.price) { buy.classList.remove('pri'); buy.classList.add('poor'); }
+      buy.textContent = cr(deal.price);
+      if (deal.pct) el.querySelector('.shop-buy').insertAdjacentHTML('afterbegin', `<p class="deal">${deal.who}: ${deal.pct}% off. Was ${cr(c.price)}</p>`);
+      if (money < deal.price) { buy.classList.remove('pri'); buy.classList.add('poor'); }
       buy.addEventListener('click', () => this.ask(c));
     }
     el.querySelector('.shop-buy').appendChild(buy);
   }
 
   ask(c) {
-    const money = this.game.save.career.cr;
-    if (money < c.price) {
+    const money = this.game.save.career.cr, { price } = priceOf(this.game.save, c);
+    if (money < price) {
       this.game.audio.ui('nope');
-      this.screens.window('Not enough CR', `The ${c.model} costs ${cr(c.price)}. You have ${cr(money)}. Win some races.`, [['OK']]);
+      this.screens.window('Not enough CR', `The ${c.model} costs ${cr(price)}. You have ${cr(money)}. Win some races.`, [['OK']]);
       return;
     }
-    this.screens.window('Buy this car?', `${carTitle(c)} for ${cr(c.price)}. You would have ${cr(money - c.price)} left.`, [
+    this.screens.window('Buy this car?', `${carTitle(c)} for ${cr(price)}. You would have ${cr(money - price)} left.`, [
       ['Buy it', () => this.buy(c), true], ['Not yet'],
     ]);
   }
 
   buy(c) {
-    const save = this.game.save;
-    save.career.cr -= c.price;
+    const save = this.game.save, deal = priceOf(save, c);
+    save.career.cr -= deal.price;
+    paid(save, deal);
     save.garage.owned.push(c.id);
-    this.game.audio.ui('cash');
+    this.game.audio.ui('buy');
     this.screens.pickCar(c.id);
     this.game.saveNow();
     this.screens.wallet();

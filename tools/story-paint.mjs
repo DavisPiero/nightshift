@@ -75,31 +75,20 @@ window.paint = (id, blink) => {
     rim('M122 60 C120 84 116 100 108 112', '#ffa050', 1.5);
     g.restore();
     rim('M4 200 C8 170 30 152 60 142', '#4ff0e0', 1.5);
-  } else if (id.startsWith('face-dave')) {
-    // Stand-in until David's sheet: a faded work shirt, an old hat, sunnies, a
-    // big grey moustache, not a care in the world.
-    P('M2 200 C6 170 30 152 62 142 L108 142 C138 152 164 170 168 200 Z', '#7a8a6a', 2.5);
-    P('M62 142 L84 176 L108 142 L120 150 L98 200 L70 200 L48 150 Z', '#8e9e7c', 2);
-    P('M70 146 L84 172 L100 146 Q84 156 70 146 Z', '#c89468');
-    R(112, 170, 26, 18, '#6a7a5a'); R(112, 170, 26, 2, '#4a5840');
+  } else if (id.startsWith('face-sonny')) {
+    // Stand-in until David's sheet: a small man in a loud jacket, wide awake.
+    P('M2 200 C8 176 32 160 62 150 L108 150 C136 160 162 176 168 200 Z', '#2c6e6a', 2.5);
+    P('M62 150 L84 182 L108 150 L116 156 L92 200 L76 200 L54 156 Z', '#e8e2d4', 2);
     g.save();
-    head({ skin: '#cc8f62', skinD: '#a26c46', skinDD: '#784c30', skinL: '#e8b284', eye: '#2a2018', brow: '#8a8478',
-      browL: 'M72 62 Q80 57 90 62 L90 64 Q80 60 72 65 Z', browR: 'M100 62 Q108 57 118 60 L118 62 Q108 60 100 64 Z' });
-    // Sunnies, pushed a little down his nose.
-    P('M66 70 L92 70 L90 84 Q78 88 68 84 Z', '#16161c', 1.6);
-    P('M98 70 L120 68 L118 82 Q108 87 100 84 Z', '#16161c', 1.6);
-    R(90, 72, 10, 2, '#16161c'); R(72, 73, 8, 2, '#5a6a8a'); R(104, 72, 7, 2, '#5a6a8a');
-    // The moustache, and a lazy half smile under it.
-    P('M70 106 Q84 94 95 101 Q106 92 118 102 Q112 112 96 108 Q84 114 70 106 Z', '#b4aea2', 1.6);
-    P('M82 112 Q94 116 106 110', null); rim('M82 113 Q94 117 106 111', '#5e2622', 1.6);
-    // A hat that has been left on a dashboard for thirty years.
-    P('M34 58 Q84 44 138 54 Q144 60 134 62 Q84 56 40 66 Q30 64 34 58 Z', '#7a5a38', 2.5);
-    P('M58 54 C60 26 76 18 94 18 C112 18 124 28 124 52 Q90 46 58 54 Z', '#8e6c46', 2.5);
-    P('M58 54 Q90 46 124 52 L124 46 Q90 40 58 48 Z', '#4a3420');
-    clip(HEAD, () => { spots(62, 96, 58, 30, 120, '#8a7c70'); });
-    rim('M122 60 C120 84 116 100 108 112', '#ffa050', 1.5);
+    head({ skin: '#d8ac80', skinD: '#b0845c', skinDD: '#865e40', skinL: '#eec89c', eye: '#141218', brow: '#16141a',
+      browL: 'M70 58 Q80 50 90 56 L90 59 Q80 54 70 62 Z', browR: 'M100 56 Q110 50 118 56 L118 59 Q110 54 100 59 Z' });
+    // Hair standing straight up, eyes too open, a grin with every tooth in it.
+    P('M56 58 L52 26 L66 40 L68 14 L82 34 L90 10 L100 34 L114 16 L114 40 L128 30 L122 60 Q90 42 56 58 Z', '#16141a', 2);
+    P('M74 104 Q94 122 114 102 Q94 110 74 104 Z', '#fff4e4', 1.6);
+    rim('M122 60 C120 84 116 100 108 112', '#22d8c8', 1.5);
     g.restore();
-    rim('M166 198 C160 170 138 152 110 144', '#ffa050', 1.5);
+    // The coffee.
+    P('M126 150 L156 150 L150 196 L132 196 Z', '#f2ece0', 2.2); P('M124 146 L158 146 L156 152 L126 152 Z', '#3a2a22', 2);
   } else if (id.startsWith('face-max')) {
     // Black race jacket with a pink stripe, collar up.
     P('M2 200 C6 170 30 152 62 142 L108 142 C138 152 164 170 168 200 Z', '#15151c', 2.5);

@@ -3,6 +3,10 @@
 // Plain DOM. Screens stack, so Back (or Escape) always returns to where you
 // came from, e.g. Settings opened from the pause menu goes back to it.
 
+import { Tally } from './tally.js';
+import { invitePay } from '../career/invites.js';
+import { checkQuest } from '../career/quests.js';
+import { VOUCHER_OFF } from '../career/contacts.js';
 import { getCar, TIERS } from '../vehicles/cars.js';
 import { TRACKS, trackWeathers } from '../world/tracks.js';
 import { WEATHER } from '../physics/weather.js';
@@ -155,6 +159,7 @@ export class Screens {
 
   // Show a screen on top of the stack.
   open(name) {
+    this.game.audio.ui('swish');
     if (this.top) this.hideEl(this.top);
     this.stack.push(name);
     this.showEl(name);
@@ -261,14 +266,16 @@ export class Screens {
     const game = this.game, career = game.save.career, r = race.player, e = setup.event;
     const beatMax = !e?.beat || r.place < race.cars.find((c) => c.rival).place;
     let pay, clearedNow = false;
-    if (e) {
+    if (e?.invite) pay = invitePay(e, r.place);
+    else if (e) {
       const first = !cleared(career, e);
       clearedNow = first && r.place <= CLEARS && beatMax;
       pay = eventPay(e, r.place, setup.difficulty, first && beatMax);
       if (clearedNow || (cleared(career, e) && r.place < career.done[e.id])) career.done[e.id] = r.place;
       if (clearedNow) this.career.pick = null; // on to the next race
     } else pay = racePay(setup.laps, setup.pi, r.place, setup.difficulty, setup.rivals);
-    const got = bank(career, pay);
+    const xpFrom = career.xp, got = bank(career, pay);
+    const job = checkQuest(career, { track: setup.track, weather: setup.weather, place: r.place, hits: r.hits, difficulty: setup.difficulty });
     game.saveNow();
     this.after = clearedNow && e.after && !career.seen.includes(e.after) ? e.after : null;
     this.resultsEvent = e;
@@ -277,17 +284,19 @@ export class Screens {
     const list = $('#res-list');
     list.innerHTML = race.results().map((c) => `<div class="res-row${c.player ? ' me' : ''}"><span class="p">${c.place}</span><span class="n">${c.name}</span><span class="c">${c.car || ''}</span><span class="t">${clock(c.time)}</span><span class="b">${Number.isFinite(c.best) ? clock(c.best) : '-'}</span></div>`).join('');
     const i = levelInfo(career.xp);
-    const note = !e ? '' : clearedNow ? '<p class="res-ok">Race cleared</p>' : e.beat && !beatMax && r.place <= CLEARS ? '<p class="res-no">You have to beat Max</p>' : r.place > CLEARS && !cleared(career, e) ? `<p class="res-no">Top ${CLEARS} to clear it</p>` : '';
+    const note = (job ? `<p class="res-ok">Dave's job done: ${VOUCHER_OFF}% off a car</p>` : '') + (!e ? '' : e.invite ? (r.place <= CLEARS ? '<p class="res-ok">Sonny pays up</p>' : '<p class="res-no">No podium, no pay</p>') : clearedNow ? '<p class="res-ok">Race cleared</p>' : e.beat && !beatMax && r.place <= CLEARS ? '<p class="res-no">You have to beat Max</p>' : r.place > CLEARS && !cleared(career, e) ? `<p class="res-no">Top ${CLEARS} to clear it</p>` : '');
     $('#res-pay').innerHTML = `<p class="res-place">P${r.place}<small>of ${race.cars.length}</small></p>${note}`
-      + `<dl><dt>Money</dt><dd>+ ${cr(got.cr)}</dd><dt>XP</dt><dd>+ ${got.xp}</dd></dl>`
-      + `<div class="res-level"><span>Level ${i.level}</span><span class="w-bar"><i style="width:${Math.round(i.share * 100)}%"></i></span></div>`
-      + (got.levelAfter > got.levelBefore ? `<p class="res-ok">Level up!</p>` : '');
+      + `<dl><dt>Money</dt><dd id="tl-cr">+ ${cr(0)}</dd><dt>XP</dt><dd id="tl-xp">+ 0</dd></dl>`
+      + `<div class="res-level"><span id="tl-level">Level ${levelInfo(xpFrom).level}</span><span class="w-bar"><i id="tl-bar" style="width:${Math.round(levelInfo(xpFrom).share * 100)}%"></i></span></div>`
+      + `<p class="res-ok" id="tl-up" hidden>Level up!</p>`;
+    $('#res-again').hidden = !!e?.invite; // one try
     this.reset('results');
     $('#wallet').hidden = true;
-    game.audio.ui('cash');
+    (this.tally ??= new Tally(game.audio)).start({ cr: got.cr, xp: got.xp, xpFrom });
   }
 
   resultsDone() {
+    this.tally?.stop();
     const scene = this.after, e = this.resultsEvent;
     const leave = () => this.game.toMain(e ? 'career' : 'tracks');
     if (scene) this.story(scene, leave); else leave();

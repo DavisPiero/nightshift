@@ -6,7 +6,7 @@ import { carStats } from '../vehicles/stats.js';
 import { buildSpec } from '../vehicles/tuning.js';
 import { cr } from '../career/career.js';
 
-export function carCard(car, { owned = false, on = false, foot = null } = {}) {
+export function carCard(car, { owned = false, on = false, foot = null, deal = null } = {}) {
   const r = carStats(buildSpec(car));
   const b = document.createElement('button');
   b.className = `card${on ? ' on' : ''}${owned ? ' owned' : ''}`;
@@ -14,7 +14,7 @@ export function carCard(car, { owned = false, on = false, foot = null } = {}) {
   b.innerHTML = `<span class="c-name">${car.model}</span><span class="c-sub">${car.year} ${car.make}</span>`
     + `<img class="c-art" src="assets/cars/cards/${car.id}.png" alt="" draggable="false">`
     + `<span class="c-foot"><span class="c-tag t-${car.tier}">${car.tier === 'street' ? 'Street' : car.tier}</span>`
-    + `<span class="c-price">${foot ?? (owned ? 'Owned' : cr(car.price))}</span><span class="cls cls-${r.cls} mini">${r.cls}</span><span class="c-pi">${r.pi}</span></span>`;
+    + `<span class="c-price">${foot ?? (owned ? 'Owned' : cr(deal?.pct ? deal.price : car.price))}${deal?.pct && !owned ? `<small>-${deal.pct}%</small>` : ''}</span><span class="cls cls-${r.cls} mini">${r.cls}</span><span class="c-pi">${r.pi}</span></span>`;
   return b;
 }
 

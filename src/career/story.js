@@ -12,9 +12,11 @@
 // he thinks you have the talent. Max is the rival, named after the champ.
 
 export const PEOPLE = {
-  johnny: { name: 'Johnny', jp: 'ジョニー', sprite: true },
-  max: { name: 'Max', jp: 'マックス' },
-  aoi: { name: 'Aoi Tachibana', jp: '橘' },
+  johnny: { name: 'Johnny', jp: 'ジョニー', sprite: true, voice: 0.3 },
+  max: { name: 'Max', jp: 'マックス', voice: 0.55 },
+  aoi: { name: 'Aoi Tachibana', jp: '橘', voice: 0.8 },
+  dave: { name: 'Dave', jp: 'デイブ', sprite: true, voice: 0.1 },
+  sonny: { name: 'Sonny', jp: 'ソニー', voice: 1 },
 };
 
 const j = (mood, text, more = {}) => ({ who: 'johnny', mood, text, ...more });
@@ -61,6 +63,14 @@ export const SCENES = {
     j('calm', 'I didn\'t know a word of Japanese. I didn\'t need it. These tunnels taught me the rest.'),
     j('wrench', 'Listen to the walls, {name}. They tell you when you\'re going fast enough.'),
   ] },
+  'the-pass': { art: 'garage', lines: [
+    j('smug', 'Bet a man a crate of beer you could beat him up Yamagiri Pass. Three hairpins and a lot of dark.'),
+    j('wrench-grin', 'Don\'t make me buy that crate, {name}.'),
+  ] },
+  'first-look': { art: 'ring', lines: [
+    j('aside', 'Night off from the tunnels. I want you to see something.'),
+    j('calm', 'That\'s the Ring. Quiet tonight, nobody who matters is here. You\'re not ready for it. Drive it anyway.'),
+  ] },
   'old-line': { art: 'tokyo', lines: [
     j('shock', 'That\'s the line! That\'s my old line through the junction!'),
     j('laugh', 'All these years and nobody\'s told those walls I left.'),
@@ -70,12 +80,17 @@ export const SCENES = {
     ...say('max', '...', 'Do that again and I might have to learn your name.'),
     j('laugh', 'Did you see his face? I\'m having that framed.'),
   ] },
+  'meet-sonny': { art: 'tokyo', lines: [
+    ...tell('A tap on the window. A very small man with a very large coffee.'),
+    ...say('sonny', 'YOU beat Max! In the tunnels! I saw it! Everyone saw it! I\'m Sonny! Hi!', 'I get people into races. The good ones. The ones that aren\'t on any list because I am the list.', 'One invite a day. Every day. Miss it, it\'s gone, gone, GONE. Five hundred to get in. One try. Podium or nothing.', 'Pays like nothing else in this town. Your phone. Give me your phone. Too late, I\'m already in it.'),
+    j('facepalm', '...He does that. He\'s harmless. The races aren\'t.'),
+  ] },
   'back-home': { art: 'docks', lines: [
     j('thumbs', 'We\'re back. And look, they\'ve painted your number on the crane.'),
     j('worry', 'The harbor knows you now, {name}. That means they\'ll all be coming for you.'),
   ] },
   'max-calls': { art: 'grid', lines: say('max', 'Fine. You\'re real. Let\'s do this properly, in front of everyone, on your own harbor.', 'Win, and I\'ll show you where the big names race.') },
-  'the-ring': { art: 'ring', lines: say('max', 'They call it the Ring. Long straights, two chicanes, one corner that never ends.', 'Nobody races here for fun. People come here to get noticed.', 'See you out there. Bring something fast.') },
+  'the-ring': { art: 'ring', lines: say('max', 'Been here as a tourist, have you? Tonight it counts. Long straights, two chicanes, one corner that never ends.', 'Nobody races here for fun. People come here to get noticed.', 'See you out there. Bring something fast.') },
   clipboard: { art: 'ring', lines: [
     ...tell('At the last corner, a person with a clipboard. Not cheering. Writing things down.'),
     j('angry', 'Don\'t look. Don\'t look!'),

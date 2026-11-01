@@ -22,6 +22,8 @@
 //  - Character: `pace`, `aggression` (how soon it goes for a gap),
 //    `consistency` (how rarely it brakes late), and a little form that changes
 //    each lap, so no two laps are the same.
+//  - Hunting: when you take P1 the cars close behind you go for it: they look
+//    further for a gap, brake later, swerve harder, and err more for it.
 //  - Catch-up: the race can nudge pace up or down a few percent (rubber
 //    band) so the pack stays together for a casual game.
 //  - Skill: the difficulty (difficulty.js) scales pace, how much of the
@@ -87,6 +89,8 @@ export class AIDriver {
     this.wander = 0; this.wanderTo = 0; // a little of its own line, never the same twice
     this.form = 1; this.formLap = -1;   // how it is going this lap
     this.catchUp = 1;      // set by the race (rubber band)
+    this.huntGoal = 0;     // set by the race: you hold P1 and this car is close behind
+    this.hunt = 0;         // eased: braver, quicker across the road, a little faster
     this.lapse = 0;        // seconds left of a late-braking mistake
     this.stuck = 0;        // seconds barely moving (the race may reset us)
     this.reversing = 0;    // seconds left backing out of a wall
@@ -108,7 +112,7 @@ export class AIDriver {
 
   // Looks up from the road, a few times a second: who is round me, what now?
   think(v, near, others) {
-    const line = this.line, track = line.track, p = this.persona, st = this.style;
+    const line = this.line, track = line.track, p = this.persona, st = this.style, hunt = this.hunt;
     const i = near.index, speed = v.speed, hw = track.halfWidth, edge = hw - 1.2;
     const lineOff = line.offset[i];
     let ahead = null, behind = null, beside = null;
@@ -119,7 +123,7 @@ export class AIDriver {
       const side = o.offset - near.offset;
       if (Math.abs(gap) < 5.5 && Math.abs(side) < 3) {
         if (!beside || Math.abs(side) < Math.abs(beside.side)) beside = { o, gap, side };
-      } else if (gap > 0 && gap < 12 + speed * (0.5 + p.aggression * 0.5) * st.dive && Math.abs(side) < CLEAR) {
+      } else if (gap > 0 && gap < 12 + speed * (0.5 + p.aggression * 0.5) * st.dive * (1 + hunt * 0.6) && Math.abs(side) < CLEAR) {
         if (!ahead || gap < ahead.gap) ahead = { o, gap, side };
       } else if (gap < 0 && gap > -(8 + speed * 0.7)) {
         if (!behind || gap > behind.gap) behind = { o, gap, side };
@@ -134,7 +138,7 @@ export class AIDriver {
       // Alongside: hold a lane, a car's width off them, and never turn in.
       const off = beside.side > 0 ? Math.min(near.offset, beside.o.offset - CLEAR) : Math.max(near.offset, beside.o.offset + CLEAR);
       this.plan = clamp(off, -edge, edge);
-      this.outside = Math.abs(off) > edge || (corner && corner.at < 50 && Math.sign(near.offset - beside.o.offset) === -corner.side && p.aggression < 0.8);
+      this.outside = Math.abs(off) > edge || (corner && corner.at < 50 && Math.sign(near.offset - beside.o.offset) === -corner.side && p.aggression + hunt * 0.5 < 0.8);
       this.cover = null;
     } else if (this.pass) {
       this.plan = clamp(this.pass.off, -edge, edge);
@@ -161,7 +165,7 @@ export class AIDriver {
     if (ahead) {
       const closing = speed - ahead.o.speed, room = ahead.gap - 5.5;
       const inLane = Math.abs(ahead.side) < 2 && !(this.pass && Math.abs(near.offset - ahead.o.offset) > 1.9);
-      if (inLane && (room < 2 || (closing > 0 && room / closing < (this.pass ? 0.55 : 0.9)))) this.follow = { speed: ahead.o.speed, gap: room };
+      if (inLane && (room < 2 || (closing > 0 && room / closing < (this.pass ? 0.55 : 0.9) - hunt * 0.2))) this.follow = { speed: ahead.o.speed, gap: room };
     }
   }
 
@@ -187,11 +191,12 @@ export class AIDriver {
       this.form = 1 + (this.rand() - 0.5) * 0.02 * (2 - p.consistency) * (this.skill.mistakes + 0.3);
     }
     this.wander += (this.wanderTo - this.wander) * Math.min(1, dt * 0.6);
+    this.hunt += (this.huntGoal - this.hunt) * Math.min(1, dt * 1.5);
 
     // --- Steering: pure pursuit to a point ahead on the (shifted) line ---
     const look = 5 + speed * 0.42;
     const want = (this.plan === null ? 0 : this.plan - line.offset[track.wrap(Math.round(i + look))]) + this.wander;
-    const rate = this.style.swerve * dt;
+    const rate = this.style.swerve * (1 + this.hunt * 0.3) * dt;
     this.shift += clamp(want - this.shift, -rate, rate);
     const [tx, tz] = line.point(i + look, this.shift);
     const dx = tx - v.x, dz = tz - v.z;
@@ -206,9 +211,9 @@ export class AIDriver {
     c.steer = clamp(-wheel / lock, -1, 1);
 
     // --- Speed ---
-    if (this.lapse <= 0 && this.rand() < (1 - p.consistency) * 0.04 * this.skill.mistakes * this.style.errs * dt) this.lapse = 1.5; // brakes late into the next corner
+    if (this.lapse <= 0 && this.rand() < (1 - p.consistency) * 0.04 * this.skill.mistakes * this.style.errs * (1 + this.hunt) * dt) this.lapse = 1.5; // brakes late into the next corner
     this.lapse -= dt;
-    const pace = this.pace * this.skill.pace * this.form * this.catchUp * (this.lapse > 0 ? 1.08 : 1) * (this.outside ? 0.97 : 1);
+    const pace = this.pace * this.skill.pace * this.form * this.catchUp * (this.lapse > 0 ? 1.08 : 1) * (this.outside ? 0.97 : 1) * (1 + this.hunt * 0.035);
     let target = this.speeds[track.wrap(i + 3 + Math.round(speed * 0.15))] * pace;
     if (this.follow) target = Math.min(target, Math.max(4, this.follow.speed - 0.5 + this.follow.gap * 0.5));
     const over = speed - target;

@@ -59,6 +59,7 @@ export const URL_FLAGS = {
   difficulty: params.get('difficulty'),
   debug: params.has('debug'),
   graphics: params.get('graphics'),
+  hours: Number(params.get('hours')) || 0, // skip the favour clock ahead, for testing
   track: params.get('track'),
   car: params.get('car'),
   screen: params.get('screen'),

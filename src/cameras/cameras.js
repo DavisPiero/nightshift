@@ -160,6 +160,33 @@ class CockpitCamera {
   }
 }
 
+// The finish: the camera swings out and round the car as it slides to a stop,
+// from wherever the last camera was.
+class FinishCamera {
+  constructor(camera) {
+    this.pos = camera.position.clone();
+    this.angle = null;
+    this.t = 0;
+    this.fov = camera.fov;
+  }
+
+  update(car, dt) {
+    const v = car.vehicle, cam = car.camera;
+    this.t += dt;
+    this.angle ??= Math.atan2(this.pos.x - v.x, this.pos.z - v.z);
+    this.angle += dt * (0.25 + 0.75 * Math.exp(-this.t * 0.8));
+    const r = 6 + Math.min(1.5, v.speed * 0.05);
+    _t.set(v.x + Math.sin(this.angle) * r, v.roadY + 1.45, v.z + Math.cos(this.angle) * r);
+    this.pos.lerp(_t, damp(3, dt));
+    cam.position.copy(this.pos);
+    cam.up.set(0, 1, 0);
+    cam.lookAt(v.x, v.roadY + 0.7, v.z);
+    this.fov += (OPTIONS.fov - 8 - this.fov) * damp(2, dt);
+    cam.fov = this.fov;
+    cam.near = 0.1;
+  }
+}
+
 const TYPES = { chase: ChaseCamera, cockpit: CockpitCamera };
 export const CAMERA_ORDER = ['chase', 'cockpit'];
 
@@ -173,6 +200,9 @@ export class CameraManager {
 
   configure(o) { Object.assign(OPTIONS, o); }
   bump(impact) { this.shake.bump(impact); }
+
+  // Take over for the finish, or (off) hand back.
+  finish(on) { this.over = on ? new FinishCamera(this.camera) : null; }
 
   set(mode, car) {
     this.mode = mode;
@@ -192,7 +222,7 @@ export class CameraManager {
     this.shifts = gb.shiftCount;
     this.shake.burn(!!car.vehicle.nosOn, dt);
     this.shake.step(Math.min(dt, 0.05));
-    this.cams[this.mode].update({ ...car, camera: this.camera }, dt);
+    (this.over ?? this.cams[this.mode]).update({ ...car, camera: this.camera }, dt);
     this.camera.updateProjectionMatrix();
   }
 }

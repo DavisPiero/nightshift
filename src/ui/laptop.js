@@ -53,6 +53,7 @@ export class Laptop {
     this.tab = 'upgrades';
     this.data = null;
     this.game.device = this;
+    this.game.audio.ui('laptop-open');
     this.draw();
     this.stage.show(this.model, (a) => ({ x: Math.max(1.05, a * 1.99 - 2.12), y: -0.92, z: 0, rx: 0.2, ry: -0.2, rz: 0.01, scale: Math.min(1.04, a * 0.62) }));
   }
@@ -60,7 +61,7 @@ export class Laptop {
   // The other tab.
   side() {
     this.tab = this.tab === 'upgrades' ? 'analytics' : 'upgrades';
-    this.game.audio.ui('move');
+    this.game.audio.ui('laptop-key');
     this.draw();
   }
 
@@ -68,7 +69,7 @@ export class Laptop {
     if (this.tab === 'analytics') return;
     const n = UPGRADES.length + 1;
     this.pick = (this.pick + d + n) % n;
-    this.game.audio.ui('move');
+    this.game.audio.ui('laptop-key');
     this.draw();
   }
 
@@ -91,6 +92,7 @@ export class Laptop {
 
   go() {
     this.game.device = null;
+    this.game.audio.ui('laptop-close');
     this.game.audio.ui('confirm');
     const d = this.done;
     this.done = null;

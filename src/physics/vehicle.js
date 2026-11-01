@@ -15,6 +15,13 @@ const RPM_PER_RADS = 60 / (2 * Math.PI);
 // Drive force while NOS burns. A press is worth 30% more speed; hold it for
 // NOS_BUILD seconds and it climbs to 35% (David, 2026-11-01; drive bench).
 const NOS_PUSH = 2.0, NOS_PUSH_HELD = 2.4, NOS_BUILD = 2;
+// Warm tyres off the line (race.js): extra drive and grip that fade over this long.
+export const LAUNCH_SECONDS = 2.5;
+const LAUNCH_PUSH = 0.22, LAUNCH_GRIP = 0.3;
+// The handbrake drift (David, 2026-11-02). Above DRIFT_MIN m/s, handbrake with some
+// steering swings the car to a clean angle and carves round; below DRIFT_END it gives up.
+const DRIFT_MIN = 11, DRIFT_END = 7;
+const DRIFT_ANGLE = 0.3, DRIFT_ANGLE_MORE = 0.35; // radians of slide, and how much more with the wheel over
 
 export const DEFAULT_ASSISTS = {
   steering: true,    // countersteers for you a little when the tail slides
@@ -90,6 +97,9 @@ export class Vehicle {
     this.roadY = 0; this.slope = 0; this.slopeSide = 0; // the hill under the car (walls.js)
     this.nosOn = false;
     this.nosHeld = 0;         // seconds this burn has been held
+    this.drift = null;        // the handbrake drift going on, or null
+    this.launchLeft = 0;      // seconds of warm-tyre launch left
+    this.burnout = false;     // revving on the line (race.js), for the smoke
     this.gearbox.gear = 1;
     this.gearbox.shiftTimer = 0;
   }
@@ -102,6 +112,69 @@ export class Vehicle {
   wheelRpm(gear) {
     const ratio = Math.abs(this.gearbox.ratio(gear)) * this.spec.finalDrive;
     return Math.abs(this.speedForward) / this.spec.wheelRadius * ratio * RPM_PER_RADS;
+  }
+
+  // Start, leave or lose a drift. `park` is the finish: see FinishDriver.
+  checkDrift(c, speed) {
+    const d = this.drift, into = d ? -c.steer * d.dir : 0;
+    if (!d) {
+      if (c.park) this.drift = { dir: c.park.side, park: true, out: false, t: 0, was: speed, fade: 1 };
+      else if (c.handbrake && this.assists.drift && speed > DRIFT_MIN && this.speedForward > 0 && Math.abs(c.steer) > 0.15) {
+        this.drift = { dir: -Math.sign(c.steer), park: false, out: false, t: 0, was: speed, fade: 1 };
+      }
+      return;
+    }
+    // A wall took the speed: let the ordinary physics have it back.
+    if (speed < d.was - 1.5) { this.drift = null; return; }
+    d.was = speed;
+    if (d.park) return;
+    const hold = (c.handbrake || into > 0.15) && into > -0.15 && speed > DRIFT_END;
+    if (d.out && hold && c.handbrake && speed > DRIFT_MIN) d.out = false;
+    else if (!hold) d.out = true;
+  }
+
+  // One step of a drift: the road's grip bends the path, and the nose is held at
+  // the slide you asked for, so it cannot spin. Returns the car's acceleration.
+  stepDrift(c, speed, push, drag, brake, dt) {
+    const d = this.drift, s = this.spec;
+    d.t += dt;
+    const grip = G * s.tireGrip * this.surface.grip;
+    const into = clamp(-c.steer * d.dir, -1, 1);
+    let way = Math.atan2(this.vx, this.vz);
+    const beta = Math.atan2(Math.sin(way - this.heading), Math.cos(way - this.heading));
+    let want, bend, acc;
+    if (d.park) {
+      // The finish: the nose swings towards side-on while the car slides on
+      // along the road and stops.
+      want = -d.dir * Math.min(1.45, 0.35 + d.t * 1.15);
+      const off = c.park.heading - way;
+      bend = clamp(Math.atan2(Math.sin(off), Math.cos(off)) * 3, -1, 1) * grip * 0.9;
+      acc = -Math.min(speed / dt, 9 * Math.sqrt(this.surface.grip));
+    } else if (d.out) {
+      d.fade = Math.max(0, d.fade - dt * 4);
+      want = 0;
+      bend = d.dir * grip * 0.6 * d.fade;
+      acc = push - drag - 0.8;
+    } else {
+      want = -d.dir * (DRIFT_ANGLE + DRIFT_ANGLE_MORE * Math.max(0, into));
+      bend = d.dir * grip * (into >= 0 ? 0.62 + 0.38 * into : 0.62 * (1 + into));
+      acc = push - drag - 1 - Math.abs(Math.sin(beta)) * 1.6 - (c.handbrake ? 2.2 : 0) - brake * 5;
+    }
+    const v = Math.max(0, speed + acc * dt);
+    way += bend / Math.max(speed, 6) * dt;
+    this.vx = Math.sin(way) * v;
+    this.vz = Math.cos(way) * v;
+    const settle = d.park ? Math.min(1, speed / 3) : 1;
+    const yaw = clamp((bend / Math.max(speed, 6) + (beta - want) * (d.park ? 3.5 : 5)) * settle, -3.2, 3.2);
+    this.yawRate += (yaw - this.yawRate) * Math.min(1, 12 * dt);
+    this.rearSlide = d.park || !d.out ? 1 : 0.6;
+    this.frontSlide = 0.3;
+    this.spin = Math.max(this.spin, this.throttle * 0.6);
+    if (d.park ? v < 0.3 : d.out && (Math.abs(beta) < 0.07 || d.t > 8)) {
+      this.drift = null;
+      if (d.park) { this.vx = this.vz = 0; this.yawRate = 0; }
+    }
+    return acc;
   }
 
   step(dt, c) {
@@ -181,6 +254,7 @@ export class Vehicle {
         const air = 0.5 * AIR * s.dragCoefficient * s.frontalArea * speed * speed;
         const k = clamp((air / driveForce - 0.12) / 0.3, 0, 1);
         driveForce *= 1 - (1 - (s.accelScale ?? 1)) * (1 - k * k * (3 - 2 * k));
+        if (this.launchLeft > 0) driveForce *= 1 + LAUNCH_PUSH * this.launchLeft / LAUNCH_SECONDS;
       }
       if (vLong < -0.5 && !reversing) driveForce = Math.max(driveForce, 0);
       // NOS burns while held on the throttle in a forward gear, and only then.
@@ -193,8 +267,10 @@ export class Vehicle {
     }
     if (reversing) driveForce = -driveForce;
 
-    const muF = s.tireGrip * this.surface.grip;
-    const muR = s.tireGrip * s.rearGripScale * this.surface.grip;
+    this.launchLeft = Math.max(0, this.launchLeft - dt);
+    const warm = 1 + LAUNCH_GRIP * this.launchLeft / LAUNCH_SECONDS;
+    const muF = s.tireGrip * this.surface.grip * warm;
+    const muR = s.tireGrip * s.rearGripScale * this.surface.grip * warm;
     const slideGrip = s.slideGrip * this.surface.slide;
     const rearCap = muR * nRear;
     const frontCap = muF * nFront;
@@ -289,6 +365,13 @@ export class Vehicle {
       }
     }
 
+    this.checkDrift(c, speed);
+    if (this.drift) {
+      // A drift steers the car itself; the tyres' forces above sit this out.
+      const push = Math.min(3.5, Math.max(0, driveForce + frontDrive) / s.mass * 0.5);
+      fLong = this.stepDrift(c, speed, push, dragF / s.mass, brake, dt) * s.mass;
+      fLat = 0;
+    } else {
     // Integrate in world space.
     const ax = (fLong * fx + fLat * lx) / s.mass;
     const az = (fLong * fz + fLat * lz) / s.mass;
@@ -313,6 +396,7 @@ export class Vehicle {
       // Leaning on a wall at walking pace: pivot to run along it, so the
       // car never gets pinned nose-first (rolling tyres alone cannot turn it).
       if (this.wallTimer > 0 && (drive > 0.2 || brake > 0.2)) this.yawRate += this.wallPivot * crawl;
+    }
     }
     this.wallTimer = Math.max(0, this.wallTimer - dt);
 

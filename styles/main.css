@@ -325,6 +325,8 @@ body:has(#scr-main:not([hidden])) #wallet { right: calc(max(16px, var(--sr)) + 1
 .c-foot { display: flex; align-items: center; gap: 6px; padding: 5px 8px 6px; border-top: 1px solid var(--line); background: rgba(0, 0, 0, 0.45); }
 .c-tag { font: 17px/1 var(--px); color: var(--muted); }
 .c-price { margin-left: auto; font: 20px/1 var(--px); color: var(--amber); white-space: nowrap; }
+.c-price small { margin-left: 5px; font: 17px/1 var(--px); color: var(--teal); -webkit-text-stroke: 0; }
+.deal { margin: 0 0 6px; color: var(--teal); font-size: 14px; }
 .c-pi { font: 20px/1 var(--px); color: var(--white); }
 .card.owned .c-price { color: var(--teal); }
 .card:hover, .card:focus-visible { outline: none; border-color: var(--titanium-hi); }
@@ -558,13 +560,21 @@ input[type=range]::-moz-range-thumb { width: 12px; height: 22px; border: 0; bord
 .res-row .c { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--muted); }
 .res-row .t, .res-row .b { text-align: right; font: 22px/1 var(--px); color: var(--white); }
 .res-row .b { color: var(--muted); }
-.res-row.me { background: var(--amber); border-bottom-color: var(--amber); }
+.res-row.me { border-radius: var(--radius-sm); background: var(--amber); border-bottom-color: var(--amber); }
 .res-row.me .p, .res-row.me .n, .res-row.me .c, .res-row.me .t, .res-row.me .b { color: var(--ink); }
 .res-place, .res-ok, .res-no, .rl-k, .rl-tk, .big-note, .label { -webkit-text-stroke: 0; }
 .res-place { font: 92px/0.9 var(--px); color: var(--amber); }
 .res-place small { font: var(--bold) 16px/1 var(--dot); color: var(--muted); margin-left: 8px; -webkit-text-stroke: var(--weight) currentColor; }
 .res-ok { font: 24px/1 var(--px); padding: 3px 8px 5px; background: var(--teal); color: var(--ink); }
 .res-no { font: 24px/1 var(--px); padding: 3px 8px 5px; border-left: 3px solid var(--amber); color: var(--amber); }
+.screen.results.in .res-place { animation: stamp 320ms var(--ease) 80ms both; }
+@keyframes stamp { from { transform: scale(2.1); opacity: 0; } 60% { transform: scale(0.95); opacity: 1; } to { transform: none; } }
+#tl-cr, #tl-xp { font-variant-numeric: tabular-nums; transition: color 200ms; }
+#tl-cr.done { color: var(--amber); animation: bump 220ms var(--ease); }
+#tl-xp.done { color: var(--teal); animation: bump 220ms var(--ease); }
+@keyframes bump { 50% { transform: scale(1.12); } }
+#tl-up { margin-top: 8px; text-align: center; }
+#tl-up.pop { animation: stamp 320ms var(--ease) both; }
 .res-level { display: flex; align-items: center; gap: 8px; }
 .res-level .w-bar { flex: 1; }
 
