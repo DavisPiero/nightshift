@@ -10,6 +10,7 @@ import { TrackPath } from '../src/world/track-path.js';
 import { STARTER_TRACK } from '../src/world/starter-track.js';
 import { UNDERGROUND_TRACK } from '../src/world/underground.js';
 import { PARABOLICA_TRACK } from '../src/world/parabolica.js';
+import { MOUNTAIN_TRACK } from '../src/world/mountain.js';
 import { CARS } from '../src/vehicles/cars.js';
 import { RacingLine } from '../src/race/racing-line.js';
 import { AIDriver, DRIVERS } from '../src/race/ai-driver.js';
@@ -24,7 +25,7 @@ let failed = 0;
 const check = (ok, label) => { if (!ok) { failed++; console.log('  FAIL: ' + label); } };
 const fmt = (t) => (Number.isFinite(t) ? t.toFixed(1) + ' s' : '-');
 
-for (const def of [STARTER_TRACK, UNDERGROUND_TRACK, PARABOLICA_TRACK]) {
+for (const def of [STARTER_TRACK, UNDERGROUND_TRACK, PARABOLICA_TRACK, MOUNTAIN_TRACK]) {
   for (const weather of ['clear', 'rain']) {
     if (weather === 'rain' && def.weathers && !def.weathers.includes('rain')) continue;
     const track = new TrackPath(def);
@@ -61,7 +62,7 @@ for (const pi of [500, 650, 840]) {
 }
 
 // The field on each difficulty, alone (no rubber band): lap times must step up.
-for (const def of [STARTER_TRACK, PARABOLICA_TRACK]) {
+for (const def of [STARTER_TRACK, PARABOLICA_TRACK, MOUNTAIN_TRACK]) {
   console.log(`${def.name}: seven cars at level 510 and 800, median best lap`);
   const track = new TrackPath(def), line = new RacingLine(track);
   for (const pi of [510, 800]) {

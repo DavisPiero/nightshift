@@ -318,25 +318,25 @@ export function cityBackdrop(r, { count = 520, minH = 22, maxH = 150, windows = 
   const far = new THREE.Group();
   const blocks = [], signQuads = new Map(), reds = [];
   for (let i = 0; i < count; i++) {
-    const a = r() * Math.PI * 2, k = r(), d = 340 + k * k * 1900;
+    const a = r() * Math.PI * 2, k = r(), d = 560 + k * k * 1900;
     // Towers bunch into a few centres, with low ground between them.
     const bunch = 0.35 + 0.65 * Math.max(0, Math.sin(a * 3 + 1) * Math.sin(a * 5 + 2)) + r() * 0.3;
     const h = minH + (r() ** 2.2) * (maxH - minH) * bunch * (1 + d / 2200);
     const w = 22 + r() * 34, dp = 22 + r() * 34;
     const g = new THREE.BoxGeometry(w, h, dp), uv = g.attributes.uv;
     const off = (r() * 8 | 0) / 8;
-    for (let n = 0; n < uv.count; n++) uv.setXY(n, off + uv.getX(n) * w / 48, uv.getY(n) * h / 64);
+    for (let n = 0; n < uv.count; n++) uv.setXY(n, off + uv.getX(n) * w / 110, uv.getY(n) * h / 150);
     const x = centre[0] + Math.sin(a) * d, z = centre[2] + Math.cos(a) * d;
     blocks.push(placed(g, x, h / 2, z, r() * 1.6));
     if (h > 70) reds.push(x, h + 2, z);
     if (r() < 0.22) {
-      const c = signs[(r() * signs.length) | 0], sw = 8 + r() * 16, sh = 10 + r() * 26;
+      const c = signs[(r() * signs.length) | 0], sw = 6 + r() * 9, sh = 8 + r() * 16;
       if (!signQuads.has(c)) signQuads.set(c, []);
       signQuads.get(c).push(placed(new THREE.PlaneGeometry(sw, sh), x - Math.sin(a) * (dp / 2 + 14), h * (0.55 + r() * 0.3), z - Math.cos(a) * (dp / 2 + 14), a + Math.PI));
     }
   }
   far.add(new THREE.Mesh(merge(blocks), new THREE.MeshBasicMaterial({ map: windows })));
-  for (const [c, geos] of signQuads) far.add(new THREE.Mesh(merge(geos), new THREE.MeshBasicMaterial({ color: new THREE.Color(c).multiplyScalar(1.6), side: THREE.DoubleSide })));
+  for (const [c, geos] of signQuads) far.add(new THREE.Mesh(merge(geos), new THREE.MeshBasicMaterial({ color: new THREE.Color(c).multiplyScalar(0.8), side: THREE.DoubleSide })));
   const rg = new THREE.BufferGeometry();
   rg.setAttribute('position', new THREE.Float32BufferAttribute(reds, 3));
   far.add(new THREE.Points(rg, new THREE.PointsMaterial({ color: new THREE.Color(3, 0.25, 0.15), size: 3, sizeAttenuation: false })));

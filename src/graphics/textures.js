@@ -103,12 +103,118 @@ function cached(name, make) {
   return cache.get(name);
 }
 
+// Far towers: many small windows on a dark wall. Seen only through the sky bake.
+function farWindows(lit, wall, seed) {
+  return canvasTexture([256, 256], (g, w, h) => {
+    g.fillStyle = wall; g.fillRect(0, 0, w, h);
+    const r = rng(seed);
+    for (let y = 2; y < h; y += 6) {
+      const row = r();
+      for (let x = 2; x < w; x += 5) {
+        const k = r() * (row < 0.2 ? 0.45 : 1.15);
+        const on = lit.find(([p]) => k < p);
+        if (on) { g.fillStyle = on[1]; g.fillRect(x, y, 3, 4); }
+      }
+    }
+  }, { nearest: false });
+}
+
+// One window: aluminium frame, dark glass or a lit room behind a curtain.
+function paintWindow(g, r, x, y, w, h, glow, litChance = 0.26) {
+  const lit = r() < litChance, warm = r() < 0.72, curtain = r(), pink = r() < 0.05;
+  if (lit) {
+    const f = g.createLinearGradient(0, y, 0, y + h);
+    if (pink) { f.addColorStop(0, '#ff90b8'); f.addColorStop(1, '#c04a7a'); } else if (warm) { f.addColorStop(0, '#ffdca0'); f.addColorStop(1, '#c89050'); } else { f.addColorStop(0, '#dcecf0'); f.addColorStop(1, '#88a8b0'); }
+    g.fillStyle = f; g.fillRect(x, y, w, h);
+    g.fillStyle = 'rgba(40,24,14,0.35)'; g.fillRect(x, y, w * curtain * 0.5, h);       // curtain drawn part way
+    g.fillStyle = 'rgba(40,24,14,0.5)'; g.fillRect(x + w * 0.6, y + h * (0.4 + r() * 0.3), w * 0.25, h); // something in the room
+  } else if (!glow) {
+    const f = g.createLinearGradient(0, y, 0, y + h);
+    f.addColorStop(0, '#2a3440'); f.addColorStop(1, '#0c1014');
+    g.fillStyle = f; g.fillRect(x, y, w, h);
+    g.fillStyle = 'rgba(160,190,220,0.08)'; g.beginPath(); g.moveTo(x + w * 0.2, y); g.lineTo(x + w * 0.5, y); g.lineTo(x + w * 0.2, y + h); g.lineTo(x, y + h); g.fill();
+  }
+  if (!glow) {
+    g.strokeStyle = '#8c9094'; g.lineWidth = 2; g.strokeRect(x, y, w, h);
+    g.fillStyle = '#8c9094'; g.fillRect(x + w / 2 - 1, y, 2, h);
+  } else if (lit) { g.fillStyle = '#000'; g.fillRect(x + w / 2 - 1, y, 2, h); }
+}
+
+function paintFloors(g, w, h, seed, glow) {
+  const r = rng(seed * 47), wall = ['#6e6a66', '#58606a', '#7a6e62'][seed % 3];
+  g.fillStyle = glow ? '#000' : wall; g.fillRect(0, 0, w, h);
+  if (!glow) { const n = rng(seed); for (let i = 0; i < 900; i++) { g.fillStyle = `rgba(${n() < 0.5 ? '0,0,0' : '255,255,255'},${n() * 0.05})`; g.fillRect(n() * w, n() * h, 2 + n() * 18, 1 + n() * 3); } }
+  for (let fy = 0; fy < 4; fy++) for (let bx = 0; bx < 4; bx++) {
+    const x = bx * 64, y = fy * 64;
+    paintWindow(g, r, x + 9, y + 10, 46, 38, glow);
+    if (glow) { r(); r(); continue; }
+    g.fillStyle = '#a0a09a'; g.fillRect(x + 6, y + 49, 52, 4); // sill
+    g.fillStyle = 'rgba(0,0,0,0.3)'; g.fillRect(x + 6, y + 53, 52, 2);
+    const stain = r();
+    if (stain < 0.5) { const f = g.createLinearGradient(0, y + 55, 0, y + 64); f.addColorStop(0, 'rgba(0,0,0,0.28)'); f.addColorStop(1, 'rgba(0,0,0,0)'); g.fillStyle = f; g.fillRect(x + 10 + stain * 30, y + 55, 8, 9); }
+    if (r() < 0.3) { g.fillStyle = '#b8b8b0'; g.fillRect(x + 42, y + 34, 14, 12); g.fillStyle = '#44464a'; g.beginPath(); g.arc(x + 49, y + 40, 4.5, 0, 6.3); g.fill(); } // air-con
+    g.fillStyle = 'rgba(0,0,0,0.18)'; g.fillRect(x, y, 64, 2); // floor line
+  }
+}
+
+function paintFlats(g, w, h, seed, glow) {
+  const r = rng(seed * 53);
+  g.fillStyle = glow ? '#000' : ['#8a8680', '#76787e', '#92887a'][seed % 3]; g.fillRect(0, 0, w, h);
+  for (let fy = 0; fy < 4; fy++) for (let bx = 0; bx < 2; bx++) {
+    const x = bx * 128, y = fy * 64;
+    if (!glow) { g.fillStyle = '#3a3a3e'; g.fillRect(x + 4, y + 4, 120, 44); }
+    paintWindow(g, r, x + 10, y + 7, 62, 40, glow, 0.3);
+    paintWindow(g, r, x + 80, y + 7, 38, 40, glow, 0.2);
+    if (glow) { r(); r(); continue; }
+    g.fillStyle = '#b4b2a8'; g.fillRect(x, y + 34, 128, 4);                 // the rail
+    for (let i = 2; i < 128; i += 5) { g.fillStyle = '#6a6a68'; g.fillRect(x + i, y + 38, 1.6, 18); }
+    g.fillStyle = 'rgba(190,190,184,0.5)'; g.fillRect(x, y + 38, 128, 18);
+    if (r() < 0.45) for (let i = 0; i < 6; i++) { g.fillStyle = ['#d8d4cc', '#6a7a9a', '#a85a5a', '#e0d8a0'][(r() * 4) | 0]; g.fillRect(x + 14 + i * 13 + r() * 3, y + 14, 9, 18 + r() * 10); } // washing
+    g.fillStyle = '#c8c6bc'; g.fillRect(x, y + 56, 128, 8);                 // the slab's edge
+    g.fillStyle = 'rgba(0,0,0,0.3)'; g.fillRect(x, y + 62, 128, 2);
+    g.fillStyle = '#6a6a68'; g.fillRect(x + 125, y, 3, 56);                 // divider
+  }
+}
+
+const SHOP_NAMES = ['ラーメン', '薬局', '書店', '喫茶', '居酒屋', '花屋', '酒', '寿司', '麺処', 'カフェ', '文具', '果物', '時計', '定食', '焼鳥', '古本'];
+function paintShops(g, w, h, seed) {
+  const r = rng(seed * 59), bay = w / 4;
+  g.fillStyle = '#1c1c20'; g.fillRect(0, 0, w, h);
+  for (let n = 0; n < 4; n++) {
+    const x = n * bay + 6, sw = bay - 12, top = 62;
+    const band = ['#c0283a', '#1a5a98', '#20785a', '#c07818', '#e8e0cc', '#2a2a30'][(r() * 6) | 0];
+    if (r() < 0.2) { // shuttered for the night
+      g.fillStyle = '#6a7074'; g.fillRect(x, top, sw, h - top);
+      g.fillStyle = 'rgba(0,0,0,0.3)'; for (let y = top; y < h; y += 7) g.fillRect(x, y, sw, 2);
+      g.fillStyle = 'rgba(30,30,34,0.6)'; for (let i = 0; i < 3; i++) g.fillRect(x + r() * sw * 0.8, top + 30 + r() * 80, 20 + r() * 40, 6 + r() * 26); // old posters and paint
+    } else {
+      const f = g.createLinearGradient(0, top, 0, h);
+      f.addColorStop(0, ['#fff4dc', '#eef6fa', '#ffe8f0', '#e4fbf0'][(seed + n) % 4]); f.addColorStop(1, '#a8947a');
+      g.fillStyle = f; g.fillRect(x, top, sw, h - top);
+      for (let sy = top + 16; sy < h - 40; sy += 34) { // shelves of goods
+        g.fillStyle = 'rgba(70,50,36,0.8)'; g.fillRect(x + 6, sy + 22, sw - 12, 4);
+        for (let i = x + 8; i < x + sw - 12;) { const gw = 6 + r() * 12, gh = 8 + r() * 13; g.fillStyle = ['#c0503a', '#3a7ac0', '#d8a83a', '#4a9a5a', '#a04a8a', '#e8e0d0'][(r() * 6) | 0]; g.fillRect(i, sy + 22 - gh, gw, gh); i += gw + 1 + r() * 3; }
+      }
+      const dx = x + sw * (0.3 + r() * 0.3);
+      g.fillStyle = 'rgba(30,34,38,0.75)'; g.fillRect(dx, top + 6, 56, h - top - 6); // the door
+      g.strokeStyle = '#bcc0c4'; g.lineWidth = 3; g.strokeRect(dx, top + 6, 56, h - top - 6);
+      g.fillStyle = '#bcc0c4'; for (let px = x + sw / 3; px < x + sw - 8; px += sw / 3) g.fillRect(px, top, 3, h - top);
+    }
+    // The sign over the front.
+    g.fillStyle = band; g.fillRect(x, 6, sw, top - 10);
+    g.fillStyle = 'rgba(255,255,255,0.2)'; g.fillRect(x, 6, sw, 3);
+    g.fillStyle = band === '#e8e0cc' ? '#1c1c20' : '#fff6e4';
+    g.font = 'bold 40px "DotGothic16", sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle';
+    g.fillText(SHOP_NAMES[(seed * 5 + n * 3 + (r() * 3 | 0)) % SHOP_NAMES.length], x + sw / 2, 33);
+  }
+}
+
 // Leaves, needles and blossom: many small dabs on a clear canvas, for the cards
 // trees are made of. Painted large and filtered smoothly.
 function clump(g, w, h, colours, dabs, size, seed, shape = () => 1) {
   const r = rng(seed);
   for (let i = 0; i < dabs; i++) {
-    const a = r() * Math.PI * 2, d = Math.sqrt(r()), x = 0.5 + Math.cos(a) * d * 0.47, y = 0.5 + Math.sin(a) * d * 0.47;
+    const a = r() * Math.PI * 2, d = r() ** 0.8, x = 0.5 + Math.cos(a) * d * 0.48, y = 0.5 + Math.sin(a) * d * 0.48; // thinning to a ragged edge
     if (r() > shape(x, y)) continue;
     g.fillStyle = colours[(r() * colours.length) | 0];
     g.save(); g.translate(x * w, y * h); g.rotate(r() * 6.3);
@@ -183,8 +289,14 @@ export const Tex = {
     for (let i = 0; i < 40; i++) { g.fillStyle = `rgba(80,66,50,${r() * 0.18})`; g.fillRect(r() * w, h * 0.5 + r() * h * 0.5, 1 + r() * 8, 2 + r() * 6); }
   }, { nearest: false })),
   // Fallen petals: a pale scatter for pavements and the road's edge.
-  petals: () => cached('petals', () => clear([256, 256], (g, w, h) => {
-    clump(g, w, h, ['#f2b4cc', '#f8cfdc', '#e89ab8', '#fff0f4'], 1500, 2.6, 81);
+  petals: () => cached('petals', () => clear([512, 512], (g, w, h) => {
+    const r = rng(81), C = ['#f2b4cc', '#f8cfdc', '#e89ab8', '#fff0f4'];
+    for (let i = 0; i < 2600; i++) {
+      const x = r() * w, y = r() * h, drift = 0.5 + 0.5 * Math.sin(x * 0.0123 + 1) * Math.sin(y * 0.0123 + 2); // the wind heaps them
+      if (r() > drift * drift + 0.08) continue;
+      g.fillStyle = C[(r() * 4) | 0];
+      g.save(); g.translate(x, y); g.rotate(r() * 6.3); g.beginPath(); g.ellipse(0, 0, 2.4 + r() * 1.8, 1.4 + r(), 0, 0, 6.3); g.fill(); g.restore();
+    }
   })),
   // A sign: white with a red border, black text.
   warnSign: (text) => cached('warn' + text, () => canvasTexture([128, 128], (g, w, h) => {
@@ -272,15 +384,22 @@ export const Tex = {
   })),
 
   // Corrugated metal cladding for warehouses.
-  cladding: (tint = [70, 78, 80]) => cached('clad' + tint, () => canvasTexture([64, 64], (g, w, h) => {
-    noise(g, w, h, tint, 14, 5);
-    for (let x = 0; x < w; x += 4) {
-      g.fillStyle = 'rgba(0,0,0,0.28)'; g.fillRect(x, 0, 1, h);
-      g.fillStyle = 'rgba(255,255,255,0.06)'; g.fillRect(x + 2, 0, 1, h);
+  cladding: (tint = [70, 78, 80]) => cached('clad' + tint, () => canvasTexture([256, 256], (g, w, h) => {
+    noise(g, w, h, tint, 16, 5);
+    // Ribs of the steel sheet, a seam every few metres.
+    for (let x = 0; x < w; x += 16) {
+      const f = g.createLinearGradient(x, 0, x + 16, 0);
+      f.addColorStop(0, 'rgba(0,0,0,0.34)'); f.addColorStop(0.3, 'rgba(255,255,255,0.1)'); f.addColorStop(0.7, 'rgba(0,0,0,0.04)'); f.addColorStop(1, 'rgba(0,0,0,0.3)');
+      g.fillStyle = f; g.fillRect(x, 0, 16, h);
     }
+    g.fillStyle = 'rgba(0,0,0,0.3)'; g.fillRect(0, h * 0.5, w, 2);
     const r = rng(9);
-    g.fillStyle = 'rgba(80,50,30,0.35)'; // rust streaks
-    for (let i = 0; i < 5; i++) g.fillRect(r() * w | 0, h - 20 + r() * 10 | 0, 1, 10 + r() * 10 | 0);
+    for (let i = 0; i < 40; i++) { // rust and rain down the sheets
+      const x = r() * w, y = r() * h * 0.8, l = 30 + r() * 120;
+      const f = g.createLinearGradient(0, y, 0, y + l), rust = r() < 0.6 ? '86,50,28' : '20,20,20';
+      f.addColorStop(0, `rgba(${rust},${0.1 + r() * 0.3})`); f.addColorStop(1, `rgba(${rust},0)`);
+      g.fillStyle = f; g.fillRect(x, y, 2 + r() * 9, l);
+    }
   })),
 
   // Concrete block wall.
@@ -363,14 +482,16 @@ export const Tex = {
   })),
 
   // Lit office windows on a dark wall (a few lit, most dark).
-  windows: (seed = 1) => cached('win' + seed, () => canvasTexture([64, 32], (g, w, h) => {
+  windows: (seed = 1) => cached('win' + seed, () => canvasTexture([256, 128], (g, w, h) => {
     g.fillStyle = '#16191a'; g.fillRect(0, 0, w, h);
     const r = rng(seed * 31);
-    for (let x = 2; x < w; x += 8) {
-      for (let y = 4; y < h; y += 12) {
-        const lit = r() < 0.18;
-        g.fillStyle = lit ? (r() < 0.5 ? '#d9b46a' : '#a9c4a0') : '#0b0d0e';
-        g.fillRect(x, y, 5, 6);
+    for (let x = 8; x < w; x += 32) {
+      for (let y = 12; y < h; y += 48) {
+        const lit = r() < 0.2;
+        const f = g.createLinearGradient(0, y, 0, y + 28);
+        if (lit) { const c = r() < 0.5 ? ['#f0d08a', '#a88a4a'] : ['#c8e0d0', '#7a9a8a']; f.addColorStop(0, c[0]); f.addColorStop(1, c[1]); } else { f.addColorStop(0, '#141a1e'); f.addColorStop(1, '#090b0c'); }
+        g.fillStyle = f; g.fillRect(x, y, 20, 28);
+        g.fillStyle = '#26292a'; g.fillRect(x + 9, y, 2, 28);
       }
     }
   })),
@@ -511,24 +632,10 @@ export const Tex = {
   }, { nearest: false })),
 
   // Far city blocks: dark with a scatter of lit windows.
-  skyline: () => cached('skyline', () => canvasTexture([32, 64], (g, w, h) => {
-    g.fillStyle = '#0d1114'; g.fillRect(0, 0, w, h);
-    const r = rng(51);
-    for (let y = 2; y < h; y += 3) for (let x = 1; x < w; x += 3) {
-      if (r() < 0.16) { g.fillStyle = r() < 0.8 ? '#8a6a3a' : '#7a8a8a'; g.fillRect(x, y, 1, 1); }
-    }
-  }, { repeat: [2, 2] })),
+  skyline: () => cached('skyline', () => farWindows([[0.1, '#8a6a3c'], [0.13, '#74848a']], '#10151a', 51)),
 
   // A far city at night with more lit windows, some pink and white.
-  skylineNeon: () => cached('skylineneon', () => canvasTexture([32, 64], (g, w, h) => {
-    g.fillStyle = '#0c0c12'; g.fillRect(0, 0, w, h);
-    const r = rng(52);
-    for (let y = 2; y < h; y += 3) for (let x = 1; x < w; x += 3) {
-      const k = r();
-      if (k < 0.24) { g.fillStyle = k < 0.15 ? '#b8a07a' : k < 0.2 ? '#c8d4e8' : '#e05a9a'; g.fillRect(x, y, 1, 1); }
-    }
-    g.fillStyle = '#ff3a3a'; g.fillRect(15, 0, 2, 1); // an aircraft light on a roof
-  }, { repeat: [2, 2] })),
+  skylineNeon: () => cached('skylineneon', () => farWindows([[0.09, '#9a8460'], [0.13, '#98a4b4'], [0.145, '#b04a74']], '#100f18', 52)),
 
   // A streak of lamp light reflected in a wet road: bright at the lamp,
   // fading toward the viewer, soft at the sides.
@@ -548,62 +655,29 @@ export const Tex = {
   // --- Parabolica Street (Tokyo city ring road) ---
 
   // Small square facade tiles, the beige and grey of Tokyo mid-rises.
-  tiles: (tint = [150, 140, 120]) => cached('tiles' + tint, () => canvasTexture([32, 32], (g, w, h) => {
-    noise(g, w, h, tint, 12, 71);
-    g.fillStyle = 'rgba(0,0,0,0.22)';
-    for (let i = 0; i < w; i += 4) { g.fillRect(i, 0, 1, h); g.fillRect(0, i, w, 1); }
+  tiles: (tint = [150, 140, 120]) => cached('tiles' + tint, () => canvasTexture([128, 128], (g, w, h) => {
+    noise(g, w, h, tint, 14, 71);
+    g.fillStyle = 'rgba(0,0,0,0.2)';
+    for (let i = 0; i < w; i += 16) { g.fillRect(i, 0, 2, h); g.fillRect(0, i, w, 2); }
     const r = rng(72);
-    g.fillStyle = 'rgba(40,36,30,0.3)'; // grime under the sills
-    for (let i = 0; i < 6; i++) g.fillRect(r() * w | 0, r() * h | 0, 1, 4 + r() * 6 | 0);
-  })),
-
-  // Upper floors: rows of windows (one floor per 8 texels, 4 m across per
-  // 8 texels), some lit warm, some cool, a few pink.
-  floors: (seed = 1) => cached('floors' + seed, () => canvasTexture([32, 32], (g, w, h) => {
-    g.fillStyle = '#1a1a1e'; g.fillRect(0, 0, w, h);
-    const r = rng(seed * 47);
-    for (let y = 0; y < h; y += 8) for (let x = 0; x < w; x += 8) {
-      const lit = r();
-      g.fillStyle = lit < 0.22 ? '#e2c486' : lit < 0.32 ? '#b8d4dc' : lit < 0.35 ? '#ff7ab0' : '#0c0d10';
-      g.fillRect(x + 1, y + 2, 6, 4);
-      g.fillStyle = 'rgba(255,255,255,0.08)'; g.fillRect(x, y + 7, 8, 1); // sill
+    for (let i = 0; i < 18; i++) { // grime under the sills
+      const x = r() * w, y = r() * h, l = 16 + r() * 50, f = g.createLinearGradient(0, y, 0, y + l);
+      f.addColorStop(0, 'rgba(30,26,22,0.4)'); f.addColorStop(1, 'rgba(30,26,22,0)');
+      g.fillStyle = f; g.fillRect(x, y, 3 + r() * 12, l);
     }
   })),
 
-  // Flats: each floor a balcony rail in front of windows, a few lit.
-  flats: (seed = 1) => cached('flats' + seed, () => canvasTexture([32, 32], (g, w, h) => {
-    g.fillStyle = '#2a2a2e'; g.fillRect(0, 0, w, h);
-    const r = rng(seed * 53);
-    for (let y = 0; y < h; y += 8) {
-      for (let x = 0; x < w; x += 8) {
-        g.fillStyle = r() < 0.26 ? (r() < 0.7 ? '#d8b878' : '#9ac0d0') : '#0e0f12';
-        g.fillRect(x + 1, y + 1, 6, 4);
-      }
-      g.fillStyle = '#8a8c90'; g.fillRect(0, y + 5, w, 2); // balcony rail
-      g.fillStyle = '#505258'; g.fillRect(0, y + 7, w, 1);
-    }
-  })),
+  // Upper floors: tile 8 m wide by four floors, painted window by window. The
+  // Glow versions are the same picture with only the light in it.
+  floors: (seed = 1) => cached('floors' + seed, () => canvasTexture([256, 256], (g, w, h) => paintFloors(g, w, h, seed, false), { nearest: false })),
+  floorsGlow: (seed = 1) => cached('floorsg' + seed, () => canvasTexture([256, 256], (g, w, h) => paintFloors(g, w, h, seed, true), { nearest: false })),
 
-  // A ground-floor shopfront: bright inside, shelves and goods, a door.
-  // 64 x 16 texels for a 16 m x 4 m front.
-  shopFront: (seed = 1) => cached('shopfront' + seed, () => canvasTexture([64, 16], (g, w, h) => {
-    const r = rng(seed * 59);
-    const glow = ['#f0e4c8', '#e8f0f4', '#ffd8e8', '#d8f4ec'][seed % 4];
-    g.fillStyle = '#18181a'; g.fillRect(0, 0, w, h);
-    for (let x = 0; x < w; x += 16) {
-      if (r() < 0.2) { // shuttered for the night
-        g.fillStyle = '#5a6064'; g.fillRect(x + 1, 3, 14, h - 3);
-        g.fillStyle = 'rgba(0,0,0,0.3)'; for (let y = 4; y < h; y += 2) g.fillRect(x + 1, y, 14, 1);
-        continue;
-      }
-      g.fillStyle = glow; g.fillRect(x + 1, 3, 14, h - 3);
-      for (let y = 5; y < h - 2; y += 3) for (let i = x + 2; i < x + 15; i++) {
-        if (r() < 0.6) { g.fillStyle = ['#c0503a', '#3a7ac0', '#d8a83a', '#4a9a5a', '#a04a8a'][(r() * 5) | 0]; g.fillRect(i, y, 1, 2); }
-      }
-      g.fillStyle = '#2a2a2c'; g.fillRect(x + 6, 6, 4, h - 6); // door
-      g.fillStyle = ['#c0283a', '#1a6aa8', '#2a8a5a', '#d88a1a'][(r() * 4) | 0]; g.fillRect(x + 1, 0, 14, 3); // awning band
-    }
-  })),
+  // Flats: the same, each floor a balcony.
+  flats: (seed = 1) => cached('flats' + seed, () => canvasTexture([256, 256], (g, w, h) => paintFlats(g, w, h, seed, false), { nearest: false })),
+  flatsGlow: (seed = 1) => cached('flatsg' + seed, () => canvasTexture([256, 256], (g, w, h) => paintFlats(g, w, h, seed, true), { nearest: false })),
+
+  // A row of four small shops, 16 m by 4 m: lit shelves, doors, a sign over each.
+  shopFront: (seed = 1) => cached('shopfront' + seed, () => canvasTexture([1024, 256], (g, w, h) => paintShops(g, w, h, seed), { nearest: false })),
 
   // Vertical neon sign: characters stacked in glowing tubes on a dark board.
   neonVertical: (text, colour = '#ff3a8a') => cached('neonv' + text + colour, () => canvasTexture([32, 32 * text.length + 16], (g, w, h) => {

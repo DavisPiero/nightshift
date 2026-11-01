@@ -53,7 +53,7 @@ export function buildMountain(track, def) {
     const side = inLoop(x, z) ? 120 * (1 - Math.exp(-d / 150)) : -105 * (1 - Math.exp(-d / 160));
     const rough = (fbm(x * 0.011 + 2, z * 0.011 + 5) - 0.5) * 46 * Math.min(1, d / 60) + (fbm(x * 0.05, z * 0.05, 3) - 0.5) * 8 * Math.min(1, d / 30);
     let h = roadH - 0.14 + (sum / wt + side + rough - roadH + 0.14) * smooth(W + 3.5, W + 26, d);
-    for (const [px, pz, pr, py] of pads) h += (py - h) * (1 - smooth(pr, pr + 16, Math.hypot(x - px, z - pz)));
+    for (const [px, pz, pr, py] of pads) h += (py - h) * (1 - smooth(pr, pr + 16, Math.hypot(x - px, z - pz))) * smooth(W + 3.6, W + 9, d);
     return h;
   };
   let x0 = Infinity, x1 = -Infinity, z0 = Infinity, z1 = -Infinity;
@@ -169,7 +169,6 @@ export function buildMountain(track, def) {
   for (let k = 40; k < n; k += 86) lampSpots.add(k);
   for (const k of hairpins) { lampSpots.add(track.wrap(k + 8)); lampSpots.add(track.wrap(k + 42)); }
   for (const k of lampSpots) if (k < SHED[0] - 10 || k > SHED[1] + 10) lampAt(k);
-  if (pools.length) group.add(new THREE.Mesh(merge(pools), new THREE.MeshBasicMaterial({ map: Tex.lightPoolWhite(), color: 0x8ea8d8, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, polygonOffset: true, polygonOffsetFactor: -4 })));
   for (let k = 0; k < n; k += 5) {
     const c = track.curvature[k];
     if (Math.abs(c) < 1 / 55) continue;
@@ -237,15 +236,24 @@ export function buildMountain(track, def) {
       col.position.set(x, y + roofH / 2, z); col.rotation.y = head(k);
       group.add(col);
     }
+    const shedPools = (k) => {
+      const g = strip(track, -hw - 1, hw + 1, 0.03, { step: 2, from: k - 12, to: k + 12, closed: false, uScale: 1 / (2 * hw + 2), vScale: 1 });
+      const u = g.attributes.uv;
+      for (let q = 0; q < u.count; q++) u.setY(q, (u.getY(q) - (k - 12)) / 24);
+      pools.push(g);
+    };
     for (let k = SHED[0] + 8; k < SHED[1]; k += 16) {
       const [x, z] = along(k, 0), y = roadY(k);
-      place.glow(x, y + roofH - 0.3, z, 'white', 2.2);
+      place.glow(x, y + roofH - 0.3, z, 'white', 1.4);
+      shedPools(k);
       const l = new THREE.Vector3(x, y + roofH - 0.6, z); l.floor = y; place.lamps.push(l);
       const bar = new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.08, 1.8), new THREE.MeshBasicMaterial({ color: 0xe4ecff }));
       bar.position.set(x, y + roofH - 0.05, z); bar.rotation.y = head(k);
       group.add(bar);
     }
   }
+
+  if (pools.length) group.add(new THREE.Mesh(merge(pools), new THREE.MeshBasicMaterial({ map: Tex.lightPoolWhite(), color: 0x8ea8d8, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, polygonOffset: true, polygonOffsetFactor: -4 })));
 
   // --- The forest ---
   // Close to the road, real cedars; behind them, three crossed pictures of a
@@ -282,7 +290,7 @@ export function buildMountain(track, def) {
     place.add('fern', x, heightAt(x, z), z, r() * 6, 0.8 + r() * 0.7);
   }
 
-  const { glows, reflect, lamps } = place.finish(group);
+  const { glows, reflect, lamps } = place.finish(group, { glowSize: 2 });
   const skies = [];
   reflect.add(reflectSky(skies));
 

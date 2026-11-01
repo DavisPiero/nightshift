@@ -791,6 +791,7 @@ class Game {
       this.effects.renderHeight = this.renderer.height;
       this.effects.update(live, v, this.model, this.camera, near, this.weatherId);
       this.weather.update(live, this.camera, v, this.state === 'menu' ? 0 : this.patch || 0);
+      this.world.update?.(live, this.camera, v);
       placeBackdrop(this.world.backdrop, this.camera);
       this.world.backdrop?.userData.sky?.update(live);
     }

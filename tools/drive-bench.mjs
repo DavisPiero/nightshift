@@ -14,6 +14,7 @@ import { applyWeather } from '../src/physics/weather.js';
 import { CHALLENJER_SRT8, COUNTACH_QV, CARS } from '../src/vehicles/cars.js';
 import { UNDERGROUND_TRACK } from '../src/world/underground.js';
 import { PARABOLICA_TRACK } from '../src/world/parabolica.js';
+import { MOUNTAIN_TRACK } from '../src/world/mountain.js';
 import { carStats } from '../src/vehicles/stats.js';
 import { knock } from '../src/physics/knocks.js';
 import { buildSpec } from '../src/vehicles/tuning.js';
@@ -270,7 +271,7 @@ console.log('Snow and weather patches');
   const dRain = stop('rain'), dSnow = stop('snow');
   console.log(`  100-0 braking: rain ${dRain.toFixed(1)} m, snow ${dSnow.toFixed(1)} m`);
   check(dSnow > dRain, 'braking on snow should take longer than in the rain');
-  for (const def of [TEST_ROAD, UNDERGROUND_TRACK, PARABOLICA_TRACK]) {
+  for (const def of [TEST_ROAD, UNDERGROUND_TRACK, PARABOLICA_TRACK, MOUNTAIN_TRACK]) {
     for (const weather of def.weathers || ['rain', 'fog', 'snow']) {
       if (weather === 'clear') continue;
       for (const car of [CAR, ...CARS]) {

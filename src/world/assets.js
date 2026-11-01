@@ -167,7 +167,7 @@ export const ASSETS = {
           part(new THREE.CylinderGeometry(0.2, 0.24, 0.5, 6), pole, { y: 0.25 }),
         ],
         glows: [[3.2, 8.7, 0, 'white']],
-        pools: [[3.2, 0, 18, 18, 'white']],
+        pools: [[3.2, 0, 22, 22, 'lamp']],
         lamps: [[3.2, 8.5, 0]],
         reflect: [[new THREE.BoxGeometry(1.6, 0.3, 0.8), 0xe4ecff, 3.2, 8.9, 0]],
       };
@@ -239,8 +239,8 @@ export const ASSETS = {
     note: 'A broadleaf: a forked trunk and a crown of leaf cards. Scale it 0.8 to 1.5.',
     kit: () => ({
       parts: [
-        { geo: limbs(0.3, 3.4, 5, 2.2, 4), mat: barkMat(), shadow: false },
-        { geo: crown({ n: 42, rx: 3.3, ry: 3.1, rz: 3.3, cy: 5.3, size: 2.5, seed: 5 }), mat: leafMat('leaves', Tex.leaves, 0, 0, THREE.FrontSide), shadow: true },
+        { geo: limbs(0.3, 3.4, 2.2, 1.6, 4), mat: barkMat(), shadow: false },
+        { geo: crown({ n: 56, rx: 3.3, ry: 3.1, rz: 3.3, cy: 5.3, size: 2, seed: 5 }), mat: leafMat('leaves', Tex.leaves, 0, 0, THREE.FrontSide), shadow: true },
       ],
     }),
   },
@@ -249,8 +249,8 @@ export const ASSETS = {
     note: 'In full blossom: a wide umbrella of flower on a dark crooked trunk. Lines Parabolica Street; takes the lamps well.',
     kit: () => ({
       parts: [
-        { geo: limbs(0.34, 2.6, 7, 3.4, 8), mat: barkMat(), shadow: false },
-        { geo: crown({ n: 64, rx: 5.2, ry: 2.5, rz: 5.2, cy: 5.0, size: 2.6, seed: 9 }), mat: leafMat('blossom', Tex.blossom, 0xff9cc0, 0.2, THREE.FrontSide), shadow: true },
+        { geo: limbs(0.34, 2.8, 3.2, 1.5, 5), mat: barkMat(), shadow: false },
+        { geo: crown({ n: 90, rx: 5.2, ry: 2.3, rz: 5.2, cy: 5.0, size: 2.1, seed: 9 }), mat: leafMat('blossom', Tex.blossom, 0xff9cc0, 0.2, THREE.FrontSide), shadow: true },
       ],
     }),
   },
@@ -597,8 +597,8 @@ const NEON_GLOW = { pink: 'pink', teal: 'teal', amber: 'amber', violet: [0.63, 0
 });
 
 // The ground pools' looks, shared by every track.
-const POOL_TEX = { warm: () => Tex.lightPool(), cool: () => Tex.lightPool(), white: () => Tex.lightPoolWhite(), pink: () => Tex.lightPoolWhite(), gold: () => Tex.lightPoolWhite(), violet: () => Tex.lightPoolWhite() };
-const POOL_COLOUR = { warm: 0xffffff, cool: 0x9adcc0, white: 0xc8d8ff, pink: 0xff4fa0, gold: 0xffc870, violet: 0x9a6aff };
+const POOL_TEX = { lamp: () => Tex.lightPoolWhite(), warm: () => Tex.lightPool(), cool: () => Tex.lightPool(), white: () => Tex.lightPoolWhite(), pink: () => Tex.lightPoolWhite(), gold: () => Tex.lightPoolWhite(), violet: () => Tex.lightPoolWhite() };
+const POOL_COLOUR = { lamp: 0x7a8498, warm: 0xffffff, cool: 0x9adcc0, white: 0xc8d8ff, pink: 0xff4fa0, gold: 0xffc870, violet: 0x9a6aff };
 function poolMat(kind) {
   return mat('pool-' + kind, () => new THREE.MeshBasicMaterial({ map: POOL_TEX[kind](), color: POOL_COLOUR[kind], transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, polygonOffset: true, polygonOffsetFactor: -4 }));
 }
@@ -839,15 +839,22 @@ function shops(list, group, placer) {
   for (const [c, geos] of awnings) group.add(new THREE.Mesh(merge(geos), lambert(c)));
   for (const [c, geos] of bands) group.add(new THREE.Mesh(merge(geos), basic(c)));
   fronts.forEach((geos, i) => { if (geos.length) group.add(new THREE.Mesh(merge(geos), mat('shopfront' + i, () => new THREE.MeshBasicMaterial({ map: Tex.shopFront(i + 1), color: 0xcccccc })))); });
-  uppers.forEach((geos, i) => { if (geos.length) group.add(new THREE.Mesh(merge(geos), litMat('floors' + i, Tex.floors(i + 1)))); });
+  uppers.forEach((geos, i) => { if (geos.length) group.add(new THREE.Mesh(merge(geos), litMat('floors' + i, Tex.floors(i + 1), Tex.floorsGlow(i + 1)))); });
   if (roofs.length) group.add(new THREE.Mesh(merge(roofs), roofMat()));
 }
 
 // Blocks of flats: balconies and windows all round. { x, z, w, d, h, rot, seed (1-3) }.
 // b.crown: a colour for a lit band round the top (Parabolica's gold).
 function flats(list, group, placer) {
-  const sides = [[], [], []], roofs = [], crowns = new Map();
+  const sides = [[], [], []], roofs = [], crowns = new Map(), slabs = [];
   for (const b of list) {
+    // Real balcony slabs on the two long faces, one a floor, and fins between
+    // the bays: the wall has depth as you pass.
+    for (const side of [0, Math.PI]) {
+      const ang = b.rot + side, fx = Math.sin(ang), fz = Math.cos(ang), sx = Math.cos(ang), sz = -Math.sin(ang);
+      for (let y = 3.2; y < b.h - 1; y += 3.2) slabs.push(placed(new THREE.BoxGeometry(b.w + 0.3, 0.16, 1.1), b.x + fx * (b.d / 2 + 0.55), y, b.z + fz * (b.d / 2 + 0.55), ang));
+      for (let u = -b.w / 2; u <= b.w / 2 + 0.1; u += 8) slabs.push(placed(new THREE.BoxGeometry(0.14, b.h, 1.1), b.x + fx * (b.d / 2 + 0.55) + sx * u, b.h / 2, b.z + fz * (b.d / 2 + 0.55) + sz * u, ang));
+    }
     [[b.w, 0], [b.d, Math.PI / 2], [b.w, Math.PI], [b.d, -Math.PI / 2]].forEach(([len, a], fi) => {
       const g = new THREE.PlaneGeometry(len, b.h);
       const uv = g.attributes.uv;
@@ -871,13 +878,14 @@ function flats(list, group, placer) {
     }
   }
   for (const [col, geos] of crowns) group.add(new THREE.Mesh(merge(geos), basic(col)));
-  sides.forEach((geos, i) => { if (geos.length) group.add(new THREE.Mesh(merge(geos), litMat('flats' + i, Tex.flats(i + 1)))); });
+  sides.forEach((geos, i) => { if (geos.length) group.add(new THREE.Mesh(merge(geos), litMat('flats' + i, Tex.flats(i + 1), Tex.flatsGlow(i + 1)))); });
+  if (slabs.length) group.add(new THREE.Mesh(merge(slabs), mat('flatslab', () => new THREE.MeshLambertMaterial({ map: Tex.concrete(), color: 0xb0aea4 }))));
   if (roofs.length) group.add(new THREE.Mesh(merge(roofs), roofMat()));
 }
 
 // A wall whose lit windows glow but whose walls still take the light.
-function litMat(key, tex) {
-  return mat('lit' + key, () => new THREE.MeshLambertMaterial({ map: tex, emissive: 0xffffff, emissiveMap: tex, emissiveIntensity: 0.75 }));
+function litMat(key, tex, glow) {
+  return mat('lit' + key, () => new THREE.MeshLambertMaterial({ map: tex, emissive: 0xffffff, emissiveMap: glow, emissiveIntensity: 1 }));
 }
 
 // Flat roofs: one material, so snow can whiten every roof at once.
