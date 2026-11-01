@@ -126,7 +126,7 @@ export function buildParabolica(track, def) {
     flip = -flip;
     const lx = track.leftX(k), lz = track.leftZ(k);
     const off = flip * (W + 1.4);
-    place.add('gold-streetlight', track.x[k] + lx * off, 0, track.z[k] + lz * off, Math.atan2(lz * flip, -lx * flip));
+    place.add('ring-streetlight', track.x[k] + lx * off, 0, track.z[k] + lz * off, Math.atan2(lz * flip, -lx * flip));
   }
 
   // --- Landmarks first, so the town is built round them ---
@@ -289,7 +289,7 @@ export function buildParabolica(track, def) {
   const { glows, reflect, lamps } = place.finish(group);
 
   const skies = [];
-  const backdrop = cityBackdrop(r, skies, { count: 90, minH: 30, maxH: 140, windows: Tex.skylineNeon() });
+  const backdrop = cityBackdrop(r, { count: 760, minH: 30, maxH: 190, windows: Tex.skylineNeon(), signs: [0xff4f9a, 0xffc860, 0xe8ecff], centre: [track.x[0], 0, track.z[0] + 420] });
   reflect.add(reflectSky(skies));
   reflect.add(viaduct.userData.reflect);
 

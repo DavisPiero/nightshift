@@ -31,6 +31,7 @@ import { getTrack, trackWeathers } from './world/tracks.js';
 import { buildGarage } from './world/garage.js';
 import { Reflections } from './graphics/reflections.js';
 import { buildTrackScene, placeBackdrop } from './world/track-scene.js';
+import { setSceneDetail } from './world/assets.js';
 import { WeatherView } from './world/weather.js';
 import { timeLook, trackTimes, TIMES } from './world/time-of-day.js';
 import { CameraManager } from './cameras/cameras.js';
@@ -171,12 +172,14 @@ class Game {
     if (this.world && this.trackInfo === info) return;
     if (this.world) {
       this.scene.remove(this.world.group, this.world.backdrop);
+      this.world.backdrop.userData.far?.dispose();
       for (const g of [this.world.group, this.world.backdrop, this.world.reflect]) {
         g?.traverse((o) => { o.geometry?.dispose(); for (const m of [].concat(o.material || [])) m.dispose(); });
       }
     }
     this.trackInfo = info;
     this.track = info.path;
+    setSceneDetail((URL_FLAGS.device || this.save.platform) === 'touch' || this.graphicsName === 'low' ? 0.55 : 1);
     this.world = buildTrackScene(this.track, info.def);
     this.scene.add(this.world.group, this.world.backdrop);
     this.world.baseLook = this.world.look;
@@ -202,6 +205,7 @@ class Game {
     for (const m of w.skies || []) { m.map = L.sky; m.needsUpdate = true; }
     for (const g of w.glows) g.material.opacity = L.glow;
     if (!this.inGarage) this.reflections.setWorld(w);
+    w.backdrop.userData.far?.bake(this.renderer.gl, L);
     if (this.weather && this.preset) this.weather.set(this.weatherId, this.preset, this.save.settings.effects);
   }
 

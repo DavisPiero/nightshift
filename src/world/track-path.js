@@ -14,9 +14,9 @@ function catmull(p0, p1, p2, p3, t) {
 
 export class TrackPath {
   // points: [[x, z], ...] in driving order. halfWidth: half the tarmac width.
-  // wall: distance from the centre line to the barriers. height: (x, z) => y,
-  // the ground the road should follow (left out, the road is flat at 0).
-  constructor({ points, halfWidth, wall, patches = [], height }) {
+  // wall: distance from the centre line to the barriers. heights: [[metres, y], ...]
+  // along the road, in order, from 0 (left out, the road is flat at 0).
+  constructor({ points, halfWidth, wall, patches = [], heights }) {
     this.halfWidth = halfWidth;
     this.wall = wall;
     this.patches = patches; // [[from, to], ...] metres along: heavier weather
@@ -71,9 +71,14 @@ export class TrackPath {
     // steep it is (rise per metre travelled).
     this.y = new Float32Array(count);
     this.grade = new Float32Array(count);
-    this.hilly = !!height;
-    if (height) {
-      for (let i = 0; i < count; i++) this.y[i] = height(this.x[i], this.z[i]);
+    this.hilly = !!heights;
+    if (heights) {
+      const keys = [...heights, [count, heights[0][1]]];
+      for (let i = 0, n = 0; i < count; i++) {
+        while (keys[n + 1][0] <= i) n++;
+        const [a, ya] = keys[n], [b, yb] = keys[n + 1];
+        this.y[i] = ya + (yb - ya) * (i - a) / (b - a);
+      }
       let was = this.y.slice();
       for (let pass = 0; pass < 3; pass++) {
         let sum = 0;

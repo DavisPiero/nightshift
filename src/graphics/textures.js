@@ -103,7 +103,95 @@ function cached(name, make) {
   return cache.get(name);
 }
 
+// Leaves, needles and blossom: many small dabs on a clear canvas, for the cards
+// trees are made of. Painted large and filtered smoothly.
+function clump(g, w, h, colours, dabs, size, seed, shape = () => 1) {
+  const r = rng(seed);
+  for (let i = 0; i < dabs; i++) {
+    const a = r() * Math.PI * 2, d = Math.sqrt(r()), x = 0.5 + Math.cos(a) * d * 0.47, y = 0.5 + Math.sin(a) * d * 0.47;
+    if (r() > shape(x, y)) continue;
+    g.fillStyle = colours[(r() * colours.length) | 0];
+    g.save(); g.translate(x * w, y * h); g.rotate(r() * 6.3);
+    g.beginPath(); g.ellipse(0, 0, size * (0.5 + r()), size * (0.25 + r() * 0.4), 0, 0, 6.3); g.fill();
+    g.restore();
+  }
+}
+const clear = (size, paint) => canvasTexture(size, paint, { nearest: false });
+
 export const Tex = {
+  // A clump of broadleaf leaves, lit from above.
+  leaves: () => cached('leaves', () => clear([256, 256], (g, w, h) => {
+    clump(g, w, h, ['#16261a', '#1c3220', '#223a24'], 2600, 7, 11);
+    clump(g, w, h, ['#2e4c2c', '#3a5a34', '#4a6c3c'], 900, 5, 12, (x, y) => (1 - y) * 1.2);
+  })),
+  // A branch of cherry blossom: pale, dense, a little darker underneath.
+  blossom: () => cached('blossom', () => clear([256, 256], (g, w, h) => {
+    clump(g, w, h, ['#b8688c', '#c87a9c', '#a85a80'], 2400, 6, 21);
+    clump(g, w, h, ['#eeb0c8', '#f6c4d6', '#e8a0bc'], 2200, 4.5, 22, (x, y) => 1.15 - y * 0.6);
+    clump(g, w, h, ['#ffe6ee', '#fff4f6'], 500, 2.6, 23, (x, y) => 1 - y * 0.8);
+  })),
+  // One skirt of a cedar: needles hanging in points from the top edge.
+  cedarTier: () => cached('cedartier', () => clear([256, 128], (g, w, h) => {
+    const r = rng(31);
+    for (let i = 0; i < 2600; i++) {
+      const x = r() * w, drop = 0.35 + 0.62 * (0.5 + 0.5 * Math.sin(x / w * Math.PI * 18 + Math.sin(x * 0.05) * 2)) * (0.6 + r() * 0.4), y = r() * drop * h;
+      const v = 20 + (1 - y / h) * 26 + r() * 16;
+      g.strokeStyle = `rgb(${v * 0.62 | 0},${v * 1.02 | 0},${v * 0.7 | 0})`; g.lineWidth = 1 + r() * 1.6;
+      g.beginPath(); g.moveTo(x, y); g.lineTo(x + (r() - 0.5) * 5, y + 6 + r() * 10); g.stroke();
+    }
+  })),
+  // A whole cedar, for the forest behind the road: a tall dark spire.
+  cedarCard: () => cached('cedarcard', () => clear([256, 768], (g, w, h) => {
+    const r = rng(33);
+    g.fillStyle = '#17110c'; g.fillRect(w * 0.48, h * 0.1, w * 0.04, h * 0.9);
+    for (let i = 0; i < 5200; i++) {
+      const t = r() ** 0.8, y = (0.02 + t * 0.84) * h, half = (0.03 + t * 0.44) * w * (0.75 + 0.25 * Math.sin(t * 60)), x = w / 2 + (r() * 2 - 1) * half;
+      const v = 14 + r() * 20 + (x < w / 2 ? 8 : 0);
+      g.strokeStyle = `rgb(${v * 0.62 | 0},${v | 0},${v * 0.72 | 0})`; g.lineWidth = 1.5 + r() * 2.4;
+      g.beginPath(); g.moveTo(x, y); g.lineTo(x + (x - w / 2) * 0.12 + (r() - 0.5) * 3, y + 9 + r() * 14); g.stroke();
+    }
+  })),
+  bark: () => cached('bark', () => canvasTexture([64, 128], (g, w, h) => {
+    noise(g, w, h, [66, 52, 42], 26, 41);
+    const r = rng(42);
+    for (let i = 0; i < 90; i++) { g.strokeStyle = `rgba(${r() < 0.5 ? '18,12,8' : '110,92,76'},${0.3 + r() * 0.4})`; g.lineWidth = 1 + r() * 2; const x = r() * w, y = r() * h; g.beginPath(); g.moveTo(x, y); g.lineTo(x + (r() - 0.5) * 6, y + 12 + r() * 30); g.stroke(); }
+  }, { nearest: false })),
+  // The forest floor and bare rock under the mountain's colours (a grey that
+  // the ground's own colours tint).
+  soil: () => cached('soil', () => canvasTexture([512, 512], (g, w, h) => {
+    noise(g, w, h, [170, 170, 170], 46, 51);
+    const r = rng(52);
+    for (let i = 0; i < 2400; i++) { g.fillStyle = `rgba(${r() < 0.5 ? '30,30,30' : '235,235,235'},${0.05 + r() * 0.16})`; const s = 2 + r() * 12; g.beginPath(); g.ellipse(r() * w, r() * h, s, s * (0.3 + r() * 0.7), r() * 3, 0, 6.3); g.fill(); }
+  }, { nearest: false })),
+  // The concrete lattice held against a cut slope (法枠), mossy and stained.
+  lattice: () => cached('lattice', () => canvasTexture([256, 256], (g, w, h) => {
+    noise(g, w, h, [46, 56, 42], 24, 61);
+    const r = rng(62), n = 2, cell = w / n;
+    for (let i = 0; i < 700; i++) { g.fillStyle = `rgba(${r() < 0.5 ? '60,88,48' : '24,30,22'},0.35)`; g.beginPath(); g.ellipse(r() * w, r() * h, 2 + r() * 8, 2 + r() * 6, 0, 0, 6.3); g.fill(); }
+    for (let i = 0; i <= n; i++) {
+      g.fillStyle = '#8c8c84'; g.fillRect(i * cell - 14, 0, 28, h); g.fillRect(0, i * cell - 14, w, 28);
+      g.fillStyle = 'rgba(30,30,28,0.45)'; g.fillRect(i * cell + 10, 0, 5, h); g.fillRect(0, i * cell + 10, w, 5);
+    }
+    for (let i = 0; i < 90; i++) { const x = r() * w, y = r() * h; g.strokeStyle = 'rgba(24,22,18,0.3)'; g.lineWidth = 1 + r() * 3; g.beginPath(); g.moveTo(x, y); g.lineTo(x + (r() - 0.5) * 6, y + 20 + r() * 60); g.stroke(); }
+  }, { nearest: false })),
+  // A white guard rail: one corrugated beam, grubby along the bottom.
+  guardRail: () => cached('guardrail', () => canvasTexture([64, 32], (g, w, h) => {
+    const f = g.createLinearGradient(0, 0, 0, h);
+    for (const [t, c] of [[0, '#d8d8d0'], [0.24, '#f2f2ea'], [0.42, '#8e8e88'], [0.5, '#c8c8c0'], [0.58, '#8e8e88'], [0.76, '#e6e6de'], [1, '#a8a498']]) f.addColorStop(t, c);
+    g.fillStyle = f; g.fillRect(0, 0, w, h);
+    const r = rng(71);
+    for (let i = 0; i < 40; i++) { g.fillStyle = `rgba(80,66,50,${r() * 0.18})`; g.fillRect(r() * w, h * 0.5 + r() * h * 0.5, 1 + r() * 8, 2 + r() * 6); }
+  }, { nearest: false })),
+  // Fallen petals: a pale scatter for pavements and the road's edge.
+  petals: () => cached('petals', () => clear([256, 256], (g, w, h) => {
+    clump(g, w, h, ['#f2b4cc', '#f8cfdc', '#e89ab8', '#fff0f4'], 1500, 2.6, 81);
+  })),
+  // A sign: white with a red border, black text.
+  warnSign: (text) => cached('warn' + text, () => canvasTexture([128, 128], (g, w, h) => {
+    g.fillStyle = '#f0e8a8'; g.save(); g.translate(w / 2, h / 2); g.rotate(Math.PI / 4); g.fillRect(-46, -46, 92, 92); g.strokeStyle = '#141414'; g.lineWidth = 6; g.strokeRect(-40, -40, 80, 80); g.restore();
+    g.fillStyle = '#141414'; g.font = 'bold 30px "DotGothic16", sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle';
+    g.fillText(text.slice(0, 2), w / 2, h * 0.4); g.fillText(text.slice(2), w / 2, h * 0.64);
+  }, { nearest: false })),
   // Surface wear for car paint, as a roughness multiplier (dark = glossy,
   // light = dull): faint swirls, a few fine scratches and dirty patches.
   wear: () => cached('wear', () => canvasTexture([128, 128], (g, w, h) => {

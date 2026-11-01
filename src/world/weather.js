@@ -76,6 +76,7 @@ export class WeatherView {
     this.patchFar = w.patch ? Math.min(this.fogFar, w.patch.fogFar) : this.fogFar;
     fog.far = this.fogFar + (this.patchFar - this.fogFar) * this.k;
     this.world.backdrop?.userData.sky?.set(this.world.look, this.id, !!preset.skyDetail, fog.color.getHex());
+    this.world.backdrop?.userData.far?.setHaze(fog.color, this.id);
     // Overhead is the top of the sky, unless fog hides the sky altogether.
     const top = this.world.look?.skyTop;
     this.scene.background = top !== undefined && this.id !== 'fog' ? new THREE.Color(top) : fog.color;
@@ -103,6 +104,7 @@ export class WeatherView {
       const map = snowy ? (m.userData.snowMap ?? null) : m.userData.dry.map;
       if (m.map !== map) { m.map = map; m.needsUpdate = true; }
     }
+    this.world.setSnow?.(this.id === 'snow');
     if (this.world.backdrop) this.world.backdrop.visible = this.id !== 'fog'; // fog hides the distance
     this.reflect = this.id === 'rain' && fx.reflections;
     for (const s of this.streaks) { s.visible = this.reflect; s.material.color.setHex(this.world.look?.lamp ?? 0xffa85a); }

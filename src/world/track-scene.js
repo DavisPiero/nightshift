@@ -10,13 +10,16 @@ import * as THREE from 'three';
 import { buildSky } from '../graphics/sky.js';
 import { Tex } from '../graphics/textures.js';
 import { rng, strip, merge, wallStrip, placed, fenceFrame } from './scene-kit.js';
-import { Placer, roofMat } from './assets.js';
+import { Placer, roofMat, sceneDetail } from './assets.js';
+import { FarBake } from '../graphics/far-bake.js';
 import { buildUnderground } from './underground-scene.js';
 import { buildParabolica } from './parabolica-scene.js';
+import { buildMountain } from './mountain-scene.js';
 
 export function buildTrackScene(track, def) {
   if (def.theme === 'underground') return buildUnderground(track, def);
   if (def.theme === 'parabolica') return buildParabolica(track, def);
+  if (def.theme === 'mountain') return buildMountain(track, def);
   const group = new THREE.Group();
   const hw = track.halfWidth;
   const r = rng(42);
@@ -270,7 +273,7 @@ export function buildTrackScene(track, def) {
   const { glows, reflect, lamps } = place.finish(group);
 
   const skies = []; // sky materials, repainted for the time of day
-  const backdrop = cityBackdrop(r, skies);
+  const backdrop = cityBackdrop(r, { centre: [130, 0, 40] });
 
   // What the car's paint reflects: the lamp heads, the bright canopy (from
   // the assets), and the amber glow of the city low in the sky.
@@ -291,29 +294,53 @@ export function buildTrackScene(track, def) {
   };
 }
 
-// Far away: the sky dome (graphics/sky.js) and a ring of city blocks with
-// lit windows, so the horizon is never an empty black. It is a backdrop:
-// drawn first, behind everything, and moved with the camera (see
-// placeBackdrop) so it always sits just inside the view distance. The sky is
-// repainted for the time and weather through backdrop.userData.sky.
-export function cityBackdrop(r, skies, { count = 70, minH = 20, maxH = 80, windows = Tex.skyline() } = {}) {
+// Far away: the sky dome (graphics/sky.js) with the far scenery baked into it
+// (graphics/far-bake.js). `far` is a group of anything at all, `centre` where it
+// is seen from. The backdrop is drawn first, behind everything, and moved with
+// the camera (see placeBackdrop). The sky is repainted for the time and weather
+// through backdrop.userData.sky.
+export function skyBackdrop(far, centre) {
   const backdrop = new THREE.Group();
-  const bg = { fog: false, depthWrite: false, depthTest: false };
   const sky = buildSky();
   backdrop.add(sky.mesh);
   backdrop.userData.sky = sky;
-  const blocks = [];
-  for (let i = 0; i < count; i++) {
-    const a = (i / count) * Math.PI * 2 + r() * 0.05;
-    const d = 700 + r() * 120;
-    const h = minH + r() * (maxH - minH);
-    blocks.push(placed(new THREE.BoxGeometry(25 + r() * 40, h, 25 + r() * 30), Math.sin(a) * d, h / 2, Math.cos(a) * d, a));
-  }
-  const skyline = new THREE.Mesh(merge(blocks), new THREE.MeshBasicMaterial({ map: windows, ...bg }));
-  skyline.renderOrder = -10;
-  backdrop.add(skyline);
+  const bake = new FarBake(far, centre, sceneDetail() < 1 ? 512 : 1024);
+  backdrop.add(bake.mesh);
+  backdrop.userData.far = bake;
   backdrop.traverse((o) => { o.frustumCulled = false; });
   return backdrop;
+}
+
+// A city in rings round the track, too far to move as you drive: towers with
+// lit windows, red lights on the tallest, lit signs high up. `signs` are the
+// track's colours for them.
+export function cityBackdrop(r, { count = 520, minH = 22, maxH = 150, windows = Tex.skyline(), signs = [0xffb060, 0xfff0d0], centre = [0, 0, 0] } = {}) {
+  const far = new THREE.Group();
+  const blocks = [], signQuads = new Map(), reds = [];
+  for (let i = 0; i < count; i++) {
+    const a = r() * Math.PI * 2, k = r(), d = 340 + k * k * 1900;
+    // Towers bunch into a few centres, with low ground between them.
+    const bunch = 0.35 + 0.65 * Math.max(0, Math.sin(a * 3 + 1) * Math.sin(a * 5 + 2)) + r() * 0.3;
+    const h = minH + (r() ** 2.2) * (maxH - minH) * bunch * (1 + d / 2200);
+    const w = 22 + r() * 34, dp = 22 + r() * 34;
+    const g = new THREE.BoxGeometry(w, h, dp), uv = g.attributes.uv;
+    const off = (r() * 8 | 0) / 8;
+    for (let n = 0; n < uv.count; n++) uv.setXY(n, off + uv.getX(n) * w / 48, uv.getY(n) * h / 64);
+    const x = centre[0] + Math.sin(a) * d, z = centre[2] + Math.cos(a) * d;
+    blocks.push(placed(g, x, h / 2, z, r() * 1.6));
+    if (h > 70) reds.push(x, h + 2, z);
+    if (r() < 0.22) {
+      const c = signs[(r() * signs.length) | 0], sw = 8 + r() * 16, sh = 10 + r() * 26;
+      if (!signQuads.has(c)) signQuads.set(c, []);
+      signQuads.get(c).push(placed(new THREE.PlaneGeometry(sw, sh), x - Math.sin(a) * (dp / 2 + 14), h * (0.55 + r() * 0.3), z - Math.cos(a) * (dp / 2 + 14), a + Math.PI));
+    }
+  }
+  far.add(new THREE.Mesh(merge(blocks), new THREE.MeshBasicMaterial({ map: windows })));
+  for (const [c, geos] of signQuads) far.add(new THREE.Mesh(merge(geos), new THREE.MeshBasicMaterial({ color: new THREE.Color(c).multiplyScalar(1.6), side: THREE.DoubleSide })));
+  const rg = new THREE.BufferGeometry();
+  rg.setAttribute('position', new THREE.Float32BufferAttribute(reds, 3));
+  far.add(new THREE.Points(rg, new THREE.PointsMaterial({ color: new THREE.Color(3, 0.25, 0.15), size: 3, sizeAttenuation: false })));
+  return skyBackdrop(far, [centre[0], 30, centre[2]]);
 }
 
 // The sky the car's paint reflects, kept centred on the car.

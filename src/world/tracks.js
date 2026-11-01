@@ -6,6 +6,7 @@ import { TrackPath } from './track-path.js';
 import { STARTER_TRACK } from './starter-track.js';
 import { UNDERGROUND_TRACK } from './underground.js';
 import { PARABOLICA_TRACK } from './parabolica.js';
+import { MOUNTAIN_TRACK } from './mountain.js';
 
 export const TRACKS = [
   {
@@ -34,6 +35,15 @@ export const TRACKS = [
     jp: 'パラボリカ通り',
     stage: 'street',
     def: PARABOLICA_TRACK,
+  },
+  {
+    id: 'mountain',
+    name: 'Yamagiri Pass',
+    blurb: 'A mountain road through cedar forest. Three hairpins up, a ridge under the shrine gates, and a long fast drop home.',
+    corners: 14,
+    jp: '山霧峠',
+    stage: 'street',
+    def: MOUNTAIN_TRACK,
   },
 ];
 for (const t of TRACKS) t.path = new TrackPath(t.def);
