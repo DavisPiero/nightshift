@@ -71,7 +71,7 @@ export class RivalSounds {
       const closing = ((v.vx - me.vx) * dx + (v.vz - me.vz) * dz) / -d;
       const bend = SOUND_SPEED / (SOUND_SPEED - Math.max(-120, Math.min(120, closing * DOPPLER)));
       s.voice.update(dt, { rpm: v.rpm * bend, throttle: v.throttle, load: v.load, redline: v.spec.redline, limiter: v.limiter, boost: v.boost, turbo: !!v.spec.turbo, whine: !!v.spec.whine, loud: v.spec.exhaustVolume ?? 1 });
-      s.gain.gain.setTargetAtTime(0.62 / (1 + (d / 16) ** 2) * (1 - 0.25 * Math.max(0, -along)), t, 0.06);
+      s.gain.gain.setTargetAtTime(0.4 / (1 + (d / 16) ** 2) * (1 - 0.25 * Math.max(0, -along)), t, 0.06);
       s.dull.frequency.setTargetAtTime(700 + 7000 / (1 + d / 9), t, 0.08);
       s.pan?.pan.setTargetAtTime(-side * 0.85, t, 0.05);
     }
