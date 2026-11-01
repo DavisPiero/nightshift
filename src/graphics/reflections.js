@@ -72,9 +72,9 @@ export class Reflections {
   update(gl, x, y, z, force = false) {
     if (!force && this.frame++ % this.every) return;
     this.camera.position.set(x, y, z);
-    this.ground.position.set(x, 0, z);
+    this.ground.position.set(x, y - 0.9, z);
     this.sky.position.set(x, y, z);
-    this.current?.traverse((o) => { if (o.userData.follow) o.position.set(x, o.position.y, z); });
+    this.current?.traverse((o) => { if (o.userData.follow) o.position.set(x, y + o.userData.follow, z); });
     this.camera.updateMatrixWorld();
     this.camera.update(gl, this.scene);
   }

@@ -1,4 +1,4 @@
-// Dave, who owns the lot. He sits in the corner of the Shop and talks: useless
+// Dave, who owns the lot. He leans in his cabin window in the Shop and talks: useless
 // facts about the car you are looking at, or his life as an Australian car dealer
 // in Japan, which he never quite explains. Plain data, no DOM.
 

@@ -115,7 +115,7 @@ export class WeatherView {
     this.k += (patch - this.k) * Math.min(1, dt * 1.5);
     this.scene.fog.far = this.fogFar + (this.patchFar - this.fogFar) * this.k;
     const heavy = 1 + (this.fall - 1) * this.k; // 1 normally, up to `fall` in a patch
-    const cx = camera.position.x, cz = camera.position.z;
+    const cx = camera.position.x, cz = camera.position.z, cy = v.roadY;
     if (this.rain.visible) {
       const n = Math.min(DROPS, Math.round(1400 * heavy));
       const fall = 17 * dt;
@@ -126,7 +126,7 @@ export class WeatherView {
         this.drops[j + 1] = y;
         // Drops live in camera-relative space so the box follows you; the
         // car's speed adds streak slant so rain rushes past at speed.
-        const px = cx + x, pz = cz + z, py = y;
+        const px = cx + x, pz = cz + z, py = cy + y;
         const k = i * 6;
         this.linePos[k] = px; this.linePos[k + 1] = py; this.linePos[k + 2] = pz;
         this.linePos[k + 3] = px + this.wind * 0.04 - v.vx * 0.02; this.linePos[k + 4] = py + 0.5; this.linePos[k + 5] = pz - v.vz * 0.02;
@@ -149,7 +149,7 @@ export class WeatherView {
         this.flakes[j] = x; this.flakes[j + 1] = y; this.flakes[j + 2] = z;
         const sway = Math.sin(this.time * 1.3 + this.flakes[j + 3]) * 0.4;
         const k = i * 3;
-        this.flakePos[k] = cx + x + sway + this.wind * y * 0.05; this.flakePos[k + 1] = y; this.flakePos[k + 2] = cz + z + sway * 0.6;
+        this.flakePos[k] = cx + x + sway + this.wind * y * 0.05; this.flakePos[k + 1] = cy + y; this.flakePos[k + 2] = cz + z + sway * 0.6;
       }
       this.snow.geometry.setDrawRange(0, n);
       this.snow.geometry.attributes.position.needsUpdate = true;
@@ -162,7 +162,7 @@ export class WeatherView {
         const L = lamps[i]?.[0];
         if (!L) { s.visible = false; return; }
         s.visible = true;
-        s.position.set(L.x, 0.02, L.z);
+        s.position.set(L.x, (L.floor ?? 0) + 0.02, L.z);
         // Reflections always run from the light toward whoever is looking.
         s.rotation.y = Math.atan2(cx - L.x, cz - L.z);
         s.material.opacity = 0.75 + Math.sin(this.time * 3 + i) * 0.08;

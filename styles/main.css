@@ -343,16 +343,15 @@ body:has(#scr-main:not([hidden])) #wallet { right: calc(max(16px, var(--sr)) + 1
 /* What sits on the laptop's display (ui/desk.js). DeviceStage.pin sets its
    transform every frame, so the entrance animation must leave it alone. */
 .desk-panel { position: fixed; left: 0; top: 0; width: 800px; height: 500px; transform-origin: 0 0; will-change: transform; display: flex; flex-direction: column; gap: 8px; padding: 10px 12px 12px; background: var(--panel-solid); opacity: 0; }
-.screen.in > .desk-panel { animation: none; }
+.screen.in > .desk-panel, .screen.in > #dave-say { animation: none; }
 .desk-body { flex: 1; min-height: 0; display: grid; grid-template-columns: 290px minmax(0, 1fr); gap: 12px; }
 #garage-desk .desk-body { grid-template-columns: minmax(0, 1fr) 300px; }
 #garage-desk .list { overflow-y: auto; min-height: 0; touch-action: pan-y; }
 .gstats { display: flex; flex-direction: column; gap: 6px; min-height: 0; overflow: auto; }
 .desk-toggle { position: absolute; left: max(16px, var(--sl)); bottom: max(16px, var(--sb)); }
-/* Dave, in the right-hand corner. */
-#dave { position: absolute; right: 0; bottom: 0; display: flex; align-items: flex-end; pointer-events: none; max-width: 44vw; }
-#dave-face { height: min(40vh, 300px); image-rendering: pixelated; flex: none; }
-#dave-say { order: -1; margin: 0 -10px 14px 0; padding: 8px 12px 10px; max-width: 250px; font: var(--bold) 15px/1.3 var(--dot); color: var(--ink); background: var(--white); }
+/* Dave's speech bubble hangs from his cabin window (Shop.place moves it). */
+#dave-say { position: fixed; left: 0; top: 0; width: 240px; margin: 0; padding: 8px 12px 10px; font: var(--bold) 15px/1.3 var(--dot); color: var(--ink); background: var(--white); pointer-events: none; will-change: transform; }
+#dave-say::before { content: ''; position: absolute; left: var(--tail, 50%); top: -8px; margin-left: -8px; border: 8px solid transparent; border-top: 0; border-bottom-color: var(--white); }
 .stamp-brand { display: none; }
 .shop-info .car-name { flex: none; }
 .shop-buy { margin-top: auto; }

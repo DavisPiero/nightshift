@@ -1,9 +1,10 @@
 // The shop: Dave's lot. A laptop on the left (ui/desk.js) filters by stage (Street,
 // GT3, Formula) and by brand, with a wall of car cards and the picked car's numbers
 // and Buy button. The picked car stands on the lot in front of you: drag to walk
-// round it. Dave sits in the corner and talks. A stage that your level has not
+// round it. Dave leans in his cabin window and talks. A stage that your level has not
 // reached stays locked. Nothing here spends money without a yes in a pop-up.
 
+import * as THREE from 'three';
 import { CARS, TIERS, carTitle } from '../vehicles/cars.js';
 import { levelFor, cr } from '../career/career.js';
 import { buildSpec } from '../vehicles/tuning.js';
@@ -12,6 +13,7 @@ import { carCard, lockedCard } from './car-cards.js';
 import { daveOnCar, daveOnLife } from '../career/dave.js';
 
 const $ = (sel) => document.querySelector(sel);
+const _at = new THREE.Vector3();
 const CHAT_SECONDS = 9; // how long he lets a thought sit before the next one
 
 export class Shop {
@@ -22,7 +24,6 @@ export class Shop {
     this.brand = null; // null: every brand
     this.picked = CARS.find((c) => c.price)?.id;
     this.said = 0;
-    $('#dave-face').src = 'assets/story/face-dave.png';
     screens.garage.orbitControls($('#scr-shop'));
   }
 
@@ -42,6 +43,16 @@ export class Shop {
     this.said++;
     $('#dave-say').textContent = onCar ? daveOnCar(this.picked, this.said) : daveOnLife(this.said);
     this.chat = setTimeout(() => this.say(this.said % 3 === 0), CHAT_SECONDS * 1000);
+  }
+
+  // His bubble hangs under the window he is in, wherever that is on screen, and
+  // stays on the screen when the view swings away.
+  place(at, camera) {
+    const el = $('#dave-say'), p = _at.copy(at).project(camera), W = window.innerWidth, H = window.innerHeight;
+    const x = (p.x + 1) / 2 * W, y = (1 - p.y) / 2 * H, w = el.offsetWidth, h = el.offsetHeight;
+    const left = Math.max(8, Math.min(W - w - 8, x - w / 2)), top = Math.max(70, Math.min(H - h - 8, y + 6));
+    el.style.transform = `translate(${left.toFixed(1)}px, ${top.toFixed(1)}px)`;
+    el.style.setProperty('--tail', `${Math.max(14, Math.min(w - 14, x - left)).toFixed(1)}px`);
   }
 
   // The car on the lot follows the card you pick. Leaving, the game goes back

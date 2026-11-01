@@ -5,18 +5,24 @@
 import * as THREE from 'three';
 import { buildCar } from '../vehicles/car-model.js';
 
+// A car body on the road: where it is, and how the hill tips it.
+export function placeOnRoad(root, v) {
+  root.position.set(v.x, v.roadY, v.z);
+  root.rotation.set(-Math.atan(v.slope), v.heading, Math.atan(v.slopeSide), 'YXZ');
+}
+
 export class RaceView {
   constructor(scene) {
     this.scene = scene;
     this.rivals = [];
   }
 
-  setup(cars) {
+  setup(cars, lights = true) {
     this.clear();
     for (const c of cars) {
       if (c.isPlayer) continue;
       const model = buildCar(c.vehicle.spec, c.look, { simple: true });
-      model.setLights(true);
+      model.setLights(lights);
       this.scene.add(model.root);
       this.rivals.push({ car: c, model });
     }
@@ -25,8 +31,7 @@ export class RaceView {
   update(dt) {
     for (const { car, model } of this.rivals) {
       const v = car.vehicle;
-      model.root.position.set(v.x, 0, v.z);
-      model.root.rotation.y = v.heading;
+      placeOnRoad(model.root, v);
       model.update(v, dt);
     }
   }
@@ -60,7 +65,7 @@ export class GhostView {
     if (!this.model) return;
     this.model.root.visible = !!pose;
     if (!pose) return;
-    this.model.root.position.set(pose.x, 0, pose.z);
+    this.model.root.position.set(pose.x, pose.y ?? 0, pose.z);
     this.model.root.rotation.y = pose.heading;
   }
 

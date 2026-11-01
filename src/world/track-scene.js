@@ -320,13 +320,12 @@ export function cityBackdrop(r, skies, { count = 70, minH = 20, maxH = 80, windo
 export function reflectSky(skies) {
   const sky = new THREE.Mesh(new THREE.CylinderGeometry(150, 150, 120, 16, 1, true), new THREE.MeshBasicMaterial({ map: Tex.skyGlow(), side: THREE.BackSide, fog: false }));
   skies.push(sky.material);
-  sky.position.y = 40;
-  sky.userData.follow = true; // kept centred on the car (see reflections.js)
+  sky.userData.follow = 40; // kept this high above the car (see reflections.js)
   return sky;
 }
 
 // Keep the far backdrop centred on the camera and just inside its far plane.
 export function placeBackdrop(backdrop, camera) {
-  backdrop.position.set(camera.position.x, 0, camera.position.z);
+  backdrop.position.set(camera.position.x, camera.position.y, camera.position.z);
   backdrop.scale.setScalar((camera.far * 0.85) / 900);
 }

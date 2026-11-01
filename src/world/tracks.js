@@ -14,6 +14,7 @@ export const TRACKS = [
     blurb: 'A short, quick loop round the harbour estate.',
     corners: 5,
     jp: 'スターター',
+    stage: 'street',
     def: STARTER_TRACK,
   },
   {
@@ -22,6 +23,7 @@ export const TRACKS = [
     blurb: 'Expressway tunnels under Tokyo. Turquoise lights, narrow lanes, a tight junction loop.',
     corners: 7,
     jp: 'アンダーグラウンド',
+    stage: 'street',
     def: UNDERGROUND_TRACK,
   },
   {
@@ -30,6 +32,7 @@ export const TRACKS = [
     blurb: 'A city ring road round a park, shaped like Monza. Long straights, two chicanes, the Lesmos and the long Parabolica.',
     corners: 11,
     jp: 'パラボリカ通り',
+    stage: 'street',
     def: PARABOLICA_TRACK,
   },
 ];

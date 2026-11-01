@@ -3,7 +3,7 @@
 // Plain DOM. Screens stack, so Back (or Escape) always returns to where you
 // came from, e.g. Settings opened from the pause menu goes back to it.
 
-import { getCar } from '../vehicles/cars.js';
+import { getCar, TIERS } from '../vehicles/cars.js';
 import { TRACKS, trackWeathers } from '../world/tracks.js';
 import { WEATHER } from '../physics/weather.js';
 import { TIMES, trackTimes } from '../world/time-of-day.js';
@@ -17,8 +17,10 @@ import { carCard } from './car-cards.js';
 import { TIPS } from './tips.js';
 import { clock } from './hud.js';
 import { DIFFICULTY } from '../race/difficulty.js';
-import { levelInfo, eventPay, racePay, bank, cleared, cr, CLEARS, EVENTS } from '../career/career.js';
+import { levelInfo, levelFor, eventPay, racePay, bank, cleared, cr, CLEARS, EVENTS } from '../career/career.js';
 import { carStats } from '../vehicles/stats.js';
+
+const STAGE_LEVEL = Object.fromEntries(TIERS.map((t) => [t.id, t.level])); // a track opens with its stage
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -179,7 +181,7 @@ export class Screens {
     if (!new URLSearchParams(location.search).has('car') && !g.owned.includes(this.pick.car)) this.pickCar(g.owned[0]);
   }
 
-  unlocked(id) { return this.game.save.career.tracks.includes(id); }
+  unlocked(id) { return levelFor(this.game.save.career.xp) >= STAGE_LEVEL[TRACKS.find((t) => t.id === id).stage]; }
 
   showEl(name) {
     const el = this.el(name);
@@ -230,7 +232,6 @@ export class Screens {
     const pick = given || { ...this.pick };
     const t = TRACKS.find((x) => x.id === pick.track) || TRACKS[0];
     const career = this.game.save.career;
-    if (!career.tracks.includes(t.id)) career.tracks.push(t.id); // playing a track unlocks it for Race
     const el = $('#race-load');
     el.querySelector('.rl-still').style.backgroundImage = `url(assets/loading/${t.id}.jpg)`;
     el.querySelector('.rl-name').textContent = pick.event?.name || t.name;
@@ -303,7 +304,7 @@ export class Screens {
       b.dataset.track = t.id;
       b.disabled = !this.unlocked(t.id);
       b.innerHTML = `<span class="num">${String(n + 1).padStart(2, '0')}</span><canvas width="144" height="80"></canvas>`
-        + `<span class="txt"><span class="name">${t.name}</span><span class="sub">${b.disabled ? 'Play it in the career to unlock it' : `${(t.path.length / 1000).toFixed(2)} km · ${t.corners} corners`}</span></span>`;
+        + `<span class="txt"><span class="name">${t.name}</span><span class="sub">${b.disabled ? `Reach level ${STAGE_LEVEL[t.stage]}` : `${(t.path.length / 1000).toFixed(2)} km · ${t.corners} corners`}</span></span>`;
       drawMap(b.querySelector('canvas'), t, 3);
       const choose = () => { if (this.pick.track !== t.id) { this.pick.track = t.id; this.game.loadTrack(t.id); this.fillTracks(); } };
       b.addEventListener('click', choose);

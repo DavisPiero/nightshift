@@ -452,7 +452,7 @@ export class Placer {
     const v = new THREE.Vector3();
     for (const [gx, gy, gz, c, size] of kit.glows || []) { v.set(gx, gy, gz).applyMatrix4(m); this.glow(v.x, v.y, v.z, c, size); }
     for (const [px, pz, w, d, kind] of kit.pools || []) { v.set(px, 0, pz).applyMatrix4(m); this.pool(v.x, v.z, w * s[0], d * s[2], kind, ry); }
-    for (const [lx, ly, lz] of kit.lamps || []) this.lamps.push(new THREE.Vector3(lx, ly, lz).applyMatrix4(m));
+    for (const [lx, ly, lz] of kit.lamps || []) { const l = new THREE.Vector3(lx, ly, lz).applyMatrix4(m); l.floor = y; this.lamps.push(l); }
     for (const [geo, c, rx, ryy, rz] of kit.reflect || []) {
       if (!this.reflectGeos.has(c)) this.reflectGeos.set(c, []);
       this.reflectGeos.get(c).push(geo.clone().translate(rx, ryy, rz).applyMatrix4(m));

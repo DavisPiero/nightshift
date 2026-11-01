@@ -96,10 +96,14 @@ class ChaseCamera {
     const tz = v.z - Math.cos(this.yaw) * dist;
     const ty = (this.height + speedK * 0.2 - rush * 0.35) * (0.6 + 0.4 * OPTIONS.distance); // down near the road at speed
     // Position follows the car exactly (the lag is in the yaw), so the car
-    // stays the same size on screen at any speed.
+    // stays the same size on screen at any speed. On a hill the camera stands
+    // on the road behind the car, not level with it.
+    const behind = v.roadY - v.slope * dist;
+    this.ground = snap ? behind : this.ground + (behind - this.ground) * damp(9, dt);
+    this.lift = snap ? ty : this.lift + (ty - this.lift) * damp(4, dt);
     this.pos.x = tx;
     this.pos.z = tz;
-    this.pos.y = snap ? ty : this.pos.y + (ty - this.pos.y) * damp(4, dt);
+    this.pos.y = this.ground + this.lift;
     const cam = car.camera;
     const [sx, sy, roll] = this.shake.offset(v, dt, 1);
     cam.position.copy(this.pos);
@@ -107,7 +111,7 @@ class ChaseCamera {
     cam.position.z -= Math.sin(this.yaw) * sx;
     cam.position.y += sy;
     cam.up.set(0, 1, 0);
-    cam.lookAt(v.x + Math.sin(v.heading) * 2.5 + sx * 2, 0.9 + sy, v.z + Math.cos(v.heading) * 2.5);
+    cam.lookAt(v.x + Math.sin(v.heading) * 2.5 + sx * 2, v.roadY + v.slope * 2.5 + 0.9 + sy, v.z + Math.cos(v.heading) * 2.5);
     cam.rotateZ(roll);
     // Wider view at speed, eased so it never jumps.
     const fov = OPTIONS.fov + speedK * speedK * CAMERA_FEEL.speedFov + rush * 8 + this.shake.nos * 9;
@@ -145,7 +149,7 @@ class CockpitCamera {
     const target = v.steerAngle * 0.35;
     this.look += (target - this.look) * damp(4, dt);
     const yaw = v.heading + this.look;
-    _t.set(_v.x + Math.sin(yaw) * 10 + sx, _v.y - 0.45 + v.pitch * -1.5 + this.shake.jolt * 3, _v.z + Math.cos(yaw) * 10);
+    _t.set(_v.x + Math.sin(yaw) * 10 + sx, _v.y - 0.45 + v.pitch * -1.5 + v.slope * 10 + this.shake.jolt * 3, _v.z + Math.cos(yaw) * 10);
     cam.up.set(0, 1, 0).lerp(_up, 0.6).normalize();
     cam.lookAt(_t);
     cam.rotateZ(roll);
