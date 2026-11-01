@@ -14,7 +14,9 @@
 //    with the flames);
 //  - gear changes: a mechanical clack, the note cutting and coming back
 //    with a bark on the way up, a throttle blip on the way down;
-//  - a rev limiter that bounces (the sound chops) rather than just quietens.
+//  - a rev limiter that bounces (the sound chops) rather than just quietens;
+//  - at speed on the throttle, everything opens up (`roar`), and the road
+//    rumbles underneath.
 // Ambience: rain on the road and roof, and a low night hum.
 // The car's update() feeds rpm, throttle and load. To switch to real engine
 // recordings later, replace EngineVoice with a sample player that takes the
@@ -158,7 +160,7 @@ export class EngineVoice {
     this.chop = 0;         // the rev limiter's bounce
   }
 
-  update(dt, { rpm, throttle, load, redline, limiter, boost = 0, turbo = false, whine = false, loud = 1 }) {
+  update(dt, { rpm, throttle, load, redline, limiter, boost = 0, turbo = false, whine = false, loud = 1, roar = 0 }) {
     const ctx = this.ctx, t = ctx.currentTime, k = 0.03;
     const S = this.sound;
     const firing = rpm / 60 * S.cylinders / 2;
@@ -174,7 +176,8 @@ export class EngineVoice {
     this.blip = Math.max(0, this.blip - dt / 0.18);
     this.bark = Math.max(0, this.bark - dt / 0.25);
     throttle = Math.max(throttle, this.blip * 0.8);
-    const level = 0.22 + 0.5 * throttle + 0.15 * r + this.bark * 0.2;
+    const push = roar * throttle; // flat out at speed the engine fills the car
+    const level = 0.22 + 0.5 * throttle + 0.15 * r + this.bark * 0.2 + push * 0.32;
     for (const [L, mix0, open0] of [[lo, loMix, 5], [hi, hiMix, 7]]) {
       const mix = L === hi ? mix0 * S.rasp : mix0;
       const open = open0 * S.pitch;
@@ -182,26 +185,26 @@ export class EngineVoice {
       L.osc2.frequency.setTargetAtTime(base, t, 0.012);
       // Filter opens with throttle: closed and muffled when coasting. The fixed
       // part keeps idle audible on small laptop and iPad speakers.
-      L.filter.frequency.setTargetAtTime(base * (2.2 + open * (0.25 + 0.75 * throttle)) + 260, t, k);
+      L.filter.frequency.setTargetAtTime(base * (2.2 + open * (0.25 + 0.75 * throttle + 0.4 * push)) + 260, t, k);
       L.gain.gain.setTargetAtTime(mix * level, t, k);
     }
     // The lope: a V8 pulses once every two turns of the crank.
     this.lfo.frequency.setTargetAtTime(rpm / 60 / (S.cylinders >= 8 ? 2 : 1), t, 0.02);
     this.lfoDepth.gain.setTargetAtTime((0.32 - 0.22 * r) * (0.6 + S.burble), t, k);
     this.sub.frequency.setTargetAtTime(base, t, 0.012);
-    this.subGain.gain.setTargetAtTime((0.18 + 0.32 * on) * S.sub, t, k);
+    this.subGain.gain.setTargetAtTime((0.18 + 0.32 * on + 0.22 * push) * S.sub, t, k);
     this.intakeFilter.frequency.setTargetAtTime(firing * 3.2 + 300, t, k);
-    this.intakeGain.gain.setTargetAtTime(throttle * (0.05 + 0.22 * r), t, k);
+    this.intakeGain.gain.setTargetAtTime(throttle * (0.05 + 0.22 * r + 0.24 * roar), t, k);
     this.raspOsc.frequency.setTargetAtTime(firing, t, 0.012);
     this.raspFilter.frequency.setTargetAtTime(900 + firing * 4, t, k);
-    this.raspGain.gain.setTargetAtTime((0.04 + 0.16 * on * throttle) * S.rasp, t, k);
+    this.raspGain.gain.setTargetAtTime((0.04 + 0.16 * on * throttle + 0.14 * push) * S.rasp, t, k);
     // A gear change dips the note for a moment; this is applied here
     // (rather than scheduled once) so the steady level cannot override it.
     this.dip = Math.max(0, this.dip - dt / 0.2);
     // On the limiter the ignition cuts in and out: the sound chops.
     this.chop = limiter ? (this.chop + dt * 17) % 1 : 0;
     const bounce = limiter ? (this.chop < 0.45 ? 0.35 : 1) : 1;
-    this.out.gain.setTargetAtTime(0.9 * bounce * loud * (1 - 0.7 * this.dip) * (1 + this.bark * 0.25), t, 0.006);
+    this.out.gain.setTargetAtTime(0.9 * bounce * loud * (1 - 0.7 * this.dip) * (1 + this.bark * 0.25 + push * 0.35), t, 0.006);
 
     // Turbo: a whistle that rises with boost; a supercharger whines with revs.
     if (turbo) {
@@ -353,6 +356,16 @@ export class GameAudio {
     wn.connect(this.windFilter).connect(this.windGain).connect(this.fxBus);
     wn.start();
 
+    // The road: a deep rumble through the floor at speed, and tyre roar on top.
+    const rd = ctx.createBufferSource(); rd.buffer = this.noise; rd.loop = true;
+    const rdLow = ctx.createBiquadFilter(); rdLow.type = 'lowpass'; rdLow.frequency.value = 130;
+    this.rumbleGain = ctx.createGain(); this.rumbleGain.gain.value = 0;
+    rd.connect(rdLow).connect(this.rumbleGain).connect(this.fxBus);
+    const rdTyre = ctx.createBiquadFilter(); rdTyre.type = 'bandpass'; rdTyre.frequency.value = 420; rdTyre.Q.value = 0.8;
+    this.tyreGain = ctx.createGain(); this.tyreGain.gain.value = 0;
+    rd.connect(rdTyre).connect(this.tyreGain).connect(this.fxBus);
+    rd.start(0, 0.8);
+
     // Wet tyres hiss instead of squealing.
     const hs = ctx.createBufferSource(); hs.buffer = this.noise; hs.loop = true;
     this.hissFilter = ctx.createBiquadFilter(); this.hissFilter.type = 'highpass'; this.hissFilter.frequency.value = 2500;
@@ -421,8 +434,10 @@ export class GameAudio {
     this.engineLevel.gain.setTargetAtTime(level, t, 0.3);
     const wet = weather === 'rain' || weather === 'snow';
     const raining = weather === 'rain';
+    // How much speed there is to hear: nothing at 60 km/h, all of it by 170.
+    const k = Math.max(0, Math.min(1, (v.speed * 3.6 - 60) / 110)), roar = k * k * (3 - 2 * k);
     this.engine.update(dt, {
-      rpm: v.rpm, throttle: v.throttle, load: v.load,
+      roar, rpm: v.rpm, throttle: v.throttle, load: v.load,
       redline: v.spec.redline, limiter: v.limiter,
       boost: v.boost, turbo: !!v.spec.turbo, whine: !!v.spec.whine, loud: v.spec.exhaustVolume ?? 1,
     });
@@ -443,7 +458,9 @@ export class GameAudio {
     this.squealFilters[0].frequency.setTargetAtTime(900 * wobble + slide * 150, t, 0.05);
     this.squealFilters[1].frequency.setTargetAtTime(1450 * wobble + slide * 200, t, 0.05);
     const sp = Math.min(1, v.speed / 70);
-    this.windGain.gain.setTargetAtTime((sp * sp * 0.25 + sp * 0.03) * level, t, 0.1);
+    this.windGain.gain.setTargetAtTime((sp * sp * 0.3 + sp * 0.03 + roar * 0.14) * level, t, 0.1);
+    this.rumbleGain.gain.setTargetAtTime(roar * 0.7 * level, t, 0.1);
+    this.tyreGain.gain.setTargetAtTime(roar * 0.1 * level, t, 0.1);
     this.windFilter.frequency.setTargetAtTime(300 + sp * 900, t, 0.1);
   }
 

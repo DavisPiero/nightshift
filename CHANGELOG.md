@@ -1,5 +1,15 @@
 # Changelog
 
+## Arlo's notes, part 1: racing (2026-11-01)
+- Bumping another car no longer cuts your speed: knocks are shared between the two cars.
+- Starter Track and Underground are shorter, narrower and faster.
+- More speed: earlier motion blur, stronger camera shake, the car shakes, the engine roars, the road rumbles.
+- Rivals are smarter: they pick a side to pass, defend, keep their lane, and each has a hidden driving style. All four difficulties are reset, and Hard is much harder.
+- Slipstream behind other cars.
+- Race settings has a dropdown: Race, Time Trial with a ghost of your best lap, Practice.
+- An F1-style race sheet on the left replaces the top strip.
+- The map shows more road ahead, with a Map zoom setting. Max's stripes are red.
+
 ## Career (2026-10-31)
 - Career mode: 24 Street events in five acts, a story with Johnny, Max and Aoi in pixel-art scenes, CR and XP, levels 0 to 100. To be continued.
 - Real races: eight cars, 1 to 10 laps, four difficulties, start lights, places, gaps, results, Back on track.

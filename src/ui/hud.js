@@ -3,12 +3,13 @@
 // green and red) and a minimap top right, on teal with its corners fading out
 // (see #minimap in the style sheet). Both are drawn small on canvases and
 // scaled up with square pixels, like the menus. Plus a debug panel (F3) with
-// the physics numbers. In a race: place, lap, times and the gaps along the
-// top, rival dots on the map, the start lights in the middle.
+// the physics numbers. In a race: an F1-style timing sheet on the left (place,
+// who moved, name, gap, last lap), rival dots on the map, the start lights in
+// the middle. In a Time Trial: the clock, the gap to the ghost, last and best.
 
 const SEGMENTS = 28;
 const FONT = '"Jersey 10", ui-monospace, monospace';
-const PINK = '#ff2e88', LCD = '#39ff6a', LCD_DIM = '#0f4a22', RED = '#d00000';
+const AMBER = '#ffb000', LCD = '#39ff6a', LCD_DIM = '#0f4a22', RED = '#d00000';
 const FACE = '#c0c0c0';
 
 // 1:23.4
@@ -30,6 +31,10 @@ export class Hud {
     this.race = null;
     this.tick = 0;
     this.rh = root.querySelector('#race-hud');
+    this.rows = root.querySelector('#tw-rows');
+    this.tt = root.querySelector('#trial-hud');
+    this.trial = null;
+    this.mapRange = 500;
     this.big = root.querySelector('#race-big');
     this.wrong = root.querySelector('#race-wrong');
     this.goClock = 0;
@@ -43,9 +48,24 @@ export class Hud {
     this.wrong.hidden = true;
     this.goClock = 0;
     this.finished = false;
+    this.moved = new Map(); // per car: where it was, which way it went, for how long
+    this.rows.innerHTML = '';
+    if (!race) return;
+    this.rowEls = race.cars.map(() => {
+      const li = document.createElement('li');
+      li.innerHTML = '<span class="p"></span><i class="m"></i><span class="n"></span><span class="g"></span><span class="l"></span>';
+      this.rows.appendChild(li);
+      return li;
+    });
   }
 
-  // Place, lap and times, ten times a second; the lights every frame.
+  // The Time Trial to show, or null.
+  setTrial(trial) {
+    this.trial = trial;
+    this.tt.hidden = !trial;
+  }
+
+  // The lights every frame, the sheet ten times a second.
   drawRace(dt) {
     const r = this.race, p = r.player;
     const lights = r.lights;
@@ -58,19 +78,42 @@ export class Hud {
     this.tick -= dt;
     if (this.tick > 0) return;
     this.tick = 0.1;
-    const $ = (id) => this.rh.querySelector(id);
-    $('#rh-pos').textContent = p.place || r.cars.indexOf(p) + 1;
-    $('#rh-of').textContent = `/${r.cars.length}`;
-    $('#rh-lap').textContent = `${Math.min(p.lap + 1, r.laps)}/${r.laps}`;
-    $('#rh-time').textContent = clock(r.state === 'racing' || r.state === 'finished' ? r.t - p.lapStart : 0);
-    $('#rh-best').textContent = Number.isFinite(p.best) ? clock(p.best) : '--:--.-';
-    const gap = (step, el, sign) => {
-      const g = p.place ? r.gap(p, step) : null;
-      el.hidden = !g;
-      if (g) el.innerHTML = `<span>${g.name}</span><b>${sign}${g.seconds.toFixed(1)}</b>`;
-    };
-    gap(-1, $('#rh-ahead'), '+');
-    gap(1, $('#rh-behind'), '-');
+    const going = r.state === 'racing' || r.state === 'finished';
+    const set = (el, text) => { if (el.textContent !== text) el.textContent = text; };
+    set(this.rh.querySelector('#rh-lap'), `${Math.min(p.lap + 1, r.laps)}/${r.laps}`);
+    set(this.rh.querySelector('#rh-time'), clock(going ? r.t - p.lapStart : 0));
+    set(this.rh.querySelector('#rh-best'), Number.isFinite(p.best) ? clock(p.best) : '--:--.-');
+    const fastest = Math.min(...r.cars.map((c) => c.best)), lead = r.order[0];
+    r.order.forEach((c, n) => {
+      const li = this.rowEls[n], [pos, mark, name, gap, last] = li.children;
+      const m = this.moved.get(c) || { at: c.place, dir: 0, left: 0 };
+      if (going && c.place !== m.at) { m.dir = c.place < m.at ? 1 : -1; m.left = 4; }
+      m.at = c.place;
+      m.left -= 0.1;
+      this.moved.set(c, m);
+      li.className = `${c.isPlayer ? 'me' : ''}${c.rival ? ' rival' : ''}`;
+      set(pos, String(c.place));
+      mark.className = `m${m.left > 0 ? (m.dir > 0 ? ' up' : ' down') : ''}`;
+      set(name, c.name);
+      set(gap, n === 0 ? 'Leader' : c.done ? 'Finished' : `+${((lead.covered - c.covered) / Math.max(12, c.vehicle.speed)).toFixed(1)}`);
+      const lap = c.lapTimes[c.lapTimes.length - 1];
+      set(last, lap ? clock(lap) : '');
+      last.classList.toggle('fast', !!lap && c.best === fastest);
+    });
+  }
+
+  drawTrial(dt) {
+    const t = this.trial, $ = (id) => this.tt.querySelector(id);
+    this.tick -= dt;
+    if (this.tick > 0) return;
+    this.tick = 0.1;
+    $('#tt-time').textContent = clock(t.t);
+    $('#tt-last').textContent = t.last ? clock(t.last) : '--:--.-';
+    $('#tt-best').textContent = Number.isFinite(t.best) ? clock(t.best) : '--:--.-';
+    const d = $('#tt-delta'), ok = t.running && t.delta !== null && t.t > 1;
+    d.textContent = ok ? `${t.delta > 0 ? '+' : '-'}${Math.abs(t.delta).toFixed(1)}` : t.clean ? '' : 'Lap not counted';
+    d.className = `tt-delta${ok ? (t.delta > 0 ? ' behind' : ' ahead') : ''}`;
+    $('#tt-new').hidden = t.newBest <= 0;
   }
 
   show(on) { this.el.hidden = !on; }
@@ -81,10 +124,18 @@ export class Hud {
     this.debugEl.hidden = !this.debugOn;
   }
 
-  // A new track: draw its outline once, at a fixed zoom (about 270 m across
-  // the map), so each frame only needs to show the part round the car.
+  // How many metres the map shows, top to bottom (Settings > Map zoom).
+  setMapRange(metres) {
+    if (metres === this.mapRange) return;
+    this.mapRange = metres;
+    if (this.mapPath) this.setTrack(...this.mapPath);
+  }
+
+  // A new track: draw its outline once, at a fixed zoom, so each frame only
+  // needs to show the part round the car.
   setTrack(path, start) {
-    const pad = 80, K = 0.55; // px per metre
+    this.mapPath = [path, start];
+    const pad = 80, K = this.map.height / this.mapRange; // px per metre
     let x0 = Infinity, x1 = -Infinity, z0 = Infinity, z1 = -Infinity;
     for (let i = 0; i < path.count; i++) { x0 = Math.min(x0, path.x[i]); x1 = Math.max(x1, path.x[i]); z0 = Math.min(z0, path.z[i]); z1 = Math.max(z1, path.z[i]); }
     const k = Math.min(K, 4000 / Math.max(x1 - x0, z1 - z0, 1));
@@ -99,9 +150,8 @@ export class Hud {
       for (let i = 0; i <= path.count; i += 2) { const [x, y] = this.toMap(path.x[i % path.count], path.z[i % path.count]); if (i === 0) g.moveTo(x, y); else g.lineTo(x, y); }
       g.closePath();
     };
-    g.strokeStyle = '#004848'; g.lineWidth = 9; trace(); g.stroke();
-    g.strokeStyle = '#c0c0c0'; g.lineWidth = 6; trace(); g.stroke();
-    g.strokeStyle = '#ffffff'; g.lineWidth = 2; trace(); g.stroke();
+    g.strokeStyle = '#004848'; g.lineWidth = 7; trace(); g.stroke();
+    g.strokeStyle = '#ffffff'; g.lineWidth = 4; trace(); g.stroke();
     // The start line.
     const [sx, sy] = this.toMap(path.x[start], path.z[start]);
     g.fillStyle = '#fff'; g.fillRect(Math.round(sx) - 4, Math.round(sy) - 4, 8, 8);
@@ -116,14 +166,14 @@ export class Hud {
     g.fillStyle = 'rgba(0, 128, 128, 0.82)'; g.fillRect(0, 0, W, H);
     const [x, y] = this.toMap(v.x, v.z);
     g.save();
-    g.translate(W / 2, H * 0.62); // the car sits low, so more of the road ahead shows
+    g.translate(W / 2, H * 0.72); // the car sits low, so most of the map is the road ahead
     g.save();
     g.rotate(v.heading);
     g.drawImage(this.outline, -x, -y);
     g.restore();
     g.beginPath(); g.moveTo(0, -7); g.lineTo(5.5, 6); g.lineTo(0, 3); g.lineTo(-5.5, 6); g.closePath();
     g.lineWidth = 2; g.strokeStyle = '#1e0010'; g.stroke();
-    g.fillStyle = PINK; g.fill();
+    g.fillStyle = AMBER; g.fill();
     // Rivals, turned with the map. Max is yellow.
     if (this.race) {
       const c = Math.cos(v.heading), n = Math.sin(v.heading);
@@ -142,6 +192,7 @@ export class Hud {
   draw(v, dt) {
     this.drawMap(v);
     if (this.race) this.drawRace(dt);
+    if (this.trial) this.drawTrial(dt);
     const g = this.g, W = this.canvas.width, H = this.canvas.height;
     const s = v.spec;
     g.clearRect(0, 0, W, H);

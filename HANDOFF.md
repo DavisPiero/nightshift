@@ -1,15 +1,22 @@
-# Hand-off: end of session 15 (2026-10-31)
+# Hand-off: end of session 16 (2026-11-01)
 
 ## Repo state
 - On `main`, everything committed and pushed; no other branches. `main` is the live site. Next work goes on a new branch; merge only when David signs off (he says "push" for merge everything and push).
 
 ## Read first
-`CLAUDE.md`, `STATE.md`, the last 15 lines of `DECISIONS.md`.
+`CLAUDE.md`, `STATE.md`, the last 15 lines of `DECISIONS.md` (they include David's answers for Part 3).
 
 ## What comes next
-1. Ask David the questions in STATE.md, starting with the GT3 and Formula cars.
-2. If he brings notes from playing, or from watching Arlo, use `/notes` first.
-3. Tune difficulty by people playing, not the bench.
+1. Ask David how Part 1 drives, and if he has Arlo's reaction.
+2. Part 2, the UI rework, then Part 3, story, phone and laptop. Both are in the plan of session 16; the briefs are his notes, kept in `STATE.md` under Next.
+3. Use `/notes` for any new notes.
+
+## How the racing works
+- `Race.step`: slipstream, drivers, walls, then `knocks()` (`physics/knocks.js`). Drivers think every 0.1 to 0.24 s (`AIDriver.think`) and steer to `plan`, an offset across the road.
+- A style is a line in `STYLES` in `ai-driver.js`; `pickField` hands them out.
+- Set difficulty on `tools/ai-bench.mjs`: the hunter table at the end is the number to watch.
+- `raceSetup.mode` is 'race', 'trial' or 'practice'. A Time Trial is `this.trial` in `main.js`, with no `Race`.
+- Speed effects read `speedRush` in `cameras.js`; the audio has its own `roar` from speed.
 
 ## How the career works
 - `src/career/career.js` has the events, levels and pay; `node tools/career-bench.mjs` proves them and checks every event fits its track.

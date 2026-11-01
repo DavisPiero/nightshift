@@ -197,12 +197,12 @@ export function buildUnderground(track, def) {
   board(def.start + 8, 0, 6.4, 1.2, Tex.ledBoard('スタート  START', 128, 24), 5.9);
   // Direction boards before the chicane and the junction loop.
   const signAt = [
-    [980, Tex.roadSign([['新宿  中央環状', 15], ['SHINJUKU', 11], ['↑ C2', 12]], '#1d4f9a')],
-    [1450, Tex.roadSign([['出口  EXIT', 16], ['渋谷  SHIBUYA', 12], ['500m', 11]], '#16774a')],
-    [2150, Tex.roadSign([['湾岸線  WANGAN', 14], ['羽田  HANEDA', 12], ['↑', 12]], '#1d4f9a')],
+    [1000, Tex.roadSign([['新宿  中央環状', 15], ['SHINJUKU', 11], ['↑ C2', 12]], '#1d4f9a')],
+    [1250, Tex.roadSign([['出口  EXIT', 16], ['渋谷  SHIBUYA', 12], ['500m', 11]], '#16774a')],
+    [340, Tex.roadSign([['湾岸線  WANGAN', 14], ['羽田  HANEDA', 12], ['↑', 12]], '#1d4f9a')],
   ];
   for (const [k, map] of signAt) if (k < track.count) board(k, -laneW * 0.5, 4.6, 1.7, map);
-  board(Math.min(track.count - 1, 1800), 0, 4.8, 0.9, Tex.ledBoard('速度注意  事故多発'), 5.8);
+  board(760, 0, 4.8, 0.9, Tex.ledBoard('速度注意  事故多発'), 5.8);
 
   // Jet fans in pairs under the crown of the roof.
   for (let k = 120; k < track.count; k += 170) {

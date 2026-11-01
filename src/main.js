@@ -13,7 +13,8 @@ import { Vehicle } from './physics/vehicle.js';
 import { keepOnTrack } from './physics/walls.js';
 import { RacingLine } from './race/racing-line.js';
 import { Race } from './race/race.js';
-import { RaceView } from './race/race-view.js';
+import { RaceView, GhostView } from './race/race-view.js';
+import { TimeTrial } from './race/ghost.js';
 import { pickField, makeDriver } from './race/opponents.js';
 import { getDifficulty } from './race/difficulty.js';
 import { AIDriver } from './race/ai-driver.js';
@@ -21,7 +22,7 @@ import { applyWeather, WEATHER } from './physics/weather.js';
 import { getCar } from './vehicles/cars.js';
 import { buildSpec } from './vehicles/tuning.js';
 import { carStats } from './vehicles/stats.js';
-import { CAMERA_FEEL } from './cameras/cameras.js';
+import { CAMERA_FEEL, speedRush } from './cameras/cameras.js';
 import { FeelPanel } from './ui/feel-panel.js';
 import { GamepadSource } from './input/gamepad.js';
 import { buildCar } from './vehicles/car-model.js';
@@ -95,6 +96,7 @@ class Game {
     // Systems
     this.effects = new Effects(this.scene);
     this.raceView = new RaceView(this.scene);
+    this.ghost = new GhostView(this.scene);
     this.lines = {}; // racing lines, worked out once per track
     this.audio = new GameAudio();
     this.audio.setEngine(this.carSpec);
@@ -133,7 +135,7 @@ class Game {
     const forced = URL_FLAGS.device === 'computer' || URL_FLAGS.device === 'touch' ? URL_FLAGS.device : null;
     if (forced || URL_FLAGS.smoke) {
       this.save.platform = forced || this.save.platform || 'computer';
-      this.startRace({ track: this.trackInfo.id, weather: WEATHER[URL_FLAGS.weather] ? URL_FLAGS.weather : 'clear', car: this.carSpec.id, rivals: URL_FLAGS.race ? 7 : 0, laps: 3, difficulty: URL_FLAGS.difficulty || 'normal' });
+      this.startRace({ track: this.trackInfo.id, weather: WEATHER[URL_FLAGS.weather] ? URL_FLAGS.weather : 'clear', car: this.carSpec.id, mode: URL_FLAGS.mode || 'race', rivals: URL_FLAGS.race ? 7 : 0, laps: 3, difficulty: URL_FLAGS.difficulty || 'normal' });
     } else if (URL_FLAGS.screen) {
       this.save.platform = this.save.platform || 'computer';
       this.screens.reset('main');
@@ -274,6 +276,7 @@ class Game {
     this.touch.setSettings(s.touch);
     this.touch.setManual(s.transmission === 'manual');
     this.hud.units = s.units;
+    this.hud.setMapRange(s.mapRange);
     this.cameras.configure({ distance: s.chaseDistance, fov: s.fov, shake: s.shake });
     if (this.cameras.mode !== s.camera) this.cameras.set(s.camera, this.carRef());
     this.applyAudio();
@@ -356,10 +359,11 @@ class Game {
   // --- driving ---
   // held: a loading screen is up, so set everything up but hold the car
   // still until go().
-  // rivals: how many AI cars (none is free driving). event: the career event
-  // this race belongs to, if any.
-  startRace({ track, weather, car, time = this.timeId, laps = 3, difficulty = 'normal', rivals = 0, event = null, pi = 0 }, held = false) {
-    if (!event) this.save.lastRace = { track, weather, time, laps, difficulty, rivals };
+  // mode: 'race', 'trial' or 'practice'. rivals: how many AI cars (none is free
+  // driving). event: the career event this race belongs to, if any.
+  startRace({ track, weather, car, mode = 'race', time = this.timeId, laps = 3, difficulty = 'normal', rivals = 0, event = null, pi = 0 }, held = false) {
+    if (mode !== 'race') rivals = 0;
+    if (!event) this.save.lastRace = { ...this.save.lastRace, track, weather, time, mode, ...(mode === 'race' ? { laps, difficulty, rivals } : {}) };
     this.save.garage.selected = car;
     this.saveNow();
     this.loadTrack(track);
@@ -377,7 +381,7 @@ class Game {
     this.hud.setTouch(this.save.platform === 'touch');
     this.hud.setTrack(this.track, this.trackInfo.def.start);
     this.touch.show(this.save.platform === 'touch');
-    this.raceSetup = { track, laps, difficulty, rivals, event, pi: pi || this.currentRating().pi, seed: 1 + Math.floor(Math.random() * 1e6) };
+    this.raceSetup = { track, mode, laps, difficulty, rivals, event, pi: pi || this.currentRating().pi, seed: 1 + Math.floor(Math.random() * 1e6) };
     this.restartCar();
     this.audio.resume();
     if (!held) this.go();
@@ -396,6 +400,10 @@ class Game {
     this.raceView.clear();
     this.finishClock = 0;
     this.hud.setRace(null);
+    this.trial = null;
+    this.ghost.clear();
+    this.hud.setTrial(null);
+    if (r?.mode === 'trial') this.buildTrial();
     if (!r?.rivals) return;
     const d = getDifficulty(r.difficulty), grip = WEATHER[this.weatherId].grip;
     const line = this.lines[r.track] ??= new RacingLine(this.track);
@@ -413,6 +421,21 @@ class Game {
     this.hud.setRace(this.race);
   }
 
+  // A Time Trial: start on a short run-up to the line, with the ghost of the
+  // best lap of this track and car, if there is one.
+  buildTrial() {
+    const key = `${this.trackInfo.id}:${this.carSpec.id}`;
+    this.trial = new TimeTrial(this.track, this.trackInfo.def.start, this.save.bestLaps[key], (lap) => {
+      this.save.bestLaps[key] = lap;
+      this.saveNow();
+      this.audio.ui('cash');
+    });
+    this.trial.begin();
+    this.resetCar(this.trial.grid);
+    this.ghost.setup(this.vehicle.spec, carLook(this.save, this.carSpec));
+    this.hud.setTrial(this.trial);
+  }
+
   restartCar() {
     this.controls.releaseAll();
     this.resetCar(this.trackInfo.def.start);
@@ -425,6 +448,7 @@ class Game {
   backOnTrack() {
     if (this.race) { this.race.recover(this.race.player); this.trackIndex = this.race.player.index; }
     else this.resetCar(this.trackIndex);
+    this.trial?.spoil();
     this.cameras.set(this.cameras.mode, this.carRef());
   }
 
@@ -501,6 +525,7 @@ class Game {
         this.patch = this.weatherId === 'clear' ? 0 : this.track.patchAt(this.trackIndex);
         applyWeather(this.vehicle, this.weatherId, this.patch);
         this.onHit(r);
+        this.trial?.step(dt, this.vehicle, r.index);
       }
     } else if (this.state === 'results' && this.race) {
       this.race.step(dt); // the cars carry on behind the results
@@ -529,7 +554,11 @@ class Game {
     this.lastOffset = p.offset;
     this.patch = this.weatherId === 'clear' ? 0 : this.track.patchAt(p.index);
     if (race.playerHit) this.onHit(race.playerHit);
-    if (race.playerKnock > 1) { this.audio.impact(race.playerKnock); this.cameras.bump(race.playerKnock); }
+    if (race.playerKnock > 1) {
+      this.audio.impact(race.playerKnock + 2); // a light tap still makes a noise
+      this.effects.hit(race.playerContact, race.playerKnock + 1, this.vehicle);
+      this.cameras.bump(race.playerKnock + 2);
+    }
     if (race.lights !== was && race.state === 'countdown' && race.lights <= 3) this.audio.ui('count');
     if (was > 0 && race.state === 'racing') this.audio.ui('go');
     if (race.state === 'finished' && !this.finishClock) { this.finishClock = 2.6; this.audio.ui('flag'); }
@@ -575,6 +604,7 @@ class Game {
       root.position.set(v.x, 0, v.z);
       root.rotation.y = v.heading;
     }
+    this.shakeBody(dt);
     this.model.update(v, dt);
     if (this.bounce) {
       const b = this.bounce;
@@ -605,6 +635,7 @@ class Game {
       this.hud.draw(v, dt);
     }
     this.raceView.update(this.state === 'paused' ? 0 : dt);
+    if (this.trial) this.ghost.update(this.trial.pose());
     const live = this.state === 'paused' ? 0 : dt;
     // The paint reflects what is round the car (redone every other frame).
     root.updateMatrixWorld();
@@ -618,9 +649,10 @@ class Game {
     }
     this.placeGlare(garage);
     const fxs = this.save.settings.effects;
-    // Speed blur starts at 140 km/h, is full at 280, and never gets heavy.
-    const fast = Math.max(0, Math.min(1, (v.speed * 3.6 - 140) / 140));
-    const blur = fxs.motionBlur === false || garage || this.state !== 'driving' ? 0 : fast ** 1.5 * 0.6;
+    // Speed blur starts at 80 km/h and is full at 180 (Arlo's notes: 160 in the
+    // Subaro should feel fast).
+    const fast = Math.max(0, Math.min(1, (v.speed * 3.6 - 80) / 100));
+    const blur = fxs.motionBlur === false || garage || this.state !== 'driving' ? 0 : fast ** 1.3 * 0.72 * CAMERA_FEEL.rush;
     this.renderer.setLens({ blur, aberration: fxs.lens, bloom: fxs.bloom !== false, dirt: fxs.lensDirt !== false, cabin: this.cameras.mode === 'cockpit' ? this.model.root : null, soft: garage ? 0.25 : 1 });
     this.renderer.render(scene, this.camera);
 
@@ -634,6 +666,17 @@ class Game {
       });
     }
     if (this.smoke) this.smoke.frame(this);
+  }
+
+  // The body shakes a little at speed, harder on the throttle. Looks only: the
+  // physics never sees it.
+  shakeBody(dt) {
+    const v = this.vehicle, r = this.model.rumble;
+    this.rumbleT = (this.rumbleT || 0) + dt;
+    const k = this.state === 'driving' && this.save.settings.shake ? speedRush(v.speed) ** 2 * (0.55 + 0.45 * v.throttle) : 0;
+    const t = this.rumbleT;
+    r.pitch = k * 0.0045 * (Math.sin(t * 43) + Math.sin(t * 27.1) * 0.7);
+    r.roll = k * 0.0055 * (Math.sin(t * 37.7) + Math.sin(t * 19.3) * 0.7);
   }
 
   // Which camera spot the garage scene uses: the car pick, or the garage's
@@ -757,12 +800,16 @@ class SmokeTest {
     if (this.done || (this.t < 20 && this.frames < 4000)) return;
     this.done = true;
     const touchOk = game.save.platform !== 'touch' || (!document.querySelector('#touch').hidden && document.querySelectorAll('#touch .tc').length >= 5);
-    const ok = this.maxKmh > 80 && this.travelled > 300 && this.frames > 30 && touchOk;
+    // The bot drives to the grip, and corner speed goes with its square root.
+    const need = 80 * Math.sqrt(WEATHER[game.weatherId].grip);
+    // A race loses 3 s to the lights, and this bot bumps its way through traffic.
+    const far = game.race ? 200 : 300;
+    const ok = this.maxKmh > need && this.travelled > far && this.frames > 30 && touchOk;
     const out = document.createElement('pre');
     out.id = 'smoke';
     out.textContent = [
       `frames ${this.frames}, sim time ${this.t.toFixed(1)} s, platform ${game.save.platform}, ${game.trackInfo.name}, weather ${game.weatherId}, time ${game.timeId}`,
-      `top speed ${this.maxKmh.toFixed(0)} km/h, distance ${this.travelled} m, gear ${game.vehicle.gearbox.gear}`,
+      `top speed ${this.maxKmh.toFixed(0)} km/h (needs ${need.toFixed(0)}), distance ${this.travelled} m (needs ${far}), gear ${game.vehicle.gearbox.gear}`,
       `render ${game.renderer.width}x${game.renderer.height} (${game.graphicsName}), draw calls ${game.renderer.gl.info.render.calls}`,
       game.save.platform === 'touch' ? `touch controls ${touchOk ? 'shown' : 'MISSING'}` : 'keyboard',
       ok ? 'SMOKE PASS' : 'SMOKE FAIL',

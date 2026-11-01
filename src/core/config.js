@@ -42,6 +42,7 @@ export const DEFAULT_EFFECTS = {
 // skips the menus and drives straight away, ?weather=rain|fog picks the
 // weather, ?time=sunset|night|dawn the time of day, ?track=underground picks the track, ?car=<id> the car,
 // ?race races seven AI cars (with ?device), &difficulty=easy|normal|hard|impossible,
+// ?mode=trial|practice picks the session (with ?device),
 // ?screen=tracks|setup|garage|shop|career opens a menu screen, ?library opens the asset
 // library (&asset=<id> picks one, &worklight lights it up), ?smoke runs the automatic
 // load-and-drive check and ?shot runs the loop on a timer for headless
@@ -54,6 +55,7 @@ export const URL_FLAGS = {
   time: params.get('time'),
   smoke: params.has('smoke'),
   race: params.has('race'),
+  mode: params.get('mode'),
   difficulty: params.get('difficulty'),
   debug: params.has('debug'),
   track: params.get('track'),

@@ -14,6 +14,8 @@ import { CHALLENJER_SRT8, COUNTACH_QV, CARS } from '../src/vehicles/cars.js';
 import { UNDERGROUND_TRACK } from '../src/world/underground.js';
 import { PARABOLICA_TRACK } from '../src/world/parabolica.js';
 import { carStats } from '../src/vehicles/stats.js';
+import { knock } from '../src/physics/knocks.js';
+import { buildSpec } from '../src/vehicles/tuning.js';
 
 const DT = 1 / 120;
 const NO_ASSISTS = { steering: false, stability: false, drift: false };
@@ -339,6 +341,30 @@ console.log('Walls');
     check(first >= 0, 'the grind test should reach the wall');
     check(share < 0.5, 'a car steered into the wall should bounce off, not grind along it');
   }
+}
+
+// Two cars touching: a knock costs little, the car in front gets the push, and
+// they come apart (Arlo: "rear ending absolutely cuts your speed in half").
+console.log('Car to car');
+{
+  const spec = buildSpec(CARS[0]);
+  const put = (x, z, h, speed) => { const v = new Vehicle(spec); v.reset(x, z, h); v.vx = Math.sin(h) * speed; v.vz = Math.cos(h) * speed; v.gearbox.gear = 4; return v; };
+  const run = (name, a, b, keep) => {
+    const start = a.speed;
+    let low = start, stuck = 0;
+    for (let t = 0; t < 1.5; t += DT) {
+      a.step(DT, controls({ throttle: 1 })); b.step(DT, controls({ throttle: 1 }));
+      stuck = knock(a, b) ? stuck + DT : stuck;
+      low = Math.min(low, a.speed);
+    }
+    console.log(`  ${name}: keeps ${(low / start * 100).toFixed(0)}% of its speed, the other car ends at ${kmh(b).toFixed(0)} km/h, in contact ${stuck.toFixed(2)} s`);
+    check(low / start > keep, `${name} should keep over ${keep * 100}% of its speed`);
+    check(stuck < 0.5, `${name}: the cars should come apart`);
+  };
+  run('rear end, 15 km/h quicker', put(0, 0, 0, 44), put(0, 5.5, 0, 40), 0.9);
+  run('rear end, 40 km/h quicker', put(0, 0, 0, 44), put(0, 5.5, 0, 33), 0.8);
+  run('side rub at 5 degrees', put(0, 0, 0.09, 44), put(1.6, 0, 0, 44), 0.95);
+  run('side swipe at 15 degrees', put(0, 0, 0.26, 44), put(2, 1, 0, 40), 0.9);
 }
 
 console.log(failed ? `BENCH FAIL (${failed})` : 'BENCH PASS');

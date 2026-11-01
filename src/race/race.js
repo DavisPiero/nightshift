@@ -12,6 +12,7 @@
 
 import { keepOnTrack } from '../physics/walls.js';
 import { applyWeather } from '../physics/weather.js';
+import { knock } from '../physics/knocks.js';
 
 export const COUNTDOWN = 3; // seconds of lights before the start
 
@@ -27,6 +28,7 @@ export class Race {
     this.player = this.cars.find((c) => c.isPlayer) || null;
     this.playerHit = null;    // the player's last wall hit, for sparks and sound
     this.playerKnock = 0;     // the hardest knock from another car this step
+    this.playerContact = null; // where it was, for sparks
     this.wrongWay = 0;        // seconds the player has been going the wrong way
     this.state = 'grid';
     this.t = 0;          // race clock, from the green light
@@ -57,7 +59,7 @@ export class Race {
   // One physics step. playerControls: the player's control state (or none).
   step(dt, playerControls) {
     const held = this.state === 'grid' || this.state === 'countdown';
-    this.playerHit = null; this.playerKnock = 0;
+    this.playerHit = null; this.playerKnock = 0; this.playerContact = null;
     if (this.state === 'countdown') {
       this.clock -= dt;
       if (this.clock <= 0) { this.state = 'racing'; this.t = 0; for (const c of this.cars) c.lapStart = 0; }
@@ -72,12 +74,14 @@ export class Race {
       c.driver.catchUp = 1 + d * (d > 0 ? this.band.push : this.band.slow);
     }
     const others = this.cars.map((c) => ({ x: c.vehicle.x, z: c.vehicle.z, speed: c.vehicle.speed, index: c.index, offset: c.offset }));
+    this.slipstream(others);
     this.cars.forEach((c, n) => {
       const v = c.vehicle;
       let ctl;
       if (c.driver) ctl = c.driver.drive(v, c, others.filter((_, m) => m !== n), dt);
       else ctl = playerControls || { steer: 0, throttle: 0, brake: 0, handbrake: false };
       if (held) ctl = { ...ctl, steer: 0, throttle: 0, brake: 0.4 }; // held on the line (a harder brake would select reverse)
+      else if (c.driver && !c.done && this.t < c.driver.launch) ctl = { ...ctl, steer: 0, throttle: 0, brake: 0 }; // still reacting to the lights
       if (c.done && c.driver) c.driver.catchUp = 0.6; // a cool-down lap after the flag
       v.step(dt, ctl);
       const r = keepOnTrack(v, this.track, c.index);
@@ -96,6 +100,23 @@ export class Race {
     }
     this.knocks();
     this.rank();
+  }
+
+  // Tucked in behind another car the air is easier: less drag the closer you
+  // are, up to 30 m back. The player gets it too.
+  slipstream(all) {
+    const n = this.track.count;
+    this.cars.forEach((c, k) => {
+      let best = 0;
+      all.forEach((o, m) => {
+        if (m === k) return;
+        let gap = o.index - c.index;
+        if (gap < 0) gap += n;
+        if (gap > 30 || Math.abs(o.offset - c.offset) > 1.5 || o.speed < 15) return;
+        best = Math.max(best, 1 - gap / 30);
+      });
+      c.vehicle.draft = best;
+    });
   }
 
   // Track how far round each car is, and count laps at the start line.
@@ -121,24 +142,19 @@ export class Race {
     }
   }
 
-  // Cars that touch push each other apart, like a knock off a wall but
-  // shared between the two (circles about a car's width; enough for a
-  // casual game, no damage).
+  // Cars that touch share the knock (physics/knocks.js). A car's own wall
+  // check runs again afterwards, in case the knock pushed it through a wall.
   knocks() {
     const cs = this.cars;
     for (let a = 0; a < cs.length; a++) for (let b = a + 1; b < cs.length; b++) {
       const va = cs[a].vehicle, vb = cs[b].vehicle;
-      const dx = vb.x - va.x, dz = vb.z - va.z, d = Math.hypot(dx, dz);
-      const reach = (va.spec.halfWidth + vb.spec.halfWidth) * 1.05;
-      if (d >= reach || d < 1e-3) continue;
-      // Only when they really overlap end to end too (cars are long).
-      const fa = Math.abs(dx * Math.sin(va.heading) + dz * Math.cos(va.heading));
-      if (fa > va.spec.halfLength + vb.spec.halfLength * 0.6) continue;
-      const nx = dx / d, nz = dz / d, depth = (reach - d) / 2;
-      const ia = va.collide(-nx, -nz, depth, nx * va.spec.halfWidth, nz * va.spec.halfWidth);
-      const ib = vb.collide(nx, nz, depth, -nx * vb.spec.halfWidth, -nz * vb.spec.halfWidth);
-      if (cs[a].isPlayer) this.playerKnock = Math.max(this.playerKnock, ia);
-      if (cs[b].isPlayer) this.playerKnock = Math.max(this.playerKnock, ib);
+      if (Math.abs(vb.x - va.x) > 7 || Math.abs(vb.z - va.z) > 7) continue;
+      const hit = knock(va, vb);
+      if (!hit) continue;
+      if ((cs[a].isPlayer || cs[b].isPlayer) && hit.closing > this.playerKnock) {
+        this.playerKnock = hit.closing;
+        this.playerContact = hit;
+      }
     }
   }
 
@@ -156,14 +172,6 @@ export class Race {
     c.index = i; c.offset = o; c.resets++;
     if (c.driver) c.driver.stuck = 0;
     applyWeather(c.vehicle, this.weather);
-  }
-
-  // The car just ahead of or behind c, and the gap in seconds (roughly: the
-  // road between them at the speed c is going).
-  gap(c, step) {
-    const o = this.order[c.place - 1 + step];
-    if (!o) return null;
-    return { name: o.name, seconds: Math.abs(o.covered - c.covered) / Math.max(12, c.vehicle.speed) };
   }
 
   // For a results screen: place, name, total time, best lap. Anyone still on

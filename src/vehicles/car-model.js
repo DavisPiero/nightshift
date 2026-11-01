@@ -346,6 +346,7 @@ export function buildCar(spec, look = spec.paint, { simple = false } = {}) {
       for (const b of beams) b.visible = beamsOn && !on && lightsOn;
       if (dome) dome.intensity = on ? 1.4 : 0; // the little light in the roof
     },
+    rumble: { pitch: 0, roll: 0 }, // the body shaking at speed, set by the game; looks only
     update(v, dt = 0) {
       if (bay) {
         // The bonnet swings up on its hinge, easing in and out.
@@ -372,8 +373,8 @@ export function buildCar(spec, look = spec.paint, { simple = false } = {}) {
         w.spin.rotation.x = w.front ? v.frontWheelAngle : v.rearWheelAngle;
       }
       steeringWheel.rotation.z = -v.steerAngle * 6;
-      sway.rotation.x = v.pitch;
-      sway.rotation.z = v.roll;
+      sway.rotation.x = v.pitch + this.rumble.pitch;
+      sway.rotation.z = v.roll + this.rumble.roll;
       if (tach) {
         tach.rotation.z = 2.3 - (v.rpm / v.spec.limiterRpm) * 4.6;
         speedo.rotation.z = 2.3 - Math.min(1, Math.abs(v.speedForward) * 3.6 / 300) * 4.6;

@@ -20,6 +20,7 @@ export const FEEL = [
   { key: 'speedFov', label: 'Camera: speed widening', min: 0, max: 30, step: 1, camera: true },
   { key: 'gLag', label: 'Camera: pull on accel/brake', min: 0, max: 2, step: 0.05, camera: true },
   { key: 'shakeScale', label: 'Camera: shake', min: 0, max: 2, step: 0.05, camera: true },
+  { key: 'rush', label: 'Camera: speed feel', min: 0, max: 2, step: 0.05, camera: true },
 ];
 
 // base: a car from cars.js. feel: { key: value }.

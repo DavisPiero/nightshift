@@ -12,28 +12,45 @@ const _up = new THREE.Vector3();
 // Shared options from Settings (distance, fov, shake) and the Feel panel
 // (speedFov: extra degrees at speed, gLag: how much the camera trails the car
 // under acceleration and closes in under braking, shakeScale).
-export const CAMERA_FEEL = { speedFov: 16, gLag: 1, shakeScale: 1 };
+export const CAMERA_FEEL = { speedFov: 16, gLag: 1, shakeScale: 1, rush: 1 };
 const OPTIONS = { distance: 1, fov: 62, shake: true };
 
-// A little shake: road buzz that grows with speed, plus a kick on wall hits,
-// plus a jolt on each gear change: back into the seat on the way up, a nod
-// forward on the way down (a spring, so it settles by itself).
+// One number, 0 to 1 (times the Feel panel's Speed feel), for how fast it should
+// feel: nothing at 60 km/h, nearly everything by 160, so a slow car feels fast
+// too. Camera, shake, motion blur and body shake all read it.
+export function speedRush(speed) {
+  const k = Math.max(0, Math.min(1, (speed * 3.6 - 60) / 130));
+  return k * k * (3 - 2 * k) * CAMERA_FEEL.rush;
+}
+
+// The shake: a fine buzz and a slower weave that both grow with speed, a thump
+// now and then as if from the road, plus a kick on hits, plus a jolt on each
+// gear change: back into the seat on the way up, a nod forward on the way down
+// (a spring, so it settles by itself).
 class Shake {
-  constructor() { this.kick = 0; this.t = 0; this.jolt = 0; this.joltVel = 0; }
+  constructor() { this.kick = 0; this.t = 0; this.jolt = 0; this.joltVel = 0; this.thump = 0; this.nextThump = 1; }
   bump(impact) { this.kick = Math.min(1, this.kick + impact / 12); }
   shift(up) { this.joltVel += up ? 1.7 : -0.8; }
   step(dt) {
     this.joltVel += (-this.jolt * 90 - this.joltVel * 12) * dt;
     this.jolt += this.joltVel * dt;
   }
+  // Sideways, up and roll offsets.
   offset(v, dt, scale) {
     this.t += dt;
     this.kick = Math.max(0, this.kick - dt * 3);
-    if (!OPTIONS.shake) return [0, 0];
-    const buzz = (Math.min(1, v.speed / 70) ** 2 * 0.016 + v.rearSlide * 0.01 + this.kick * 0.09) * CAMERA_FEEL.shakeScale;
+    this.thump = Math.max(0, this.thump - dt * 7);
+    if (!OPTIONS.shake) return [0, 0, 0];
+    const rush = speedRush(v.speed);
+    this.nextThump -= dt;
+    if (this.nextThump <= 0) { this.nextThump = 0.35 + Math.random() * 1.1; this.thump = rush * rush * (0.4 + Math.random() * 0.6); }
+    const k = CAMERA_FEEL.shakeScale * scale, t = this.t;
+    const buzz = (rush * rush * 0.03 + v.rearSlide * 0.012 + this.kick * 0.12 + this.thump * 0.05) * k;
+    const weave = rush * rush * 0.018 * k;
     return [
-      (Math.sin(this.t * 37.1) + Math.sin(this.t * 23.3)) * 0.5 * buzz * scale,
-      (Math.sin(this.t * 41.7) + Math.sin(this.t * 29.9)) * 0.5 * buzz * scale,
+      (Math.sin(t * 37.1) + Math.sin(t * 23.3)) * 0.5 * buzz + Math.sin(t * 3.7) * weave,
+      (Math.sin(t * 41.7) + Math.sin(t * 29.9)) * 0.5 * buzz + Math.sin(t * 4.9 + 1) * weave * 0.7,
+      (Math.sin(t * 31.3) * buzz + Math.sin(t * 2.9) * weave) * 0.22,
     ];
   }
 }
@@ -63,27 +80,31 @@ class ChaseCamera {
     d = Math.atan2(Math.sin(d), Math.cos(d));
     this.yaw += snap ? d : d * damp(4.5, dt);
 
-    const speedK = Math.min(1, v.speed / 60);
+    const speedK = Math.min(1, v.speed / 60), rush = speedRush(v.speed);
     // Trail the car a little under power and close in under braking, so you
     // feel the shove and the stop. Eased, so it never jerks.
     const lagTarget = Math.max(-0.9, Math.min(0.9, v.aLong * 0.09)) * CAMERA_FEEL.gLag;
     this.lag = snap ? 0 : (this.lag ?? 0) + (lagTarget - (this.lag ?? 0)) * damp(3, dt);
-    const dist = (this.distance + speedK * 0.6 + this.lag + this.shake.jolt * 2.6) * OPTIONS.distance;
+    const dist = (this.distance + speedK * 0.6 + rush * 0.7 + this.lag + this.shake.jolt * 2.6) * OPTIONS.distance;
     const tx = v.x - Math.sin(this.yaw) * dist;
     const tz = v.z - Math.cos(this.yaw) * dist;
-    const ty = (this.height + speedK * 0.2) * (0.6 + 0.4 * OPTIONS.distance);
+    const ty = (this.height + speedK * 0.2 - rush * 0.35) * (0.6 + 0.4 * OPTIONS.distance); // down near the road at speed
     // Position follows the car exactly (the lag is in the yaw), so the car
     // stays the same size on screen at any speed.
     this.pos.x = tx;
     this.pos.z = tz;
     this.pos.y = snap ? ty : this.pos.y + (ty - this.pos.y) * damp(4, dt);
     const cam = car.camera;
-    const [sx, sy] = this.shake.offset(v, dt, 1);
+    const [sx, sy, roll] = this.shake.offset(v, dt, 1);
     cam.position.copy(this.pos);
+    cam.position.x += Math.cos(this.yaw) * sx;
+    cam.position.z -= Math.sin(this.yaw) * sx;
     cam.position.y += sy;
-    cam.lookAt(v.x + Math.sin(v.heading) * 2.5 + sx, 0.9, v.z + Math.cos(v.heading) * 2.5);
+    cam.up.set(0, 1, 0);
+    cam.lookAt(v.x + Math.sin(v.heading) * 2.5 + sx * 2, 0.9 + sy, v.z + Math.cos(v.heading) * 2.5);
+    cam.rotateZ(roll);
     // Wider view at speed, eased so it never jumps.
-    const fov = OPTIONS.fov + speedK * speedK * CAMERA_FEEL.speedFov;
+    const fov = OPTIONS.fov + speedK * speedK * CAMERA_FEEL.speedFov + rush * 8;
     this.fov += (fov - this.fov) * damp(2, dt);
     cam.fov = this.fov;
     cam.near = 0.1;
@@ -110,7 +131,7 @@ class CockpitCamera {
     const back = this.shake.jolt * 0.55;
     _v.x -= Math.sin(v.heading) * back; _v.z -= Math.cos(v.heading) * back;
     cam.position.copy(_v);
-    const [sx, sy] = this.shake.offset(v, dt, 0.35);
+    const [sx, sy, roll] = this.shake.offset(v, dt, 0.55);
     cam.position.y += sy;
     // Glance a little into the turn.
     const target = v.steerAngle * 0.35;
@@ -119,7 +140,8 @@ class CockpitCamera {
     _t.set(_v.x + Math.sin(yaw) * 10 + sx, _v.y - 0.75 + v.pitch * -1.5 + this.shake.jolt * 3, _v.z + Math.cos(yaw) * 10);
     cam.up.set(0, 1, 0).lerp(_up, 0.6).normalize();
     cam.lookAt(_t);
-    const fov = OPTIONS.fov + 12 + Math.min(1, v.speed / 60) * 6;
+    cam.rotateZ(roll);
+    const fov = OPTIONS.fov + 12 + Math.min(1, v.speed / 60) * 6 + speedRush(v.speed) * 5;
     this.fov += (fov - this.fov) * damp(2, dt);
     cam.fov = this.fov;
     cam.near = 0.04;

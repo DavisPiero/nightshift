@@ -21,6 +21,7 @@ export function defaultSave() {
       units: 'kmh',              // 'kmh' | 'mph'
       camera: 'chase',
       chaseDistance: 1,          // 0.8 near, 1 normal, 1.25 far
+      mapRange: 500,             // metres the map shows from top to bottom
       shake: true,
       // Graphics
       graphics: null,            // 'low' | 'medium' | 'high', null = Low
@@ -46,8 +47,8 @@ export function defaultSave() {
       tracks: ['starter'],       // tracks played, so open in Race
       seen: [],                  // story scenes already shown
     },
-    lastRace: { track: 'starter', weather: 'clear', time: 'night', laps: 3, difficulty: 'normal', rivals: 7 },
-    bestLaps: {},
+    lastRace: { track: 'starter', weather: 'clear', time: 'night', mode: 'race', laps: 3, difficulty: 'normal', rivals: 7 },
+    bestLaps: {},                // per 'track:car': the best Time Trial lap and its ghost
   };
 }
 

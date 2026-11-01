@@ -82,6 +82,7 @@ export class Vehicle {
     this.limiter = false;
     this.wallPivot = 0;       // yaw rate (rad/s) from leaning on a wall at low speed
     this.wallTimer = 0;
+    this.draft = 0;           // 0..1, how far into another car's slipstream (race.js)
     this.gearbox.gear = 1;
     this.gearbox.shiftTimer = 0;
   }
@@ -238,7 +239,7 @@ export class Vehicle {
     this.rearSlide = clamp(Math.max(Math.abs(alphaR) / s.slipPeak - 0.8, this.spin, c.handbrake && speed > 3 ? 0.7 : 0), 0, 1);
 
     // Air and rolling resistance.
-    const dragF = 0.5 * AIR * s.dragCoefficient * s.frontalArea * speed * speed + s.rollingResistance * s.mass * G * Math.min(1, speed);
+    const dragF = 0.5 * AIR * s.dragCoefficient * s.frontalArea * speed * speed * (1 - 0.3 * this.draft) + s.rollingResistance * s.mass * G * Math.min(1, speed);
     // Lift-off: with no pedal pressed a real car slows noticeably (engine,
     // drivetrain, tyres). Physics alone undersells it, so add a little more.
     const coasting = drive < 0.05 && brake < 0.05 && !c.handbrake;
