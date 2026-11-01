@@ -17,6 +17,7 @@ export function defaultSave() {
     notice: '',                  // the last update seen (ui/notice.js)
     updateMail: '',              // an update waiting in your inbox
     read: [],                    // mail you have opened (career/inbox.js)
+    binned: [],                  // mail you have deleted
     settings: {
       // Gameplay
       transmission: 'auto',

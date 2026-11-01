@@ -10,6 +10,7 @@
 // lets the player drag each control where they want it.
 
 import { pixelSvg } from '../graphics/pixel-art.js';
+import { NOS_SECONDS } from '../career/upgrades.js';
 
 export const DEFAULT_TOUCH = {
   size: 1,               // scale for every control
@@ -154,6 +155,15 @@ export class TouchSource {
   setSettings(settings) { this.settings = settings; this.place(); }
   setManual(on) { this.manual = on; this.place(); }
   setNos(on) { this.nos = on; this.place(); }
+  // The NOS button is its own gauge: the teal drains, and an empty button fades out.
+  setFuel(v) {
+    if (!this.nos) return;
+    const el = this.els.nos, left = v.nosLeft / NOS_SECONDS;
+    if (left === this.fuel) return;
+    this.fuel = left;
+    el.style.setProperty('--fuel', left);
+    el.classList.toggle('empty', left <= 0 && !this.editing);
+  }
   show(on) { this.root.hidden = !on; this.enabled = on; if (!on) this.releaseAll(); else this.place(); }
 
   // --- driving ---

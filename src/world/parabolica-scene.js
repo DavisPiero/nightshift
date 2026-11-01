@@ -63,7 +63,7 @@ export function buildParabolica(track, def) {
   group.add(park);
 
   // --- Road ---
-  const roadMat = new THREE.MeshPhongMaterial({ map: Tex.asphalt(), color: 0xe8e8ec, shininess: 0, specular: 0x000000 });
+  const roadMat = new THREE.MeshPhongMaterial({ ...Tex.road(W * 2), color: 0xe8e8ec, shininess: 0, specular: 0x000000 });
   const road = new THREE.Mesh(strip(track, -W, W, 0, { step: 1, uScale: 0.25, vScale: 0.25 }), roadMat);
   road.receiveShadow = true;
   group.add(road);

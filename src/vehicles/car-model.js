@@ -31,7 +31,7 @@ function beamGeometry(length, radius) {
   const p = g.attributes.position;
   for (let i = 0; i < p.count; i++) {
     const t = 1 - Math.min(1, p.getZ(i) / length);
-    const c = 0.045 * t * t; // faint: both faces add up, and the grade brightens darks
+    const c = 0.022 * t * t; // faint: both faces add up, and the grade brightens darks
     col.push(c, c * 0.95, c * 0.8);
   }
   g.setAttribute('color', new THREE.Float32BufferAttribute(col, 3));
@@ -271,7 +271,7 @@ export function buildCar(spec, look = spec.paint, { simple = false } = {}) {
   const beams = [];
   if (!simple) {
     const beamMat = new THREE.MeshBasicMaterial({ vertexColors: true, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide });
-    const beamGeo = beamGeometry(16, 2.6);
+    const beamGeo = beamGeometry(13, 1.7);
     for (const s of [1, -1]) {
       const b = new THREE.Mesh(beamGeo, beamMat);
       b.position.set(s * hx, hy, hz - 0.08);
@@ -282,13 +282,15 @@ export function buildCar(spec, look = spec.paint, { simple = false } = {}) {
     }
   }
 
-  // Headlight: a real spot light from the nose. Brake lights: a red light
+  // Headlights: one real spot light from the nose, its picture two pools of
+  // light with a clean top edge (Tex.headlightPattern). Brake lights: a red light
   // behind the car that washes the road when you brake.
   let lamp = null, brakeLamp = null;
   if (!simple) {
-    lamp = new THREE.SpotLight(0xfff0d0, 120, 70, 0.42, 0.55, 1.3);
-    lamp.position.set(0, 0.7, hz - 0.3);
-    lamp.target.position.set(0, -0.6, 22);
+    lamp = new THREE.SpotLight(0xfff4e4, 650, 90, 0.6, 0.15, 1.3);
+    lamp.map = Tex.headlightPattern();
+    lamp.position.set(0, 0.72, hz - 0.3);
+    lamp.target.position.set(0, -0.2, 22);
     root.add(lamp, lamp.target);
     brakeLamp = new THREE.PointLight(0xff2a14, 0, 7, 1.8);
     brakeLamp.position.set(0, ty, tz - 0.5);

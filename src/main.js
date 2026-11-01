@@ -44,6 +44,8 @@ import { Laptop } from './ui/laptop.js';
 import { showNotice } from './ui/notice.js';
 import { upgradedSpec, NOS_SECONDS } from './career/upgrades.js';
 
+const ARRIVE_ROLL = 3; // seconds rolling up to the grid; a moment's stop follows
+
 const _sun = new THREE.Vector3(), _dir = new THREE.Vector3();
 
 class Game {
@@ -405,10 +407,11 @@ class Game {
   }
 
   // --- before a career race: pull up to the grid (a few seconds, one press
-  // skips it), fade to your cockpit, the laptop, then the lights. ---
+  // skips it), a fade, the laptop, then the lights. ---
   arrive() {
     const p = this.race.player, t = this.track;
     this.state = 'arrive';
+    this.model.setBeams?.(false); // cones of light look like discs from in front
     this.hud.show(false);
     this.touch.show(false);
     this.arrival = { t: 0, x: this.vehicle.x, z: this.vehicle.z, heading: this.vehicle.heading, index: p.index, offset: p.offset };
@@ -418,30 +421,54 @@ class Game {
     this.arrival.cam = [t.x[i] + t.leftX(i) * out, t.z[i] + t.leftZ(i) * out];
   }
 
-  // The car rolls along the middle of the road and into its slot. The physics
-  // is not running: it is only put where the picture wants it.
+  // The car rolls along the middle of the road, eases over into its slot and
+  // pulls up on the brakes, the body dipping and settling, then the engine
+  // blips. The physics is not running: it is only put where the picture wants
+  // it. The camera is a person at the kerb: it follows a moment late and
+  // drifts a little in the hand.
   arriveFrame(dt) {
-    const a = this.arrival, v = this.vehicle, t = this.track;
+    const a = this.arrival, v = this.vehicle, t = this.track, s = v.spec;
     a.t += dt;
-    const k = Math.min(1, a.t / 3), left = 44 * (1 - k) ** 2.2;
+    const k = Math.min(1, a.t / ARRIVE_ROLL), left = 44 * (1 - k) ** 1.8;
     const at = a.index - left, j = t.wrap(Math.floor(at)), n = t.wrap(j + 1), f = at - Math.floor(at);
-    const o = a.offset * (1 - Math.min(1, left / 7)), was = [v.x, v.z];
-    const mix = (p, q) => p + (q - p) * f;
-    v.x = mix(t.x[j], t.x[n]) + t.leftX(j) * o; v.z = mix(t.z[j], t.z[n]) + t.leftZ(j) * o; v.heading = t.headingAt(j);
-    const moved = Math.hypot(v.x - was[0], v.z - was[1]);
+    const over = Math.max(0, Math.min(1, 1 - left / 16)), o = a.offset * over * over * (3 - 2 * over);
+    const was = [v.x, v.z], mix = (p, q) => p + (q - p) * f;
+    v.x = mix(t.x[j], t.x[n]) + t.leftX(j) * o; v.z = mix(t.z[j], t.z[n]) + t.leftZ(j) * o;
+    const moved = Math.hypot(v.x - was[0], v.z - was[1]), step = Math.max(dt, 1e-3), speed = moved / step;
+    // Points where it is going, and the front wheels turn to match.
+    const road = t.headingAt(j), aim = moved > 0.004 ? Math.atan2(v.x - was[0], v.z - was[1]) : road;
+    let turn = aim - v.heading;
+    turn = Math.atan2(Math.sin(turn), Math.cos(turn));
+    if (a.started) { v.heading += turn * (1 - Math.exp(-6 * dt)); v.steerAngle += (Math.max(-0.3, Math.min(0.3, turn * 3)) - v.steerAngle) * (1 - Math.exp(-8 * dt)); }
+    else { v.heading = aim; a.started = true; a.lookX = v.x; a.lookZ = v.z; a.speed = speed; }
+    v.vx = Math.sin(v.heading) * speed; v.vz = Math.cos(v.heading) * speed;
     v.frontWheelAngle += moved / 0.32; v.rearWheelAngle += moved / 0.32;
-    this.camera.position.set(a.cam[0], 1.05, a.cam[1]);
-    this.camera.lookAt(v.x, 0.75, v.z);
-    this.camera.fov = 46;
+    // The nose dips under the brakes and settles back, on the car's own springs.
+    v.aLong = (speed - a.speed) / step; a.speed = speed;
+    const lean = Math.max(-s.maxPitch, Math.min(s.maxPitch, -v.aLong * s.pitchScale * 1.6));
+    v.pitchVel += ((lean - v.pitch) * s.suspensionStiffness - v.pitchVel * s.suspensionDamping) * dt;
+    v.pitch += v.pitchVel * dt;
+    v.braking = v.aLong < -0.5 || (k >= 1 && a.t < ARRIVE_ROLL + 0.3) ? 1 : 0;
+    // The engine: falling with the car, then one blip of the throttle.
+    const blip = Math.max(0, Math.sin(Math.min(1, Math.max(0, (a.t - ARRIVE_ROLL - 0.15) / 0.4)) * Math.PI));
+    v.rpm = s.idleRpm + speed * 95 + blip * 2200;
+    v.throttle = Math.min(0.2, speed * 0.02) + blip * 0.55;
+    v.load = v.throttle;
+    const hand = (p, q) => Math.sin(a.t * p) + Math.sin(a.t * q + 1) * 0.5;
+    a.lookX += (v.x - a.lookX) * (1 - Math.exp(-5 * dt)); a.lookZ += (v.z - a.lookZ) * (1 - Math.exp(-5 * dt));
+    this.camera.position.set(a.cam[0] + hand(0.9, 2.1) * 0.012, 1.05 + hand(1.2, 2.6) * 0.012, a.cam[1] + hand(0.7, 1.9) * 0.012);
+    this.camera.lookAt(a.lookX, 0.75 + hand(1.1, 2.3) * 0.006, a.lookZ);
+    this.camera.fov = 48 - Math.min(1, a.t / (ARRIVE_ROLL + 0.8)) * 5;
     this.camera.near = 0.1;
     this.camera.updateProjectionMatrix();
-    if (k >= 1) this.endArrive();
+    if (a.t >= ARRIVE_ROLL + 0.8) { v.aLong = 0; v.throttle = 0; this.endArrive(); }
   }
 
   endArrive() {
     if (this.state !== 'arrive') return;
     const a = this.arrival, fade = document.querySelector('#fade');
     this.state = 'fading';
+    this.model.setBeams?.(this.save.settings.effects?.beams !== false);
     document.querySelector('#arrive-skip').hidden = true;
     fade.classList.add('on');
     setTimeout(() => {
@@ -451,12 +478,10 @@ class Game {
     }, 260);
   }
 
-  // The cockpit and the laptop. No changing camera until the lights go out.
-  // The camera you saved in Settings stays saved.
+  // The laptop, over whichever camera you had on last.
   prepare() {
     this.state = 'laptop';
-    this.cameraHeld = true;
-    this.cameras.set('cockpit', this.carRef());
+    this.cameras.set(this.cameras.mode, this.carRef());
     this.laptop.open(this.raceSetup.upgrades, () => this.lights());
   }
 
@@ -580,7 +605,6 @@ class Game {
 
   toMain(screen = 'main') {
     this.raceSetup = null;
-    this.cameraHeld = false;
     this.screens.reset('main');
     if (screen !== 'main') this.screens.open(screen);
     this.hud.show(false);
@@ -613,7 +637,7 @@ class Game {
     if (c.takeAction('feel')) this.feel.toggle();
     if (this.state === 'driving') {
       if (c.takeAction('pause')) { this.pauseGame(); return; }
-      if (c.takeAction('camera') && !this.cameraHeld) this.nextCamera();
+      if (c.takeAction('camera')) this.nextCamera();
       if (c.takeAction('reset')) this.backOnTrack();
       const input = this.smoke ? this.smoke.input(dt, this) : c.poll(dt);
       if (this.race) this.raceStep(dt, input);
@@ -661,7 +685,7 @@ class Game {
       this.cameras.bump(race.playerKnock + 2);
     }
     if (race.lights !== was && race.state === 'countdown' && race.lights <= 3) this.audio.ui('count');
-    if (was > 0 && race.state === 'racing') { this.audio.ui('go'); this.cameraHeld = false; }
+    if (was > 0 && race.state === 'racing') this.audio.ui('go');
     if (race.state === 'finished' && !this.finishClock) { this.finishClock = 2.6; this.audio.ui('flag'); }
     if (this.finishClock > 0 && (this.finishClock -= dt) <= 0 && !this.smoke) {
       this.state = 'results';
@@ -735,6 +759,7 @@ class Game {
       this.model.setInterior(this.cameras.mode === 'cockpit' && this.state !== 'arrive');
       this.audio.update(dt, v, this.weatherId, 1, this.weather.k);
       this.hud.draw(v, dt);
+      this.touch.setFuel(v);
     }
     this.stage.update(dt);
     this.raceView.update(this.state === 'paused' ? 0 : dt);
@@ -756,7 +781,7 @@ class Game {
     // Subaro should feel fast).
     const fast = Math.max(v.nosOn ? 0.75 : 0, Math.min(1, (v.speed * 3.6 - 80) / 100));
     const blur = fxs.motionBlur === false || garage || this.state !== 'driving' ? 0 : fast ** 1.3 * 0.72 * CAMERA_FEEL.rush;
-    this.renderer.setLens({ blur, aberration: fxs.lens, bloom: fxs.bloom !== false, dirt: fxs.lensDirt !== false, cabin: this.cameras.mode === 'cockpit' && this.state !== 'arrive' ? this.model.root : null, soft: garage ? 0.25 : 1 });
+    this.renderer.setLens({ blur, aberration: fxs.lens, bloom: fxs.bloom !== false, cabin: this.cameras.mode === 'cockpit' && this.state !== 'arrive' ? this.model.root : null, soft: garage ? 0.25 : 1 });
     this.renderer.render(scene, this.camera);
 
     if (this.hud.debugOn) {

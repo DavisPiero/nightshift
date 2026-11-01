@@ -26,11 +26,17 @@ export function speedRush(speed) {
 // The shake: a fine buzz and a slower weave that both grow with speed, a thump
 // now and then as if from the road, plus a kick on hits, plus a jolt on each
 // gear change: back into the seat on the way up, a nod forward on the way down
-// (a spring, so it settles by itself).
+// (a spring, so it settles by itself). NOS shoves you back and shakes everything.
 class Shake {
-  constructor() { this.kick = 0; this.t = 0; this.jolt = 0; this.joltVel = 0; this.thump = 0; this.nextThump = 1; }
+  constructor() { this.kick = 0; this.t = 0; this.jolt = 0; this.joltVel = 0; this.thump = 0; this.nextThump = 1; this.nos = 0; }
   bump(impact) { this.kick = Math.min(1, this.kick + impact / 12); }
   shift(up) { this.joltVel += up ? 1.7 : -0.8; }
+  // nos: 0..1 eased in and out, so it never jumps. Lighting it is a shove.
+  burn(on, dt) {
+    if (on && !this.burning) this.joltVel += 3.2;
+    this.burning = on;
+    this.nos += ((on ? 1 : 0) - this.nos) * damp(on ? 9 : 4, dt);
+  }
   step(dt) {
     this.joltVel += (-this.jolt * 90 - this.joltVel * 12) * dt;
     this.jolt += this.joltVel * dt;
@@ -45,7 +51,7 @@ class Shake {
     this.nextThump -= dt;
     if (this.nextThump <= 0) { this.nextThump = 0.35 + Math.random() * 1.1; this.thump = rush * rush * (0.4 + Math.random() * 0.6); }
     const k = CAMERA_FEEL.shakeScale * scale, t = this.t;
-    const buzz = (rush * rush * 0.03 + v.rearSlide * 0.012 + this.kick * 0.12 + this.thump * 0.05) * k;
+    const buzz = (rush * rush * 0.03 + v.rearSlide * 0.012 + this.kick * 0.12 + this.thump * 0.05 + this.nos * 0.05) * k;
     const weave = rush * rush * 0.018 * k;
     return [
       (Math.sin(t * 37.1) + Math.sin(t * 23.3)) * 0.5 * buzz + Math.sin(t * 3.7) * weave,
@@ -104,7 +110,7 @@ class ChaseCamera {
     cam.lookAt(v.x + Math.sin(v.heading) * 2.5 + sx * 2, 0.9 + sy, v.z + Math.cos(v.heading) * 2.5);
     cam.rotateZ(roll);
     // Wider view at speed, eased so it never jumps.
-    const fov = OPTIONS.fov + speedK * speedK * CAMERA_FEEL.speedFov + rush * 8;
+    const fov = OPTIONS.fov + speedK * speedK * CAMERA_FEEL.speedFov + rush * 8 + this.shake.nos * 9;
     this.fov += (fov - this.fov) * damp(2, dt);
     cam.fov = this.fov;
     cam.near = 0.1;
@@ -113,6 +119,8 @@ class ChaseCamera {
 
 // From the driver's seat. The eye rides with the body's height but not its
 // lean: the horizon stays level so the road is always easy to read.
+const SEAT_FORWARD = 0.28; // metres the eye sits ahead of the driver's head: top of the wheel, more road
+
 class CockpitCamera {
   constructor(shake) { this.look = 0; this.fov = 66; this.shake = shake; }
   snap(car) { this.look = 0; this.update(car, 1); }
@@ -128,7 +136,7 @@ class CockpitCamera {
     _v.copy(model.cockpitEye).applyMatrix4(model.body.matrixWorld);
     _up.set(0, 1, 0).transformDirection(model.body.matrixWorld);
     // A gear change pushes you back into the seat for a moment.
-    const back = this.shake.jolt * 0.55;
+    const back = this.shake.jolt * 0.55 - SEAT_FORWARD;
     _v.x -= Math.sin(v.heading) * back; _v.z -= Math.cos(v.heading) * back;
     cam.position.copy(_v);
     const [sx, sy, roll] = this.shake.offset(v, dt, 0.55);
@@ -137,11 +145,11 @@ class CockpitCamera {
     const target = v.steerAngle * 0.35;
     this.look += (target - this.look) * damp(4, dt);
     const yaw = v.heading + this.look;
-    _t.set(_v.x + Math.sin(yaw) * 10 + sx, _v.y - 0.75 + v.pitch * -1.5 + this.shake.jolt * 3, _v.z + Math.cos(yaw) * 10);
+    _t.set(_v.x + Math.sin(yaw) * 10 + sx, _v.y - 0.45 + v.pitch * -1.5 + this.shake.jolt * 3, _v.z + Math.cos(yaw) * 10);
     cam.up.set(0, 1, 0).lerp(_up, 0.6).normalize();
     cam.lookAt(_t);
     cam.rotateZ(roll);
-    const fov = OPTIONS.fov + 12 + Math.min(1, v.speed / 60) * 6 + speedRush(v.speed) * 5;
+    const fov = OPTIONS.fov + 6 + Math.min(1, v.speed / 60) * 6 + speedRush(v.speed) * 5 + this.shake.nos * 7;
     this.fov += (fov - this.fov) * damp(2, dt);
     cam.fov = this.fov;
     cam.near = 0.04;
@@ -178,6 +186,7 @@ export class CameraManager {
     const gb = car.vehicle.gearbox;
     if (this.shifts !== undefined && gb.shiftCount !== this.shifts && gb.gear > 0) this.shake.shift(gb.lastShift > 0);
     this.shifts = gb.shiftCount;
+    this.shake.burn(!!car.vehicle.nosOn, dt);
     this.shake.step(Math.min(dt, 0.05));
     this.cams[this.mode].update({ ...car, camera: this.camera }, dt);
     this.camera.updateProjectionMatrix();

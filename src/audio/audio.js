@@ -371,6 +371,16 @@ export class GameAudio {
     this.hissFilter = ctx.createBiquadFilter(); this.hissFilter.type = 'highpass'; this.hissFilter.frequency.value = 2500;
     this.hissGain = ctx.createGain(); this.hissGain.gain.value = 0;
     hs.connect(this.hissFilter).connect(this.hissGain).connect(this.fxBus);
+
+    // NOS: a deep growl pitched from the engine, and the rush of gas through it.
+    this.nosLow = ctx.createBiquadFilter(); this.nosLow.type = 'lowpass'; this.nosLow.frequency.value = 500; this.nosLow.Q.value = 1.4;
+    this.nosGain = ctx.createGain(); this.nosGain.gain.value = 0;
+    this.nosVoices = [0.5, 0.503, 1].map((m) => { const o = ctx.createOscillator(); o.type = 'sawtooth'; o.frequency.value = 60; o.connect(this.nosLow); o.start(); return { o, m }; });
+    const ns = ctx.createBufferSource(); ns.buffer = this.noise; ns.loop = true;
+    const nsBand = ctx.createBiquadFilter(); nsBand.type = 'bandpass'; nsBand.frequency.value = 340; nsBand.Q.value = 0.5;
+    ns.connect(nsBand).connect(this.nosLow);
+    ns.start();
+    this.nosLow.connect(this.nosGain).connect(this.fxBus);
     hs.start(0, 0.5);
 
     // Rain: a wash of filtered noise plus a patter of drops.
@@ -437,7 +447,7 @@ export class GameAudio {
     // How much speed there is to hear: nothing at 60 km/h, all of it by 170.
     const k = Math.max(0, Math.min(1, (v.speed * 3.6 - 60) / 110)), roar = k * k * (3 - 2 * k);
     this.engine.update(dt, {
-      roar, rpm: v.rpm, throttle: v.throttle, load: v.load,
+      roar: v.nosOn ? 1 : roar, rpm: v.rpm, throttle: v.throttle, load: v.load,
       redline: v.spec.redline, limiter: v.limiter,
       boost: v.boost, turbo: !!v.spec.turbo, whine: !!v.spec.whine, loud: v.spec.exhaustVolume ?? 1,
     });
@@ -450,7 +460,10 @@ export class GameAudio {
     const hardStop = v.brakeGrip > 0.85 && v.speed > 12 ? (v.brakeGrip - 0.85) * 4 : 0;
     const squeal = v.speed > 4 ? Math.min(1, Math.max(slide, hardStop)) * Math.min(1, v.speed / 15) : 0;
     this.squealGain.gain.setTargetAtTime(squeal * (wet ? 0.07 : 0.22) * level, t, 0.05);
-    this.hissGain.gain.setTargetAtTime(Math.max(wet ? Math.min(1, v.speed / 30) * 0.12 : 0, v.nosOn ? 0.3 : 0) * level, t, 0.1);
+    this.hissGain.gain.setTargetAtTime(Math.max(wet ? Math.min(1, v.speed / 30) * 0.12 : 0, v.nosOn ? 0.16 : 0) * level, t, 0.1);
+    for (const { o, m } of this.nosVoices) o.frequency.setTargetAtTime(Math.max(40, v.rpm / 30 * m), t, 0.03);
+    this.nosLow.frequency.setTargetAtTime(420 + v.rpm * 0.14, t, 0.05);
+    this.nosGain.gain.setTargetAtTime((v.nosOn ? 0.5 : 0) * level, t, v.nosOn ? 0.05 : 0.18);
     this.rainGain.gain.setTargetAtTime(raining ? 0.16 * (1 + patch * 0.8) : 0, t, 0.5);
     this.humGain.gain.setTargetAtTime(0.025, t, 0.5);
     if (raining && Math.random() < dt * 9 * (1 + patch)) this.drop();

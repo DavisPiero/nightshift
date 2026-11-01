@@ -96,7 +96,7 @@ export class WeatherView {
       if (!m.userData.dry) {
         m.userData.dry = { color: m.color.getHex(), map: m.map };
         // Snow texture repeated like the texture it covers (none: plain white).
-        if (m.map) { m.userData.snowMap = Tex.snow().clone(); m.userData.snowMap.repeat.copy(m.map.repeat); m.userData.snowMap.needsUpdate = true; }
+        if (m.map) { m.userData.snowMap = Tex.snow().clone(); if (m !== this.world.roadMat) m.userData.snowMap.repeat.copy(m.map.repeat); m.userData.snowMap.needsUpdate = true; }
       }
       const snowy = this.id === 'snow';
       m.color.setHex(snowy ? white : m.userData.dry.color);

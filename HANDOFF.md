@@ -1,4 +1,4 @@
-# Hand-off: end of session 17 (2026-11-01)
+# Hand-off: end of session 18 (2026-11-01)
 
 ## Repo state
 - On `main`, everything committed and pushed; no other branches. `main` is the live site. Next work goes on a new branch; merge only when David signs off (he says "push" for merge everything and push).
@@ -7,7 +7,7 @@
 `CLAUDE.md`, `STATE.md`, the last 20 lines of `DECISIONS.md`, then this file.
 
 ## What comes next
-Nothing is started. Arlo's notes are done. David's next call is what to do; GT3 is "not yet". Everything open is under "Open with David" in `STATE.md`.
+Part 2, then Part 3, of David's fourth notes: both are spelled out under "Next" in `STATE.md`, with his answers in the last lines of `DECISIONS.md`. He wants each part pushed when finished, without asking. Part 2 lays the existing shop and garage HTML over the laptop's screen with a CSS 3D transform that follows its corners; the race laptop stays drawn on its canvas.
 
 ## How the look works
 - Colours, fonts, spacing: the list at the top of `styles/main.css`. Canvas drawings repeat a few of those values (`ui/hud.js`, `ui/screens.js`, `input/touch.js`).
@@ -15,9 +15,12 @@ Nothing is started. Arlo's notes are done. David's next call is what to do; GT3 
 - New update: new `id` and lines in `ui/notice.js`; it arrives as mail.
 
 ## How Part 3 works
-- Career race: `raceLoad` -> `game.arrive()` -> `endArrive` -> `prepare` (the laptop) -> `lights` -> `go`. States `arrive`, `fading`, `laptop`; physics is not running in them. `cameraHeld` blocks camera changes until green.
+- Career race: `raceLoad` -> `game.arrive()` -> `endArrive` -> `prepare` (the laptop) -> `lights` -> `go`. States `arrive`, `fading`, `laptop`; physics is not running in them. The laptop keeps your last camera.
 - Upgrades: `raceSetup.upgrades`, applied by `fitUpgrades` (from `restartCar`, so a restart keeps them). `currentSpec` adds them; `specFor` never does, so ratings stay stock.
 - NOS: `vehicle.nosLeft`, `controls.state.nos`. A new input for it means filling `nos` in that source's `read`.
+- NOS force is `NOS_PUSH` to `NOS_PUSH_HELD` in `vehicle.js`; `vehicle.nosHeld` is how long this burn has run. `Shake.burn` and `shake.nos` are the camera side.
+- Phone: `save.binned` holds deleted mail ids (`bin` in `inbox.js`). `asking` is "are you sure?", `onBin` means the bin is picked.
+- Road: `Tex.road(width)` gives one tile of the road's width by 32 m as map and bump. Headlights: `Tex.headlightPattern` is projected by the spot light.
 - `game.device` is whichever of the phone and laptop is up. Both have `nav`, `press` and a key listener. `DeviceStage` (world/props-devices.js) draws them; `stage.update` runs from `render`.
 - A new mail: a line in `MAIL` in `career/inbox.js`, with `when(career)`.
 - A new Johnny line: `j('mood', 'text')` in `story.js`. Moods are the list at the top of `tools/johnny-sprites.mjs`. `{name}` and `{home}` work in any line.

@@ -264,7 +264,7 @@ export class Effects {
     this.scene = scene;
     this.on = {};
     this.smoke = new Particles(420, { sheet: spriteSheet('smoke'), maxSize: 260 });
-    this.fire = new Particles(160, { additive: true, sheet: spriteSheet('glow'), maxSize: 60 });
+    this.fire = new Particles(420, { additive: true, sheet: spriteSheet('glow'), maxSize: 90 });
     this.sparks = new Streaks(300);
     this.skids = new SkidMarks();
     scene.add(this.smoke.points, this.fire.points, this.sparks.points, this.skids.mesh);
@@ -348,7 +348,6 @@ export class Effects {
 
     // Exhaust pops: lifting off at high revs, and on fast upshifts.
     this.popTimer -= dt; this.popGap -= dt;
-    if (v.nosOn) this.popTimer = Math.max(this.popTimer, 0.1); // NOS spits flame
     if (this.lastThrottle > 0.6 && v.throttle < 0.25 && v.rpm > 4500) this.popTimer = (0.35 + Math.random() * 0.4) * (v.spec.pops ?? 1);
     if (v.gearbox.shiftCount !== this.lastShift) {
       if (v.gearbox.lastShift > 0 && v.rpm > 5200 && this.lastThrottle > 0.8) this.popTimer = Math.max(this.popTimer, 0.12);
@@ -369,6 +368,18 @@ export class Effects {
           this.fire.spawn(_v.x, _v.y, _v.z, v.vx - _w.x * sp + (Math.random() - 0.5), (Math.random() - 0.3) * 0.8, v.vz - _w.z * sp + (Math.random() - 0.5),
             0.06 + Math.random() * 0.08, blue ? 0.22 : 0.4 * strength, -0.15, blue ? 0.4 : 1, blue ? 0.55 : 0.5 + Math.random() * 0.3, blue ? 1 : 0.12, 1);
         }
+      }
+    }
+    // NOS: a steady blue jet from each pipe, white at the root.
+    if (v.nosOn && this.on.flames) for (const pipe of model.exhausts) {
+      _v.copy(pipe);
+      model.body.localToWorld(_v);
+      _w.set(Math.sin(v.heading), 0, Math.cos(v.heading));
+      const n = Math.ceil(dt * 260);
+      for (let i = 0; i < n; i++) {
+        const sp = 9 + Math.random() * 11, hot = Math.random() < 0.3;
+        this.fire.spawn(_v.x, _v.y, _v.z, v.vx - _w.x * sp + (Math.random() - 0.5) * 0.8, (Math.random() - 0.4) * 0.7, v.vz - _w.z * sp + (Math.random() - 0.5) * 0.8,
+          0.1 + Math.random() * 0.12, hot ? 0.34 : 0.6, -0.3, hot ? 0.8 : 0.08, hot ? 0.9 : 0.34, 1, hot ? 0.3 : 0.5);
       }
     }
     this.fire.update(dt, 0, 2);

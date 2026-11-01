@@ -34,6 +34,56 @@ function canvasTexture(size, paint, { repeat = [1, 1], nearest = true, srgb = tr
   return t;
 }
 
+// Everything is drawn again one tile up and down, so the road joins itself.
+function paintRoad(g, w, h) {
+  noise(g, w, h, [52, 52, 54], 20, 7);
+  const r = rng(71);
+  const wrapped = (draw) => { for (const y of [-h, 0, h]) { g.save(); g.translate(0, y); draw(); g.restore(); } };
+  const blot = (x, y, rx, ry, colour) => {
+    const f = g.createRadialGradient(0, 0, 0, 0, 0, 1);
+    f.addColorStop(0, colour); f.addColorStop(1, colour.replace(/[\d.]+\)$/, '0)'));
+    wrapped(() => { g.save(); g.translate(x, y); g.scale(rx, ry); g.fillStyle = f; g.beginPath(); g.arc(0, 0, 1, 0, Math.PI * 2); g.fill(); g.restore(); });
+  };
+  // Broad blotches, so no two stretches read the same.
+  for (let i = 0; i < 70; i++) blot(r() * w, r() * h, 30 + r() * 90, 50 + r() * 190, r() < 0.5 ? 'rgba(18,18,20,0.14)' : 'rgba(96,96,92,0.09)');
+  // Stones in the tarmac.
+  for (let i = 0; i < 16000; i++) {
+    const v = r();
+    g.fillStyle = v < 0.5 ? `rgba(14,14,16,${0.25 + r() * 0.4})` : `rgba(${120 + r() * 70 | 0},${120 + r() * 70 | 0},${116 + r() * 66 | 0},${0.12 + r() * 0.3})`;
+    g.fillRect(r() * w | 0, r() * h | 0, 1 + (r() * 2 | 0), 1 + (r() * 2 | 0));
+  }
+  // Rubber laid down by the wheels: two dark lanes of long streaks.
+  for (const lane of [0.33, 0.67]) for (let i = 0; i < 130; i++) {
+    const x = (lane + (r() + r() - 1) * 0.075) * w, y = r() * h, l = 90 + r() * 300;
+    g.strokeStyle = `rgba(10,10,12,${0.05 + r() * 0.09})`; g.lineWidth = 1.5 + r() * 5;
+    wrapped(() => { g.beginPath(); g.moveTo(x, y); g.lineTo(x + (r() - 0.5) * 7, y + l); g.stroke(); });
+  }
+  // Dust along both kerbs.
+  for (const [x0, x1] of [[0, w * 0.1], [w, w * 0.9]]) {
+    const f = g.createLinearGradient(x0, 0, x1, 0);
+    f.addColorStop(0, 'rgba(112,106,92,0.34)'); f.addColorStop(1, 'rgba(112,106,92,0)');
+    g.fillStyle = f; g.fillRect(Math.min(x0, x1), 0, w * 0.1, h);
+  }
+  // Patches of newer, darker tarmac with a tar edge.
+  for (const [x, y, pw, ph] of [[0.1, 0.1, 0.32, 0.17], [0.58, 0.62, 0.3, 0.1]]) {
+    g.fillStyle = 'rgba(19,19,21,0.3)'; g.fillRect(x * w, y * h, pw * w, ph * h);
+    g.strokeStyle = 'rgba(6,6,7,0.5)'; g.lineWidth = 2.5; g.strokeRect(x * w, y * h, pw * w, ph * h);
+  }
+  // Tar seams: a wandering line down the road, and one joint across it.
+  g.lineCap = 'round'; g.lineJoin = 'round';
+  for (const [x0, width] of [[0.5, 4], [0.84, 3], [0.18, 2.5]]) {
+    const a = r() * 6, b = r() * 6, at = (y) => (x0 + Math.sin(y / h * Math.PI * 2 + a) * 0.014 + Math.sin(y / h * Math.PI * 6 + b) * 0.006) * w;
+    g.strokeStyle = 'rgba(6,6,7,0.7)'; g.lineWidth = width;
+    g.beginPath(); g.moveTo(at(0), 0);
+    for (let y = 8; y <= h; y += 8) g.lineTo(at(y) + (r() - 0.5) * 1.8, y);
+    g.stroke();
+  }
+  g.strokeStyle = 'rgba(6,6,7,0.65)'; g.lineWidth = 3;
+  g.beginPath(); g.moveTo(0, h * 0.46); for (let x = 12; x <= w; x += 12) g.lineTo(x, h * 0.46 + (r() - 0.5) * 3); g.stroke();
+  // Oil down the middle.
+  for (let i = 0; i < 26; i++) blot(w * (0.5 + (r() - 0.5) * 0.12), r() * h, 5 + r() * 14, 10 + r() * 40, 'rgba(8,8,10,0.22)');
+}
+
 function noise(g, w, h, base, spread, seed, alpha = 1) {
   const r = rng(seed);
   const img = g.getImageData(0, 0, w, h);
@@ -81,6 +131,33 @@ export const Tex = {
     g.fillStyle = 'rgba(90,90,88,0.35)';
     for (let i = 0; i < 30; i++) g.fillRect(r() * w | 0, r() * h | 0, 1, 1);
   })),
+
+  // What the headlights throw on the road, seen from the lamp: two pools that
+  // overlap in the middle, brightest just under a clean top edge.
+  headlightPattern: () => cached('headlightPattern', () => {
+    const t = canvasTexture([256, 256], (g, w, h) => {
+      g.fillStyle = '#000'; g.fillRect(0, 0, w, h);
+      g.globalCompositeOperation = 'lighter';
+      g.save();
+      g.beginPath(); g.moveTo(0, h * 0.5); g.lineTo(w * 0.5, h * 0.5); g.lineTo(w * 0.58, h * 0.44); g.lineTo(w, h * 0.44); g.lineTo(w, h); g.lineTo(0, h); g.closePath(); g.clip();
+      for (const [x, y, rx, ry, a] of [[0.4, 0.52, 0.34, 0.24, 0.62], [0.6, 0.52, 0.34, 0.24, 0.62], [0.5, 0.53, 0.5, 0.42, 0.2], [0.5, 0.52, 0.13, 0.09, 0.42]]) {
+        const f = g.createRadialGradient(0, 0, 0, 0, 0, 1), c = `255,${238 + 17 * a | 0},${214 + 40 * a | 0}`;
+        f.addColorStop(0, `rgba(${c},${a})`); f.addColorStop(0.55, `rgba(${c},${a * 0.55})`); f.addColorStop(1, `rgba(${c},0)`);
+        g.save(); g.translate(x * w, y * h); g.scale(rx * w, ry * h); g.fillStyle = f; g.beginPath(); g.arc(0, 0, 1, 0, Math.PI * 2); g.fill(); g.restore();
+      }
+      g.restore();
+    }, { nearest: false });
+    t.wrapS = t.wrapT = THREE.ClampToEdgeWrapping;
+    return t;
+  }),
+
+  // A whole road: one tile is the width of the tarmac and 32 m long, so it can
+  // have dark wheel lanes, dusty edges, tar seams and patches. `width` in metres.
+  road: (width) => {
+    const paint = cached('road', () => canvasTexture([512, 1024], paintRoad));
+    const tile = (t, srgb) => { const c = t.clone(); c.repeat.set(4 / width, 1 / 8); c.colorSpace = srgb ? THREE.SRGBColorSpace : THREE.NoColorSpace; c.needsUpdate = true; chunky.add(c); return c; };
+    return { map: tile(paint, true), bumpMap: tile(paint, false), bumpScale: 1.6 };
+  },
 
   // Lying snow: off-white with faint blue hollows and grey slush specks.
   snow: () => cached('snow', () => canvasTexture([64, 64], (g, w, h) => {
