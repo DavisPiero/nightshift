@@ -10,7 +10,8 @@ Part 3: Johnny's sprite sheet and bounce, the story rewrite (data analysis, no d
 GT3: not yet (David).
 
 ## Open with David
-- Does the new look work on every screen he uses? Are amber and teal in the right places?
+- Does the new look work on every screen he uses? Are amber and teal in the right places? Is the small text heavy enough (`--weight`)?
+- Sheets like Johnny's for Max and Aoi?
 - Does the racing feel right? Roar, shake and rival pace are set by numbers; only a person can judge them. F4 > Camera: speed feel turns all the speed effects up or down together.
 - Hard: a limit bot from last finishes 4th to 7th. Is that too hard for a person?
 - Guesses (session 16): style numbers; 30% slipstream; Underground 1.46 km; ghost is best lap; pay left alone (Street 5.3 hours, was 6.2).
