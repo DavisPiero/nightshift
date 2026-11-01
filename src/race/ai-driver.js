@@ -18,7 +18,7 @@
 //    a crash is coming it brakes.
 //  - Style, hidden from the player and picked at random (opponents.js):
 //    aggressive brakes late and dives, defensive covers the inside and rarely
-//    errs, speeder has more power and less corner speed.
+//    errs, reckless has more power and less corner speed.
 //  - Character: `pace`, `aggression` (how soon it goes for a gap),
 //    `consistency` (how rarely it brakes late), and a little form that changes
 //    each lap, so no two laps are the same.
@@ -54,7 +54,7 @@ export const STYLES = {
   plain: { brake: 1, grip: 1, dive: 1, defend: 0.5, swerve: 2.6, errs: 1, power: 1 },
   aggressive: { brake: 1.12, grip: 1.01, dive: 1.35, defend: 0.5, swerve: 3.2, errs: 1.5, power: 1 },
   defensive: { brake: 0.98, grip: 1, dive: 0.8, defend: 1.5, swerve: 2.4, errs: 0.6, power: 1 },
-  speeder: { brake: 1, grip: 0.96, dive: 1.1, defend: 0.2, swerve: 2.6, errs: 1, power: 1.08 },
+  reckless: { brake: 1, grip: 0.96, dive: 1.1, defend: 0.2, swerve: 2.6, errs: 1, power: 1.08 },
 };
 
 const CLEAR = 2.35; // metres between two cars' middles to pass side by side

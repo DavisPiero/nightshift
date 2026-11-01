@@ -37,6 +37,8 @@
   --track: 0.035em;                     /* the little space between its letters */
 
   /* Shape and motion */
+  --radius: 6px;                        /* the corners of panels and buttons */
+  --radius-sm: 3px;                     /* the corners of small things on them */
   --gap: 16px;
   --top: 78px;                          /* where the content starts, under the bar */
   --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
@@ -69,6 +71,12 @@ h1, h2, h3, p { margin: 0; }
 .muted, .small, .jp, .sub, .hint, .real, .k, .ts, .c-sub, .tag, small, dt, li, p, .row > span, .feel-row span, .tw-head > span:first-child, .tw-foot > span:first-child, .boot-log, .slider output, .item.opt .meta { -webkit-text-stroke: var(--weight) currentColor; }
 
 /* ---------- shared pieces */
+/* Rounded corners, all in one place (David, 2026-11-02). The big leaning button
+   keeps its cut corners. */
+.pnl, .btn, .tile, .card, .tier, .tab, .key, .drop-list, .nw, .nok, .tw, .toast, .warn, .tc.pad, .st-racer, #race-top, #nos, #race-wrong, #dave-say, #racer-name, #layout-bar, #debug { border-radius: var(--radius); }
+.tw, .tile, .drop-list { overflow: hidden; }
+.cls, .swatch, .flag, .res-ok, .res-no, .ev-max, .ph-dot, .tt-new, .thumb, .info canvas, #phone-tip, #arrive-skip { border-radius: var(--radius-sm); }
+.drop { border-radius: var(--radius); }
 .pnl { position: relative; color: var(--text); background: var(--panel); border: 1px solid var(--line); border-top-color: var(--titanium); }
 /* Every panel's label. */
 .ttl { display: flex; align-items: center; gap: 10px; margin: 0 0 6px; padding: 0 0 7px; font: 24px/1 var(--px); letter-spacing: 0.06em; color: var(--white); border-bottom: 1px solid var(--line); }

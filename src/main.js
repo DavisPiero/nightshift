@@ -278,6 +278,7 @@ class Game {
 
   get graphicsName() {
     if (URL_FLAGS.smoke) return 'low'; // keeps the headless check quick
+    if (GRAPHICS[URL_FLAGS.graphics]) return URL_FLAGS.graphics;
     return this.save.settings.graphics || defaultGraphicsFor(this.save.platform);
   }
 

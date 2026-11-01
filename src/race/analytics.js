@@ -5,15 +5,15 @@
 
 import { carStats } from '../vehicles/stats.js';
 
-export const STYLE_NAMES = { aggressive: 'Aggressive', defensive: 'Defensive', speeder: 'Speeder', plain: 'Steady' };
+export const STYLE_NAMES = { aggressive: 'Aggressive', defensive: 'Defensive', reckless: 'Reckless', plain: 'Steady' };
 
 // Laps come from the driver more than the car: `pi` is a car's rating, and the
-// field is tuned to within about 40 points of each other. A speeder gives up
+// field is tuned to within about 40 points of each other. A reckless driver gives up
 // corners for straights; those weigh about the same over a lap.
-const PI_WEIGHT = 0.0009, STYLE_PACE = { aggressive: 0.006, defensive: -0.004, speeder: 0, plain: 0 };
+const PI_WEIGHT = 0.0009, STYLE_PACE = { aggressive: 0.006, defensive: -0.004, reckless: 0, plain: 0 };
 const YOU_PACE = 0.95; // nothing is known about you, so the middle of the field
 
-const TROUBLE = { aggressive: 1, speeder: 0.7, plain: 0.55, defensive: 0.45 };
+const TROUBLE = { aggressive: 1, reckless: 0.7, plain: 0.55, defensive: 0.45 };
 
 // cars: the race's cars, the player's included. Returns a row for each, in the
 // predicted order, with `trouble` true on the one rival to watch.
@@ -45,6 +45,6 @@ export function analyse(cars) {
 export function troubleLine(r) {
   if (r.rival) return `${r.name}: wants you off the road, and has been told nothing about pity.`;
   return { aggressive: `${r.name}: dives for every gap. Leave room or lose a door.`,
-    speeder: `${r.name}: slow in the bends, then gone on the straights.`,
+    reckless: `${r.name}: all engine, no patience. Loose in the bends, gone on the straights.`,
     defensive: `${r.name}: covers the inside and never lets you by.` }[r.styleId] || `${r.name}: sits right where you want to be.`;
 }

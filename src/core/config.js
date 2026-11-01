@@ -3,13 +3,14 @@
 
 export const GRAPHICS = {
   low:    { renderHeight: 360, shadows: false, lampLights: 4, drawDistance: 170, dither: true },
-  // Medium and High are the realistic looks, a little bit pixelated (David,
-  // 2026-10-31): physically based and filmic, but drawn at a lower resolution
-  // and scaled up with square pixels.
+  // Medium is the realistic look, a little bit pixelated (David, 2026-10-31):
+  // physically based and filmic, but drawn at a lower resolution and scaled up
+  // with square pixels.
   medium: { renderHeight: 480, shadows: false, lampLights: 6, drawDistance: 220, dither: false, smooth: true, pixel: true, bloom: 'chain' },
-  // High also gets finer clouds, the full lens convolution for its bloom and
-  // more real lamp lights.
-  high:   { renderHeight: 600, shadows: true,  lampLights: 10, drawDistance: 280, dither: false, skyDetail: true, bloom: 'fft', smooth: true, pixel: true },
+  // High has no pixels at all (David, 2026-11-02): the window's real sharpness up
+  // to 1080 lines, shown smoothly. It also gets finer clouds, the full lens
+  // convolution for its bloom and more real lamp lights.
+  high:   { renderHeight: 1080, shadows: true,  lampLights: 10, drawDistance: 280, dither: false, skyDetail: true, bloom: 'fft', smooth: true },
 };
 
 // Medium by default (the realistic look); Low keeps the old chunky-pixel look and is the fast option.
@@ -57,6 +58,7 @@ export const URL_FLAGS = {
   mode: params.get('mode'),
   difficulty: params.get('difficulty'),
   debug: params.has('debug'),
+  graphics: params.get('graphics'),
   track: params.get('track'),
   car: params.get('car'),
   screen: params.get('screen'),

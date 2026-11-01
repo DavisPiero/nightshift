@@ -140,6 +140,7 @@ export class Phone {
   }
 
   point(e) {
+    if (this.stage.touches(e.clientX, e.clientY, this.model.ok)) { this.game.audio.ui('back'); this.close(); return; } // the amber button shuts it
     const p = this.stage.hit(e.clientX, e.clientY);
     if (!p) { if (!this.stage.touches(e.clientX, e.clientY)) this.close(); return; }
     const x = p.x * 440, y = p.y * 500, inside = ([a, b, w, h]) => x >= a && x <= a + w && y >= b && y <= b + h;
@@ -187,8 +188,9 @@ export class Phone {
     g.fillStyle = WHITE; g.font = `38px ${PX}`; g.textAlign = 'center';
     wrap(g, 'Are you sure you want to delete?', W - 60).forEach((l, i) => g.fillText(l, W / 2, 190 + i * 42));
     for (const [[x, y, w, h], label, on] of [[YES, 'Yes', this.sure], [NO, 'No', !this.sure]]) {
-      g.fillStyle = on ? AMBER : '#1b1d21'; g.fillRect(x, y, w, h);
-      g.strokeStyle = on ? AMBER : LINE; g.lineWidth = 2; g.strokeRect(x, y, w, h);
+      g.beginPath(); g.roundRect(x, y, w, h, 8);
+      g.fillStyle = on ? AMBER : '#1b1d21'; g.fill();
+      g.strokeStyle = on ? AMBER : LINE; g.lineWidth = 2; g.stroke();
       g.fillStyle = on ? INK : WHITE; g.fillText(label, x + w / 2, y + 46);
     }
     g.textAlign = 'left';

@@ -49,7 +49,10 @@ export function buildPhone() {
   ring.position.set(0, -0.3, D / 2 + 0.03);
   const ok = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.065, 0.04, 16), std(0xffb000, 0.2, 0.4));
   ok.rotation.x = Math.PI / 2; ok.position.set(0, -0.3, D / 2 + 0.03);
-  keys.add(ring, ok);
+  // The amber button is small: a click anywhere on its ring counts.
+  const okHit = new THREE.Mesh(new THREE.CircleGeometry(0.15, 12), new THREE.MeshBasicMaterial({ visible: false }));
+  okHit.position.set(0, -0.3, D / 2 + 0.06);
+  keys.add(ring, ok, okHit);
   for (const x of [-0.33, 0.33]) { const k = new THREE.Mesh(slab(0.2, 0.09, 0.04, 0.03, 0.006), key); k.position.set(x, -0.26, D / 2 + 0.03); keys.add(k); }
   for (let r = 0; r < 4; r++) for (let c = 0; c < 3; c++) {
     const k = new THREE.Mesh(slab(0.23, 0.12, 0.045, 0.04, 0.008), key);
@@ -76,7 +79,7 @@ export function buildPhone() {
   const stub = new THREE.Mesh(new THREE.CapsuleGeometry(0.035, 0.32, 4, 10), dark);
   stub.position.set(W / 2 - 0.1, H + 0.14, -0.03);
   hinge.add(lid, bezel, speaker, screen, stub);
-  return { root, hinge, screen, ...d, open: 0.22, shut: 2.9 };
+  return { root, hinge, screen, ok: okHit, ...d, open: 0.22, shut: 2.9 };
 }
 
 // A chunky laptop. The origin is the hinge; the keyboard comes toward you.
@@ -247,10 +250,10 @@ export class DeviceStage {
     return h ? { x: h.uv.x, y: 1 - h.uv.y } : null;
   }
 
-  // Did a click land on the model at all?
-  touches(x, y) {
+  // Did a click land on the model at all, or on this one part of it?
+  touches(x, y, part = this.model?.root) {
     if (!this.model) return false;
     this.ray.setFromCamera({ x: (x / window.innerWidth) * 2 - 1, y: 1 - (y / window.innerHeight) * 2 }, this.camera);
-    return this.ray.intersectObject(this.model.root, true).length > 0;
+    return this.ray.intersectObject(part, true).length > 0;
   }
 }

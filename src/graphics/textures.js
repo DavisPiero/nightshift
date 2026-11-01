@@ -444,11 +444,10 @@ export const Tex = {
   }, { nearest: false })),
 
   // A glow sprite for lamps and lights.
-  glow: () => cached('glow', () => canvasTexture([32, 32], (g, w, h) => {
+  glow: () => cached('glow', () => canvasTexture([128, 128], (g, w, h) => {
     const grad = g.createRadialGradient(w / 2, h / 2, 0, w / 2, h / 2, w / 2);
-    grad.addColorStop(0, 'rgba(255,255,255,1)');
-    grad.addColorStop(0.25, 'rgba(255,255,255,0.45)');
-    grad.addColorStop(1, 'rgba(255,255,255,0)');
+    // A long soft fall, so it never ends in a visible edge however bright it is.
+    for (let i = 0; i <= 12; i++) { const k = i / 12; grad.addColorStop(k, `rgba(255,255,255,${(((Math.exp(-k * k * 9) - Math.exp(-9)) / (1 - Math.exp(-9))) * (1 - k) ** 0.5).toFixed(4)})`); }
     g.fillStyle = grad;
     g.fillRect(0, 0, w, h);
   }, { nearest: false })),

@@ -8,8 +8,10 @@ import * as THREE from 'three';
 import { Tex } from '../graphics/textures.js';
 import { Placer } from './assets.js';
 import { rng } from './scene-kit.js';
+import { DAVE_MOODS } from '../career/dave.js';
 
 const YARD = { x: 11, back: -9, front: 12 };
+const DAVE_ASPECT = 186 / 123; // his sprites' width over height
 
 // A board painted by someone in a hurry.
 function board(w, h, draw, bg = '#d8cfae') {
@@ -136,14 +138,22 @@ export function buildDealership() {
     const prop = add(new THREE.CylinderGeometry(0.02, 0.02, 1.05, 5), steel, hole.x + x * (hole.w / 2 - 0.1), hole.head - 0.08, front + 0.5);
     prop.rotation.x = 1.0;
   }
-  // Dave. A stand-in face until David's sheet comes (STATE.md).
-  const faceTex = new THREE.TextureLoader().load('assets/story/face-dave.png');
-  faceTex.colorSpace = THREE.SRGBColorSpace;
-  faceTex.magFilter = THREE.NearestFilter;
-  const daveH = 1.55, dave = new THREE.Mesh(new THREE.PlaneGeometry(daveH * 170 / 200, daveH), new THREE.MeshLambertMaterial({ map: faceTex, alphaTest: 0.5 }));
+  // Dave, from David's sheet (tools/character-sprites.mjs). The sprite is cut at
+  // the chest, so the sill hides its bottom edge.
+  const faces = {};
+  const daveFace = (mood) => {
+    if (faces[mood]) return faces[mood];
+    const t = faces[mood] = new THREE.TextureLoader().load(`assets/story/dave/${mood}.png`);
+    t.colorSpace = THREE.SRGBColorSpace;
+    t.magFilter = THREE.NearestFilter;
+    return t;
+  };
+  for (const m of DAVE_MOODS) daveFace(m);
+  const daveH = 1.2, dave = new THREE.Mesh(new THREE.PlaneGeometry(daveH * DAVE_ASPECT, daveH), new THREE.MeshLambertMaterial({ map: daveFace('plain'), alphaTest: 0.5 }));
   dave.position.set(hole.x, hole.sill + 0.42, front - 0.72);
   dave.rotation.y = 0.32;
   group.add(dave);
+  const setDave = (mood) => { dave.material.map = daveFace(mood); };
   const daveAt = new THREE.Vector3(hole.x, hole.sill - 0.1, front + 0.1); // his speech bubble hangs here
   // A bare bulb on a flex: enough to see him by.
   const room = new THREE.PointLight(0xffc88a, 4.5, 6, 1.5);
@@ -257,7 +267,7 @@ export function buildDealership() {
   };
 
   return {
-    scene, group, reflect, update, daveAt,
+    scene, group, reflect, update, daveAt, setDave,
     look: { reflectBg: 0x0a0a0e, ground: 0x2a2a2a },
     bounds: { x: [-10, 10], y: [0.35, 3.1], z: [-7, 10] },
     views: { show: { pos: [4.4, 1.6, 6.8], look: [0, 0.55, 0], fov: 46, turn: 0.55 } },

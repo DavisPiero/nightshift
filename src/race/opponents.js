@@ -39,7 +39,7 @@ export function pickField({ count, pi, difficulty, rival = false, seed = 1 }) {
   const rand = () => ((s = (s * 1664525 + 1013904223) >>> 0) / 4294967296);
   const shuffle = (a) => { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(rand() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
   const d = getDifficulty(difficulty);
-  const styles = ['aggressive', 'defensive', 'speeder'];
+  const styles = ['aggressive', 'defensive', 'reckless'];
   // Each rival gets a driving style at random; nobody is told which. Max is always aggressive.
   const people = shuffle([...DRIVERS]).slice(0, count).map((p) => ({ ...p, style: styles[Math.floor(rand() * 3)] }));
   if (rival) people[0] = { ...MAX, style: 'aggressive' };

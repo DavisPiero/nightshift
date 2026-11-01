@@ -157,8 +157,9 @@ export class Laptop {
     g.fillText('Style', T.style, Y - 4);
     rows.forEach((r, i) => {
       const y = Y + 6 + i * H;
-      if (r.you) { g.fillStyle = 'rgba(255, 176, 0, 0.15)'; g.fillRect(16, y, W - 32, H - 5); }
-      if (r.trouble) { g.strokeStyle = WHITE; g.lineWidth = 2; g.strokeRect(16, y, W - 32, H - 5); }
+      if (r.you || r.trouble) { g.beginPath(); g.roundRect(16, y, W - 32, H - 5, 8); }
+      if (r.you) { g.fillStyle = 'rgba(255, 176, 0, 0.15)'; g.fill(); }
+      if (r.trouble) { g.strokeStyle = WHITE; g.lineWidth = 2; g.stroke(); }
       const ink = r.you ? AMBER : WHITE, b = y + 32;
       g.fillStyle = ink; g.font = `38px ${PX}`;
       g.textAlign = 'right'; g.fillText(String(r.place), T.place + 12, b); g.textAlign = 'left';
@@ -180,9 +181,10 @@ export class Laptop {
     const c = this.game.save.career;
     UPGRADES.forEach((u, i) => {
       const y = TOP + i * ROW_H, on = this.pick === i, have = !!this.fitted[u.id], poor = !have && c.cr < u.price;
-      if (have) { g.fillStyle = 'rgba(34, 216, 200, 0.16)'; g.fillRect(16, y, W - 32, ROW_H - 10); }
+      g.beginPath(); g.roundRect(16, y, W - 32, ROW_H - 10, 10);
+      if (have) { g.fillStyle = 'rgba(34, 216, 200, 0.16)'; g.fill(); }
       g.strokeStyle = on ? WHITE : have ? TEAL : LINE; g.lineWidth = on ? 3 : 1.5;
-      g.strokeRect(16, y, W - 32, ROW_H - 10);
+      g.stroke();
       g.fillStyle = poor ? TITANIUM : WHITE; g.font = `48px ${PX}`; g.fillText(u.name, 36, y + 42);
       g.fillStyle = poor ? TITANIUM : MUTED; g.font = DOT;
       g.fillText(u.id === 'nos' ? `${u.info}, on ${this.nosButton()}` : u.info, 36, y + 72);

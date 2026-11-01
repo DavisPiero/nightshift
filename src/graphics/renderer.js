@@ -15,7 +15,7 @@ void main() { vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }`;
 
 const POST_FRAG = /* glsl */`
 uniform sampler2D tScene, tBloom, tFft, tMask;
-uniform vec2 resolution;
+uniform vec2 resolution, fftSize;
 uniform float dither, bloom, fft, filmic, blurK, aberr, maskOn;
 uniform vec2 sunUv;
 uniform float glare;
@@ -33,6 +33,20 @@ float sunOpen() {
     s += max(c.r, max(c.g, c.b));
   }
   return smoothstep(0.42, 0.8, s / 5.0);
+}
+
+// A smooth curve through a small picture, not straight lines: a plain lookup
+// shows the small picture's squares when it is stretched this far.
+vec3 smoothTap(sampler2D t, vec2 uv, vec2 size) {
+  vec2 st = uv * size - 0.5, f = fract(st);
+  st = floor(st);
+  vec2 f2 = f * f, f3 = f2 * f;
+  vec2 w0 = (1.0 - f) * (1.0 - f) * (1.0 - f) / 6.0, w1 = (4.0 - 6.0 * f2 + 3.0 * f3) / 6.0;
+  vec2 w2 = (1.0 + 3.0 * f + 3.0 * f2 - 3.0 * f3) / 6.0, w3 = f3 / 6.0;
+  vec2 g0 = w0 + w1, g1 = w2 + w3;
+  vec2 h0 = (st - 0.5 + w1 / g0) / size, h1 = (st + 1.5 + w3 / g1) / size;
+  return g0.y * (g0.x * texture2D(t, h0).rgb + g1.x * texture2D(t, vec2(h1.x, h0.y)).rgb)
+    + g1.y * (g0.x * texture2D(t, vec2(h0.x, h1.y)).rgb + g1.x * texture2D(t, h1).rgb);
 }
 
 float bayer4(vec2 p) {
@@ -68,7 +82,7 @@ void main() {
     c = sum > 0.01 ? c / sum : texture2D(tScene, vUv).rgb;
   } else c = texture2D(tScene, vUv).rgb;
   vec3 glow = texture2D(tBloom, vUv).rgb * bloom;
-  if (fft > 0.0) glow += texture2D(tFft, vUv).rgb * fft;
+  if (fft > 0.0) glow += smoothTap(tFft, vUv, fftSize) * fft;
   c += glow;
   // Driving into a low sun: a hot core, a wide warm veil over everything,
   // a thin horizontal streak and a few faint lens ghosts across the screen.
@@ -116,38 +130,50 @@ void main() {
 const BRIGHT_FRAG = /* glsl */`
 uniform sampler2D tScene, tMask;
 uniform float maskOn;
+uniform vec2 texel;
 varying vec2 vUv;
 void main() {
-  vec3 c = min(texture2D(tScene, vUv).rgb, vec3(14.0));
-  float l = max(c.r, max(c.g, c.b));
-  gl_FragColor = vec4(c * smoothstep(0.7, 1.25, l), 1.0);
+  // Four taps, each counted less the hotter it is, so a lone bright pixel on a
+  // car's edge cannot sparkle; a big bright lamp keeps all of its light.
+  vec3 sum = vec3(0.0);
+  float weight = 0.0;
+  for (int i = 0; i < 4; i++) {
+    vec2 o = vec2(i < 2 ? -1.0 : 1.0, mod(float(i), 2.0) * 2.0 - 1.0);
+    vec3 c = min(texture2D(tScene, vUv + o * texel).rgb, vec3(14.0));
+    float l = max(c.r, max(c.g, c.b)), w = 1.0 / (1.0 + l);
+    sum += c * smoothstep(0.7, 1.25, l) * w;
+    weight += w;
+  }
+  gl_FragColor = vec4(sum / weight, 1.0);
   // From the driver's seat, only light from outside flares the lens: not
   // a mirror or a screen in the cabin.
   if (maskOn > 0.0) gl_FragColor.rgb *= 1.0 - texture2D(tMask, vUv).r;
 }`;
-// Shrinking: a wide average of five taps.
+// Shrinking: thirteen taps, which never leave a square or a shimmer behind.
 const DOWN_FRAG = /* glsl */`
 uniform sampler2D tSrc;
 uniform vec2 texel;
 varying vec2 vUv;
+vec3 at(float x, float y) { return texture2D(tSrc, vUv + vec2(x, y) * texel).rgb; }
 void main() {
-  vec3 c = texture2D(tSrc, vUv).rgb * 0.5;
-  for (int i = 0; i < 4; i++) {
-    vec2 o = vec2(i < 2 ? -1.0 : 1.0, mod(float(i), 2.0) * 2.0 - 1.0);
-    c += texture2D(tSrc, vUv + o * texel).rgb * 0.125;
-  }
+  vec3 c = at(0.0, 0.0) * 0.125;
+  c += (at(-2.0, -2.0) + at(2.0, -2.0) + at(-2.0, 2.0) + at(2.0, 2.0)) * 0.03125;
+  c += (at(0.0, -2.0) + at(-2.0, 0.0) + at(2.0, 0.0) + at(0.0, 2.0)) * 0.0625;
+  c += (at(-1.0, -1.0) + at(1.0, -1.0) + at(-1.0, 1.0) + at(1.0, 1.0)) * 0.125;
   gl_FragColor = vec4(c, 1.0);
 }`;
-// Growing back, added onto the level above: a soft tent of four taps.
+// Growing back, added onto the level above: a soft nine-tap tent.
 const UP_FRAG = /* glsl */`
 uniform sampler2D tSrc;
 uniform vec2 texel;
 uniform float weight;
 varying vec2 vUv;
+vec3 at(float x, float y) { return texture2D(tSrc, vUv + vec2(x, y) * texel).rgb; }
 void main() {
-  vec3 c = texture2D(tSrc, vUv + texel * vec2(-1.0, 0.0)).rgb + texture2D(tSrc, vUv + texel * vec2(1.0, 0.0)).rgb
-    + texture2D(tSrc, vUv + texel * vec2(0.0, -1.0)).rgb + texture2D(tSrc, vUv + texel * vec2(0.0, 1.0)).rgb;
-  gl_FragColor = vec4(c * 0.25 * weight, 1.0);
+  vec3 c = at(0.0, 0.0) * 4.0;
+  c += (at(-1.0, 0.0) + at(1.0, 0.0) + at(0.0, -1.0) + at(0.0, 1.0)) * 2.0;
+  c += at(-1.0, -1.0) + at(1.0, -1.0) + at(-1.0, 1.0) + at(1.0, 1.0);
+  gl_FragColor = vec4(c / 16.0 * weight, 1.0);
 }`;
 
 // One step of a fast Fourier transform along x (dir 0) or y (dir 1). A texel
@@ -207,7 +233,7 @@ function lensKernel(aspect) {
   let sum = 0;
   for (let y = 0; y < FFT_H; y++) for (let x = 0; x < FFT_W; x++) {
     const dx = (x < FFT_W / 2 ? x : x - FFT_W) / (FFT_W * PAD) * aspect, dy = (y < FFT_H / 2 ? y : y - FFT_H) / (FFT_H * PAD);
-    const r = Math.hypot(dx, dy) + 0.0035;
+    const r = Math.hypot(dx, dy) + 0.014; // a soft core: the transform is coarse, the blur chain does the tight glow
     let v = Math.pow(r, -2.1) * Math.exp(-r * 3.2);
     const a = Math.atan2(dy, dx);
     for (let i = 0; i < 3; i++) {
@@ -228,7 +254,7 @@ export class RetroRenderer {
     this.gl.setPixelRatio(1);
     this.gl.info.autoReset = false; // count the whole frame (scene + post), for the debug panel
     this.gl.shadowMap.enabled = false;
-    this.gl.shadowMap.type = THREE.BasicShadowMap;
+    this.gl.shadowMap.type = THREE.PCFSoftShadowMap;
     this.target = new THREE.WebGLRenderTarget(4, 4, { depthBuffer: true });
     this.target.texture.minFilter = THREE.NearestFilter;
     this.target.texture.magFilter = THREE.NearestFilter;
@@ -247,7 +273,7 @@ export class RetroRenderer {
     this.quadScene.add(this.quad);
     this.maskTarget = new THREE.WebGLRenderTarget(4, 4, { minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter, depthBuffer: true });
     const fx = (fragmentShader, uniforms, extra = {}) => new THREE.ShaderMaterial({ uniforms, vertexShader: POST_VERT, fragmentShader, depthTest: false, depthWrite: false, ...extra });
-    this.bright = fx(BRIGHT_FRAG, { tScene: { value: this.target.texture }, tMask: { value: this.maskTarget.texture }, maskOn: { value: 0 } });
+    this.bright = fx(BRIGHT_FRAG, { tScene: { value: this.target.texture }, tMask: { value: this.maskTarget.texture }, maskOn: { value: 0 }, texel: { value: new THREE.Vector2() } });
     this.down = fx(DOWN_FRAG, { tSrc: { value: null }, texel: { value: new THREE.Vector2() } });
     this.up = fx(UP_FRAG, { tSrc: { value: null }, texel: { value: new THREE.Vector2() }, weight: { value: 1 } }, { blending: THREE.AdditiveBlending, transparent: true });
     this.levels = [];     // the shrinking chain, 1/2 size downward
@@ -255,7 +281,7 @@ export class RetroRenderer {
     this.noDraw = new THREE.MeshBasicMaterial({ visible: false });
     this.black = new THREE.Color(0);
     Object.assign(this.post.uniforms, {
-      tBloom: { value: null }, tFft: { value: null }, tMask: { value: this.maskTarget.texture },
+      tBloom: { value: null }, tFft: { value: null }, fftSize: { value: new THREE.Vector2(FFT_W, FFT_H) }, tMask: { value: this.maskTarget.texture },
       bloom: { value: 0 }, fft: { value: 0 }, maskOn: { value: 0 },
     });
     this.bloomMode = null; // null, 'chain' or 'fft'
@@ -302,6 +328,7 @@ export class RetroRenderer {
     this.gl.setSize(rw, rh, false);
     this.target.setSize(rw, rh);
     this.post.uniforms.resolution.value.set(rw, rh);
+    this.bright.uniforms.texel.value.set(1 / rw, 1 / rh);
     this.maskTarget.setSize(Math.ceil(rw / 2), Math.ceil(rh / 2));
     for (const t of this.levels) t.dispose();
     this.levels = [];
@@ -321,7 +348,7 @@ export class RetroRenderer {
       this.fftA = new THREE.WebGLRenderTarget(FFT_W, FFT_H, o);
       this.fftB = new THREE.WebGLRenderTarget(FFT_W, FFT_H, o);
       this.kernelSpec = new THREE.WebGLRenderTarget(FFT_W, FFT_H, o);
-      this.fftOut = new THREE.WebGLRenderTarget(FFT_W >> 1, FFT_H >> 1, { minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter, depthBuffer: false, type: THREE.HalfFloatType });
+      this.fftOut = new THREE.WebGLRenderTarget(FFT_W, FFT_H, { minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter, depthBuffer: false, type: THREE.HalfFloatType });
       const fx = (fragmentShader, uniforms) => new THREE.ShaderMaterial({ uniforms, vertexShader: POST_VERT, fragmentShader, depthTest: false, depthWrite: false });
       this.fftPass = fx(FFT_FRAG, { tSrc: { value: null }, size: { value: new THREE.Vector2(FFT_W, FFT_H) }, dir: { value: 0 }, span: { value: 2 }, sign: { value: -1 } });
       this.mulPass = fx(MUL_FRAG, { tSrc: { value: null }, tKernel: { value: this.kernelSpec.texture } });

@@ -2,7 +2,7 @@
 // A scene: { art, lines }. `art` is a picture in assets/story/ and a line can
 // change it. A line: { who, text, mood }; `who` is a person from PEOPLE, or
 // missing for the narrator. `mood` picks Johnny's expression (the names are in
-// tools/johnny-sprites.mjs). `{name}` in a line is your racer's name and
+// tools/character-sprites.mjs). `{name}` in a line is your racer's name and
 // `{home}` where they are from. `local` replaces the text for a racer from
 // Japan. `ask: 'racer'` stops the scene to make your racer.
 //

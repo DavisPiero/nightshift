@@ -15,6 +15,7 @@ import { daveOnCar, daveOnLife } from '../career/dave.js';
 const $ = (sel) => document.querySelector(sel);
 const _at = new THREE.Vector3();
 const CHAT_SECONDS = 9; // how long he lets a thought sit before the next one
+const BLINKS = ['plain', 'flat', 'bored', 'aside', 'think']; // faces close enough to his shut-eyed one
 
 export class Shop {
   constructor(game, screens) {
@@ -41,8 +42,25 @@ export class Shop {
     clearTimeout(this.chat);
     if (this.screens.top && this.screens.top !== 'shop') return;
     this.said++;
-    $('#dave-say').textContent = onCar ? daveOnCar(this.picked, this.said) : daveOnLife(this.said);
+    this.talk(onCar ? daveOnCar(this.picked, this.said) : daveOnLife(this.said));
     this.chat = setTimeout(() => this.say(this.said % 3 === 0), CHAT_SECONDS * 1000);
+  }
+
+  // His words in the bubble, his face in the window, and a blink now and then
+  // when the face he is pulling has open eyes to shut.
+  talk({ mood, text }) {
+    $('#dave-say').textContent = text;
+    const lot = this.game.lot;
+    lot?.setDave(mood);
+    clearTimeout(this.blinkAt);
+    if (!BLINKS.includes(mood)) return;
+    const blink = () => {
+      this.blinkAt = setTimeout(() => {
+        lot?.setDave('shut');
+        this.blinkAt = setTimeout(() => { lot?.setDave(mood); blink(); }, 130);
+      }, 2200 + Math.random() * 3200);
+    };
+    blink();
   }
 
   // His bubble hangs under the window he is in, wherever that is on screen, and

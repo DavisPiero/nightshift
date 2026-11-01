@@ -2,7 +2,7 @@
 // on top of it, a face that blinks, and the words typed into a dialog box. Tap,
 // click, Enter or Space moves on; Skip ends the scene. Pictures and faces are
 // made by tools/story-art.mjs and live in assets/story/. Johnny has a sprite for
-// each expression (tools/johnny-sprites.mjs, assets/story/johnny/), with a hop
+// each expression (tools/character-sprites.mjs, assets/story/johnny/), with a hop
 // when it changes, and no blink. A line with `ask: 'racer'` stops for the form
 // that makes your racer; even Skip stops there.
 
@@ -91,7 +91,7 @@ export class Cutscene {
     const mood = line.mood || 'plain', changed = mood !== this.mood;
     this.mood = mood;
     if (!changed) return;
-    f.src = `assets/story/johnny/${mood}.png`;
+    f.src = `assets/story/${line.who}/${mood}.png`;
     f.classList.remove('in', 'hop'); void f.offsetWidth;
     f.classList.add(first ? 'in' : 'hop');
   }
