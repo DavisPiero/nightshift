@@ -27,6 +27,7 @@ David said: push each part when finished, without asking.
 
 ## Known rough edges
 - Dave's roof sign is half hidden by the top bar in the Shop.
+- The smoke test's 200 m race limit is tight on the mountain: an uphill start in traffic gets 197 to 230 m in 20 s, so that run can fail with nothing wrong. `tools/smoke.sh` runs it in the rain, which got 230 m.
 - The mountain's rock is one tile of grey, stretched on steep faces.
 - Rivals touch the walls more on Hard on the narrow Starter, and on Impossible more still.
 - At speed the stars streak with the motion blur.
