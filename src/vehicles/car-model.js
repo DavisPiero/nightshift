@@ -264,7 +264,7 @@ export function buildCar(spec, look = spec.paint, { simple = false } = {}) {
     return s;
   };
   const [hx, hy, hz] = cap?.headLamp ?? sh.headLamp, [tx, ty, tz] = cap?.tailLamp ?? sh.tailLamp;
-  const headGlows = simple ? [] : [sprite(0xfff0c8, 0.9, hx, hy, hz), sprite(0xfff0c8, 0.9, -hx, hy, hz)];
+  const headGlows = simple ? [] : [sprite(0xb8a888, 0.42, hx, hy, hz), sprite(0xb8a888, 0.42, -hx, hy, hz)];
   const tailGlows = simple ? [] : [-tx, tx].map((x) => sprite(0xff2010, 0.7, x, ty, tz));
 
   // Headlight beams: faint cones of light in the night air.
