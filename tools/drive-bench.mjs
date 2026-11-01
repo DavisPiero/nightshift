@@ -135,6 +135,18 @@ console.log('NOS');
   check(kmh(nos) > kmh(plain) * 1.15, 'NOS should be a real boost');
   for (let t = 0; t < 3; t += DT) nos.step(DT, controls({ throttle: 1, nos: true }));
   check(nos.nosLeft === 0 && !nos.nosOn, 'NOS should run out');
+  // A whole bottle from 60 km/h, held down: 35% up on the same car without it.
+  const held = [];
+  for (const car of CARS) {
+    const a = new Vehicle(buildSpec(car), DEFAULT_ASSISTS), b = new Vehicle(buildSpec(car), DEFAULT_ASSISTS);
+    for (const v of [a, b]) while (kmh(v) < 60) v.step(DT, controls({ throttle: 1 }));
+    b.nosLeft = NOS_SECONDS;
+    for (let t = 0; t < NOS_SECONDS; t += DT) { a.step(DT, controls({ throttle: 1 })); b.step(DT, controls({ throttle: 1, nos: true })); }
+    held.push(kmh(b) / kmh(a));
+  }
+  const mean = held.reduce((s, x) => s + x, 0) / held.length;
+  console.log(`  a held bottle from 60 km/h: ${held.map((x) => `+${((x - 1) * 100).toFixed(0)}%`).join(' ')} (average +${((mean - 1) * 100).toFixed(0)}%)`);
+  check(mean > 1.32 && mean < 1.4, 'a held bottle should be worth about 35%');
 }
 
 console.log('Lap of ' + TEST_ROAD.name);

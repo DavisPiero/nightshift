@@ -187,9 +187,10 @@ export class DeviceStage {
     this.k = Math.max(0, Math.min(1, this.k + dt * (this.closing ? -4.5 : 2.6)));
     const k = this.k, u = 1 - (1 - k) ** 3, over = Math.sin(k * Math.PI) * 0.04;
     const p = this.at, H = Math.tan((this.camera.fov * Math.PI) / 360) * this.camera.position.z;
-    this.holder.position.set(p.x, p.y - (1 - u) * (H * 2.4) + over, p.z);
-    this.holder.rotation.x = p.rx + Math.sin(this.t * 0.9) * 0.008;
-    this.holder.rotation.y = p.ry + Math.sin(this.t * 0.6) * 0.012;
+    // Held in a hand: a slow sway with a little tremble on top.
+    const t = this.t, sway = (a, b, c) => Math.sin(t * a) + Math.sin(t * b + 1.3) * 0.5 + Math.sin(t * c + 2.1) * 0.18;
+    this.holder.position.set(p.x + sway(1.1, 2.3, 7.1) * 0.012, p.y - (1 - u) * (H * 2.4) + over + sway(1.4, 2.9, 8.3) * 0.016, p.z);
+    this.holder.rotation.set(p.rx + sway(1.2, 2.6, 7.7) * 0.012, p.ry + sway(0.9, 2.1, 6.7) * 0.016, p.rz + sway(1.3, 2.7, 7.3) * 0.009);
     const open = Math.max(0, Math.min(1, (k - 0.35) / 0.65));
     m.hinge.rotation.x = m.shut + (m.open - m.shut) * (1 - (1 - open) ** 2);
     this.renderer.render(this.scene, this.camera);

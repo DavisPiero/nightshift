@@ -22,7 +22,7 @@ export const MOODS = [
   'angry', 'facepalm', 'sad', 'smug', 'wrench-grin',
 ];
 
-const PIXEL = 3;    // sheet pixels to one sprite pixel: a touch coarser than the sheet's own
+const PIXEL = 2;    // sheet pixels to one sprite pixel: close to the sheet itself
 const BLACK = 16;   // brightest colour (of r, g, b) still counted as the backdrop
 
 const page = (n) => `(async () => {

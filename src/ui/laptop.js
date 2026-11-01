@@ -1,4 +1,4 @@
-// The laptop: before a career race it comes up on the right of the cockpit. Buy
+// The laptop: before a career race it comes up on the right of the screen. Buy
 // one-race upgrades (career/upgrades.js), then Race starts the countdown. Race
 // is picked to begin with, so one press goes straight to the lights.
 

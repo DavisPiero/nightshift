@@ -32,8 +32,7 @@ export function buildTrackScene(track, def) {
   group.add(ground);
 
   // Tarmac. Phong, so rain can make it shiny (see world/weather.js).
-  const asphalt = Tex.asphalt();
-  const roadMat = new THREE.MeshPhongMaterial({ map: asphalt, shininess: 0, specular: 0x000000 });
+  const roadMat = new THREE.MeshPhongMaterial({ ...Tex.road((hw + 0.6) * 2), shininess: 0, specular: 0x000000 });
   const road = new THREE.Mesh(strip(track, -hw - 0.6, hw + 0.6, 0, { step: 1, uScale: 0.25, vScale: 0.25 }), roadMat);
   road.receiveShadow = true;
   group.add(road);

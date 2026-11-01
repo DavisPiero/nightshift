@@ -22,9 +22,10 @@
 9. **A career worth finishing.** From the docks to the top: Street (levels 0-100), GT3 (100-150),
    Formula (150-200 and on). Every race pays, you can never lose money, and cars cost real effort
    (about 60 races and 6 hours to finish Street). Told in short pixel-art scenes.
-10. **A moment before the lights.** Career only: a 3 s scene of you pulling up (one press skips it),
-   your cockpit, a laptop for one-race upgrades (one press goes on), then the countdown. NOS is the
-   best of them, on Shift, a touch button and the right bumper.
+10. **A moment before the lights.** Career only: a short scene of you pulling up (one press skips it),
+   a laptop for one-race upgrades over whichever camera you had on (one press goes on), then the
+   countdown. NOS is the best of them, on Shift, a touch button and the right bumper: 30% more speed,
+   climbing to 35% if you hold it, with blue fire, a roar and camera shake.
 
 ## The story
 It all takes place in Japan. You are a data analyst who times the street races after work. Johnny, a
@@ -57,7 +58,7 @@ whole look: change a colour or a font there, once.
 - Japanese: on screen titles and in the world only, never on buttons or rows.
 - Motion: quick and smooth. Lists slide in when a screen or tab opens, never on every click.
 - Banned: control hints outside Settings > Controls, except the laptop's NOS row.
-- Phone: the small button beside the gear. An old flip phone, a real model, tilted, on the right: inbox and updates.
+- Phone: the small button beside the gear. An old flip phone, a real model, tilted, on the right: inbox and updates. A bar along the top has Back and the bin; the bin always asks first.
 
 ## Milestones
 1. Foundation: loop, platform screen. **Done.**

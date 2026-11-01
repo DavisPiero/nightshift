@@ -1,5 +1,6 @@
 // The mail on your phone. A message arrives when its `when` says so, from what
-// the career has done; nothing is stored but which ones you have read (save.read).
+// the career has done; nothing is stored but which ones you have read (save.read)
+// and which you have binned (save.binned).
 // Updates to the game arrive here too (ui/notice.js). No DOM.
 
 import { levelFor } from './career.js';
@@ -33,7 +34,12 @@ export function inbox(save, update = null) {
   const r = save.career.racer?.name || 'kid';
   const list = MAIL.filter((m) => m.when(save.career)).map((m) => ({ ...m, text: m.text.replaceAll('{name}', r) })).reverse();
   if (update) list.unshift(update);
-  return list.map((m) => ({ ...m, read: save.read.includes(m.id) }));
+  return list.filter((m) => !save.binned.includes(m.id)).map((m) => ({ ...m, read: save.read.includes(m.id) }));
+}
+
+// Throw messages away for good. A binned message never comes back.
+export function bin(save, list) {
+  for (const m of list) if (!save.binned.includes(m.id)) save.binned.push(m.id);
 }
 
 export const unread = (save, update) => inbox(save, update).filter((m) => !m.read).length;

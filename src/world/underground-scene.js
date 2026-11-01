@@ -60,7 +60,7 @@ export function buildUnderground(track, def) {
   const reflect = new THREE.Group(); // bright things the car's paint reflects
 
   // Tarmac, with a cold sheen so the lights catch it.
-  const roadMat = new THREE.MeshPhongMaterial({ map: Tex.asphalt(), color: 0x9aa4aa, shininess: 0, specular: 0x000000 });
+  const roadMat = new THREE.MeshPhongMaterial({ ...Tex.road((hw + 0.5) * 2), color: 0x9aa4aa, shininess: 0, specular: 0x000000 });
   const road = new THREE.Mesh(strip(track, -hw - 0.5, hw + 0.5, 0, { step: 1, uScale: 0.25, vScale: 0.25 }), roadMat);
   road.receiveShadow = true;
   group.add(road);

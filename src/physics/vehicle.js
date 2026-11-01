@@ -12,7 +12,9 @@ import { Gearbox } from './gearbox.js';
 const G = 9.81;
 const AIR = 1.2;
 const RPM_PER_RADS = 60 / (2 * Math.PI);
-const NOS_BOOST = 1.5;     // drive force while NOS burns
+// Drive force while NOS burns. A press is worth 30% more speed; hold it for
+// NOS_BUILD seconds and it climbs to 35% (David, 2026-11-01; drive bench).
+const NOS_PUSH = 2.0, NOS_PUSH_HELD = 2.4, NOS_BUILD = 2;
 
 export const DEFAULT_ASSISTS = {
   steering: true,    // countersteers for you a little when the tail slides
@@ -86,6 +88,7 @@ export class Vehicle {
     this.wallTimer = 0;
     this.draft = 0;           // 0..1, how far into another car's slipstream (race.js)
     this.nosOn = false;
+    this.nosHeld = 0;         // seconds this burn has been held
     this.gearbox.gear = 1;
     this.gearbox.shiftTimer = 0;
   }
@@ -181,7 +184,11 @@ export class Vehicle {
       if (vLong < -0.5 && !reversing) driveForce = Math.max(driveForce, 0);
       // NOS burns while held on the throttle in a forward gear, and only then.
       this.nosOn = !!c.nos && this.nosLeft > 0 && this.throttle > 0.3 && gb.gear > 0;
-      if (this.nosOn) { this.nosLeft = Math.max(0, this.nosLeft - dt); driveForce *= NOS_BOOST; }
+      this.nosHeld = this.nosOn ? this.nosHeld + dt : 0;
+      if (this.nosOn) {
+        this.nosLeft = Math.max(0, this.nosLeft - dt);
+        driveForce *= NOS_PUSH + (NOS_PUSH_HELD - NOS_PUSH) * Math.min(1, this.nosHeld / NOS_BUILD);
+      }
     }
     if (reversing) driveForce = -driveForce;
 
