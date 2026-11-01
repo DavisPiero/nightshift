@@ -17,7 +17,8 @@
    paint shines with the lights round it, so even a black car shows its shape.
 7. **A garage worth coming back to**: a lock-up workshop with the car on a turntable, where you
    look at the cars you own and make them yours. Looks only: nothing there changes how a car drives.
-8. **Cruising is allowed.** Race mode with no rivals is free driving.
+8. **Three ways to drive.** The race settings screen has a dropdown: Race; Time Trial, endless laps
+   against a ghost of your best lap, saved per track and car; Practice, just you and the road.
 9. **A career worth finishing.** From the docks to the top: Street (levels 0-100), GT3 (100-150),
    Formula (150-200 and on). Every race pays, you can never lose money, and cars cost real effort
    (about 50 races and 6 hours to finish Street). Told in short pixel-art scenes.
@@ -43,7 +44,8 @@ references (2026-10-31). The bevels and pixel fonts of the first; the layout and
 - Meters are block progress bars. Tips are pale yellow tooltips.
 - HUD: a round rev dial at the bottom centre, ring of blocks with gear and speed inside, in the
   same grey, green and red; and a teal map with no frame, its corners fading out (David, 2026-10-31).
-  In a race, a strip along the top: place, lap, lap time, best lap, the gaps to the cars either side.
+  In a race, an F1-style sheet on the left: place, who moved, name, gap to the leader, last lap;
+  your row amber, the fastest lap teal (Arlo's notes, 2026-11-01). The map shows about 500 m (Settings > Map zoom) with your car low on it.
 - Behind the menus: the 3D scene, except the desk screens (Career, Shop, Settings).
 - Japanese: on screen titles and in the world only, never on buttons or rows.
 - Motion: quick and stepped. Lists slide in when a screen or tab opens, never on every click.

@@ -800,12 +800,16 @@ class SmokeTest {
     if (this.done || (this.t < 20 && this.frames < 4000)) return;
     this.done = true;
     const touchOk = game.save.platform !== 'touch' || (!document.querySelector('#touch').hidden && document.querySelectorAll('#touch .tc').length >= 5);
-    const ok = this.maxKmh > 80 && this.travelled > 300 && this.frames > 30 && touchOk;
+    // The bot drives to the grip, and corner speed goes with its square root.
+    const need = 80 * Math.sqrt(WEATHER[game.weatherId].grip);
+    // A race loses 3 s to the lights, and this bot bumps its way through traffic.
+    const far = game.race ? 200 : 300;
+    const ok = this.maxKmh > need && this.travelled > far && this.frames > 30 && touchOk;
     const out = document.createElement('pre');
     out.id = 'smoke';
     out.textContent = [
       `frames ${this.frames}, sim time ${this.t.toFixed(1)} s, platform ${game.save.platform}, ${game.trackInfo.name}, weather ${game.weatherId}, time ${game.timeId}`,
-      `top speed ${this.maxKmh.toFixed(0)} km/h, distance ${this.travelled} m, gear ${game.vehicle.gearbox.gear}`,
+      `top speed ${this.maxKmh.toFixed(0)} km/h (needs ${need.toFixed(0)}), distance ${this.travelled} m (needs ${far}), gear ${game.vehicle.gearbox.gear}`,
       `render ${game.renderer.width}x${game.renderer.height} (${game.graphicsName}), draw calls ${game.renderer.gl.info.render.calls}`,
       game.save.platform === 'touch' ? `touch controls ${touchOk ? 'shown' : 'MISSING'}` : 'keyboard',
       ok ? 'SMOKE PASS' : 'SMOKE FAIL',
