@@ -840,7 +840,7 @@ fontReady.catch(() => {}).then(() => carsReady).finally(() => {
   // Keep the boot text up long enough to read, then show the notice board.
   const hide = () => setTimeout(() => {
     boot.classList.add('done'); setTimeout(() => boot.remove(), 450);
-    if (!URL_FLAGS.device && !new URLSearchParams(location.search).has('screen')) import('./ui/notice.js').then((m) => m.showNotice());
+    if (!URL_FLAGS.device && !new URLSearchParams(location.search).has('screen')) import('./ui/notice.js').then((m) => m.showNotice(game));
   }, 1700);
   if (URL_FLAGS.smoke || URL_FLAGS.shot) boot.remove();
   else requestAnimationFrame(() => requestAnimationFrame(hide));

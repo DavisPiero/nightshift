@@ -1,5 +1,5 @@
 // The pictures on the car cards: every car from one camera, in one light, on no
-// background, baked to the same small palette. Saves assets/cars/cards/<id>.png.
+// background. Saves assets/cars/cards/<id>.png.
 // Re-run after adding a car or changing its stock look.
 //   node tools/car-cards.mjs [car-id]
 
@@ -21,7 +21,7 @@ const js = `(()=>{${BAKE}
   return new Promise((res)=>setTimeout(()=>{
     for(let i=0;i<20;i++) g.render(0.05);
     g.loop.stop?.();
-    const W=360,H=180, gl=g.renderer.gl, cam=g.camera;
+    const W=840,H=420, gl=g.renderer.gl, cam=g.camera;
     const rt=new g.renderer.target.constructor(W,H,{depthBuffer:true});
     g.garageCamera(0); cam.clearViewOffset(); cam.aspect=W/H; cam.updateProjectionMatrix();
     g.model.root.rotation.y=0; s.updateMatrixWorld(true);
@@ -30,7 +30,7 @@ const js = `(()=>{${BAKE}
     const c=document.createElement('canvas'); c.width=W; c.height=H; const x=c.getContext('2d'), im=x.createImageData(W,H);
     for(let y=0;y<H;y++) im.data.set(px.subarray((H-1-y)*W*4,(H-y)*W*4),y*W*4);
     x.putImageData(im,0,0);
-    res(bake(c,{colours:40,dither:0.25,gamma:0.55,sat:1.2}));
+    res(bake(c,{colours:256,dither:0,gamma:0.55,sat:1.2}));
   },2500));
 })()`;
 const jobs = IDS.map((id) => ({ q: `screen=garage&car=${id}`, out: join(ROOT, 'review/card-last.png'), wait: 6, size: '640x340', js, saveData: join(ROOT, `assets/cars/cards/${id}.png`), after: 0.2 }));

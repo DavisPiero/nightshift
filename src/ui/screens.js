@@ -301,8 +301,8 @@ export class Screens {
       b.className = 'btn item';
       b.dataset.track = t.id;
       b.disabled = !this.unlocked(t.id);
-      b.innerHTML = `<span class="num">${String(n + 1).padStart(2, '0')}</span><canvas width="72" height="40"></canvas>`
-        + `<span class="txt"><span class="name">${t.name}</span><span class="sub">${b.disabled ? 'Play it in the career to unlock it' : `${(t.path.length / 1000).toFixed(2)} KM · ${t.corners} corners`}</span></span>`;
+      b.innerHTML = `<span class="num">${String(n + 1).padStart(2, '0')}</span><canvas width="144" height="80"></canvas>`
+        + `<span class="txt"><span class="name">${t.name}</span><span class="sub">${b.disabled ? 'Play it in the career to unlock it' : `${(t.path.length / 1000).toFixed(2)} km · ${t.corners} corners`}</span></span>`;
       drawMap(b.querySelector('canvas'), t, 3);
       const choose = () => { if (this.pick.track !== t.id) { this.pick.track = t.id; this.game.loadTrack(t.id); this.fillTracks(); } };
       b.addEventListener('click', choose);
@@ -318,11 +318,11 @@ export class Screens {
     const ws = trackWeathers(t).map((id) => WEATHER[id].name).join(' · ');
     const el = $('#track-info');
     el.innerHTML = `<div class="ttl"><span>Track data</span></div>`
-      + `<canvas width="240" height="150"></canvas>`
+      + `<canvas width="480" height="300"></canvas>`
       + `<div class="info-name"><span class="name">${t.name}</span><span class="jp">${t.jp || ''}</span></div>`
       + `<p class="muted small">${t.blurb}</p>`
       + `<dl><dt>Length</dt><dd>${(t.path.length / 1000).toFixed(2)} km</dd><dt>Corners</dt><dd>${t.corners}</dd>`
-      + `<dt>Lanes</dt><dd>${t.def.halfWidth > 6.4 ? 4 : t.def.halfWidth > 6.2 ? 3 : 2}</dd><dt>Weather</dt><dd>${ws}</dd>`
+      + `<dt>Width</dt><dd>${t.def.halfWidth * 2} m</dd><dt>Weather</dt><dd>${ws}</dd>`
       + `<dt>Time</dt><dd>${trackTimes(t).map((id) => TIMES[id].name).join(' · ')}</dd></dl>`;
     drawMap(el.querySelector('canvas'), t, 4);
   }
@@ -348,8 +348,7 @@ export class Screens {
       const b = document.createElement('button');
       b.className = 'btn';
       b.dataset.weather = id;
-      b.innerHTML = `<canvas class="ico" width="16" height="16"></canvas><span>${w.name}</span>`;
-      drawWeatherIcon(b.querySelector('canvas'), id);
+      b.innerHTML = `${weatherIcon(id)}<span>${w.name}</span>`;
       b.addEventListener('click', () => { this.pick.weather = id; this.fillRace(); this.game.previewWeather(id); });
       list.appendChild(b);
     }
@@ -429,7 +428,7 @@ export class Screens {
     const rivals = racing ? `${this.pick.rivals} on ${DIFFICULTY[this.pick.difficulty].name}, ${this.pick.laps} lap${this.pick.laps > 1 ? 's' : ''}` : MODES[mode].name;
     const el = $('#race-info');
     el.innerHTML = `<div class="ttl"><span>${MODES[mode].name}</span></div>`
-      + `<canvas width="240" height="150"></canvas>`
+      + `<canvas width="480" height="300"></canvas>`
       + `<div class="info-name"><span class="name">${t.name}</span></div>`
       + `<dl><dt>Car</dt><dd>${car.make} ${car.model}</dd><dt>Class</dt><dd><span class="cls cls-${r.cls} mini">${r.cls}</span> ${r.pi}</dd>`
       + `<dt>${racing ? 'Rivals' : 'Session'}</dt><dd>${rivals}</dd><dt>Weather</dt><dd>${WEATHER[this.pick.weather].name}</dd><dt>Time</dt><dd>${TIMES[this.pick.time].clock} · ${TIMES[this.pick.time].name}</dd></dl>`;
@@ -439,48 +438,30 @@ export class Screens {
   drawMap(canvas, t, line) { drawMap(canvas, t, line); }
 }
 
-// Track outline for the card, drawn small and scaled up with square pixels.
+// Track outline for the panels and list rows.
 function drawMap(canvas, t, line = 4) {
   const g = canvas.getContext('2d');
   const p = t.path;
   let x0 = Infinity, x1 = -Infinity, z0 = Infinity, z1 = -Infinity;
   for (let i = 0; i < p.count; i++) { x0 = Math.min(x0, p.x[i]); x1 = Math.max(x1, p.x[i]); z0 = Math.min(z0, p.z[i]); z1 = Math.max(z1, p.z[i]); }
-  const W = canvas.width, H = canvas.height, pad = 8;
+  const W = canvas.width, H = canvas.height, pad = W / 16;
   const k = Math.min((W - pad * 2) / (x1 - x0), (H - pad * 2) / (z1 - z0));
   const ox = (W - (x1 - x0) * k) / 2, oz = (H - (z1 - z0) * k) / 2;
-  const at = (i) => [Math.round(ox + (x1 - p.x[i]) * k), Math.round(oz + (z1 - p.z[i]) * k)];
+  const at = (i) => [ox + (x1 - p.x[i]) * k, oz + (z1 - p.z[i]) * k];
   g.clearRect(0, 0, W, H);
-  g.strokeStyle = '#11535a'; g.lineWidth = line + 2; g.lineJoin = 'miter';
+  g.strokeStyle = '#ffffff'; g.lineWidth = line * W / 240; g.lineJoin = 'round';
   g.beginPath();
   for (let i = 0; i <= p.count; i += 4) { const [x, y] = at(i % p.count); if (i === 0) g.moveTo(x, y); else g.lineTo(x, y); }
   g.closePath(); g.stroke();
-  g.strokeStyle = '#3ff0e8'; g.lineWidth = Math.max(1, line - 2); g.stroke();
-  const [sx, sy] = at(t.def.start);
-  g.fillStyle = '#ff2e88'; g.fillRect(sx - 3, sy - 3, 6, 6);
+  const [sx, sy] = at(t.def.start), r = W / 60;
+  g.fillStyle = '#ffb000'; g.fillRect(sx - r, sy - r, r * 2, r * 2);
 }
 
-function drawWeatherIcon(canvas, id) {
-  const g = canvas.getContext('2d');
-  const px = (x, y, c) => { g.fillStyle = c; g.fillRect(x, y, 1, 1); };
-  const C = '#3ff0e8', O = '#ff2e88', W = '#c9d8dc';
-  if (id === 'clear') {
-    // A crescent moon and two stars.
-    for (let y = 0; y < 16; y++) for (let x = 0; x < 16; x++) {
-      const a = (x - 8) ** 2 + (y - 8) ** 2 < 30, b = (x - 11) ** 2 + (y - 6) ** 2 < 24;
-      if (a && !b) px(x, y, O);
-    }
-    px(13, 12, W); px(2, 3, W); px(3, 2, W);
-  } else if (id === 'rain') {
-    for (let x = 3; x < 13; x++) for (let y = 3; y < 7; y++) if ((x - 8) ** 2 / 25 + (y - 5) ** 2 / 4 < 1) px(x, y, W);
-    for (const [x, y] of [[4, 9], [8, 10], [12, 9], [6, 13], [10, 13]]) { px(x, y, C); px(x - 1, y + 1, C); }
-  } else if (id === 'snow') {
-    // Two pixel snowflakes.
-    for (const [cx, cy, c] of [[5, 5, W], [11, 11, O]]) {
-      for (let d = -2; d <= 2; d++) { px(cx + d, cy, c); px(cx, cy + d, c); }
-      for (const [dx, dy] of [[-1, -1], [1, 1], [-1, 1], [1, -1]]) px(cx + dx, cy + dy, c);
-    }
-    px(12, 3, W); px(3, 12, C);
-  } else {
-    for (const [y, a, b] of [[4, 2, 13], [7, 4, 15], [10, 1, 11], [13, 5, 14]]) for (let x = a; x < b; x++) px(x, y, x % 5 === 0 ? C : W);
-  }
-}
+// The weather as simple line pictures, in the colour of the text round them.
+const WEATHER_ICONS = {
+  clear: '<path d="M20 15.5A8.5 8.5 0 0 1 8.5 4 8.5 8.5 0 1 0 20 15.5Z"/>',
+  rain: '<path d="M7 14h10a3.5 3.5 0 0 0 .5-7A5.5 5.5 0 0 0 7 7.6 3.3 3.3 0 0 0 7 14Z"/><path d="M8 17l-1 3M12.5 17l-1 3M17 17l-1 3"/>',
+  fog: '<path d="M3 7h13M7 11h14M3 15h15M8 19h11"/>',
+  snow: '<path d="M12 3v18M4.2 7.5l15.6 9M19.8 7.5l-15.6 9M12 6.5l-2.5-2M12 6.5l2.5-2M12 17.5l-2.5 2M12 17.5l2.5 2"/>',
+};
+const weatherIcon = (id) => `<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${WEATHER_ICONS[id] || WEATHER_ICONS.fog}</svg>`;

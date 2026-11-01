@@ -69,7 +69,6 @@ export class Shop {
     }
     const money = this.game.save.career.cr, have = this.owned(c.id);
     el.innerHTML = `<div class="ttl"><span>${c.make}</span></div>`
-      + `<div class="stamp-brand">${c.make}</div>`
       + `<div class="car-name"><span class="sub">${c.year} · ${c.code}</span><span class="name">${c.model}</span></div>`
       + `<p class="muted small">${c.blurb}</p><div class="stats"></div><div class="shop-buy"></div>`;
     fillStats(el.querySelector('.stats'), buildSpec(c), this.game.save.settings.units);

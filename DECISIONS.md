@@ -180,3 +180,11 @@ One line each, newest last.
 - 2026-11-01: Max: black with red stripes, not pink (David). GT3 cars are not being added yet (David).
 - 2026-11-01: Answers for Part 3 (David): the backstory is just data analysis, rewrite the story to fit, drop the dock work; Aoi offers a seat and you sign only with Johnny as engineer; the laptop's NOS row may name its key; upgrades are career only, one buy per race, kept on a restart; a 3 s grid scene before the laptop; Parabolica's pink neon stays in the world.
 - 2026-11-01: Smoke test limits follow the shorter tracks: top speed needed is 80 km/h times the square root of the weather's grip (the bot drives to the grip; rain needs 69), and a race needs 200 m, not 300 (3 s of lights, and the bot bumps through traffic). Replayed in Node first: both failures were the old limits, not the game.
+- 2026-11-01: David signed off Part 1 and it is live; he then asked for the map's cyan to go and a box at the top for place and lap (both done).
+- 2026-11-01: UI rework: black and titanium, white, amber and teal, clean, layouts from his references. Overturns the Microsoft desktop mix, the teal desk, yellow selection and pink main action. The fonts stay at David's word: Jersey 10, and DotGothic16 made heavier.
+- 2026-11-01: Sixth look in a week, so the cause is fixed: styles/main.css is rewritten around one list of colours and fonts (760 lines of layers down to about 500); no screen names a colour of its own.
+- 2026-11-01: DotGothic16 has one weight. Bold alone stayed thin, so its text also gets a 0.4 px outline in its own colour (`--weight`). Jersey 10 is untouched.
+- 2026-11-01: Rev dial, map, track outlines, weather icons, the gear and the car cards are drawn sharp now, not as small pixel bitmaps. The car cards are 840 x 420. The 3D view and story pictures keep their pixels.
+- 2026-11-01: The notice board is one window, shown once per update (id in ui/notice.js, `save.notice`); a brand-new player never sees it. Reminder and You got mail are gone; mail comes back on the phone in Part 3.
+- 2026-11-01: The race sheet and Time Trial panel use the game's fonts (David). Lap moved from the sheet to the top box, which keeps the sheet to the order.
+

@@ -1,5 +1,13 @@
 # Changelog
 
+## A new look (2026-11-01)
+- Every screen redone: black and titanium, with white, amber and teal. No pink, cleaner, sharper.
+- New home screen of picture tiles, a bar along the top of every screen, new car cards with sharper pictures.
+- The main font stays; the small text is heavier and easier to read.
+- In a race: a box at the top with your place and lap, and the race sheet in the game's fonts.
+- The map is just the track, with no background behind it.
+- The notice board shows once after each update. The other two pop-ups are gone.
+
 ## Arlo's notes, part 1: racing (2026-11-01)
 - Bumping another car no longer cuts your speed: knocks are shared between the two cars.
 - Starter Track and Underground are shorter, narrower and faster.

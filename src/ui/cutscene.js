@@ -115,7 +115,7 @@ export class Cutscene {
         g.fillRect(q.x | 0, q.y | 0, 1, 1);
       } else if (k === 'lights') {
         q.x += dt * 260 * q.s;
-        g.fillStyle = q.s > 0.9 ? 'rgba(255, 60, 140, 0.5)' : 'rgba(80, 240, 230, 0.5)';
+        g.fillStyle = q.s > 0.9 ? 'rgba(255, 176, 0, 0.5)' : 'rgba(34, 216, 200, 0.5)';
         g.fillRect(q.x | 0, (q.y * 0.15 + 8) | 0, 26 * q.s | 0, 1);
       } else {
         q.p += dt * 2.5;

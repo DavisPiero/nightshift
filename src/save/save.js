@@ -14,6 +14,7 @@ export function defaultSave() {
   return {
     version: SAVE_VERSION,
     platform: null,              // 'computer' | 'touch', null until chosen
+    notice: '',                  // the last notice board shown (ui/notice.js)
     settings: {
       // Gameplay
       transmission: 'auto',
