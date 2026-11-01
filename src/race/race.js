@@ -10,7 +10,7 @@
 // 'racing' -> 'finished' (when the player, or in the bench the leader,
 // crosses the line after the last lap; the rest carry on to the line).
 
-import { keepOnTrack } from '../physics/walls.js';
+import { keepOnTrack, settleOnRoad } from '../physics/walls.js';
 import { applyWeather } from '../physics/weather.js';
 import { knock } from '../physics/knocks.js';
 
@@ -45,6 +45,7 @@ export class Race {
       const i = t.wrap(start - 6 - row * 8);
       const o = side * hw * 0.45;
       c.vehicle.reset(t.x[i] + t.leftX(i) * o, t.z[i] + t.leftZ(i) * o, t.headingAt(i));
+      settleOnRoad(c.vehicle, t, { index: i, along: 0 });
       c.index = i; c.offset = o; c.covered = -(6 + row * 8);
     });
     this.start = start;
@@ -169,6 +170,7 @@ export class Race {
     const t = this.track, i = t.wrap(c.index - 5);
     const [x, z, o] = this.line.point(i);
     c.vehicle.reset(x, z, t.headingAt(i));
+    settleOnRoad(c.vehicle, t, { index: i, along: 0 });
     c.index = i; c.offset = o; c.resets++;
     if (c.driver) c.driver.stuck = 0;
     applyWeather(c.vehicle, this.weather);

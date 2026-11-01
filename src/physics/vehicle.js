@@ -87,6 +87,7 @@ export class Vehicle {
     this.wallPivot = 0;       // yaw rate (rad/s) from leaning on a wall at low speed
     this.wallTimer = 0;
     this.draft = 0;           // 0..1, how far into another car's slipstream (race.js)
+    this.roadY = 0; this.slope = 0; this.slopeSide = 0; // the hill under the car (walls.js)
     this.nosOn = false;
     this.nosHeld = 0;         // seconds this burn has been held
     this.gearbox.gear = 1;
@@ -258,7 +259,7 @@ export class Vehicle {
     const coasting = drive < 0.05 && brake < 0.05 && !c.handbrake;
     const liftOff = coasting ? s.liftOffDrag * s.mass * clamp(Math.abs(vLong) / 3, 0, 1) : 0;
     const cosD = Math.cos(delta), sinD = Math.sin(delta);
-    let fLong = fRearLong + fFrontLong * cosD - latF * sinD - Math.sign(vLong) * liftOff;
+    let fLong = fRearLong + fFrontLong * cosD - latF * sinD - Math.sign(vLong) * liftOff - s.mass * G * this.slope;
     let fLat = latR + latF * cosD + fFrontLong * sinD;
     if (speed > 0.01) {
       fLong -= dragF * vLong / speed;

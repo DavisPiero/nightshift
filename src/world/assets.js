@@ -37,6 +37,60 @@ function part(geo, material, { x = 0, y = 0, z = 0, ry = 0, rx = 0, tint = false
   return { geo: placed(geo, x, y, z, ry, rx), mat: material, tint, shadow };
 }
 
+// How much a track may fill itself with: 1 on computers, less on iPads and Low
+// graphics (the game sets it before building a track).
+let detail = 1;
+export const setSceneDetail = (k) => { detail = k; };
+export const sceneDetail = () => detail;
+
+// Cards for leaves and blossom: see-through, both sides lit. `glow` lifts them a
+// little out of the dark, so blossom reads at night.
+function leafMat(key, tex, glow = 0, power = 0, side = THREE.DoubleSide) {
+  return mat('leaf' + key, () => new THREE.MeshLambertMaterial({ map: tex(), alphaTest: 0.5, side, emissive: glow, emissiveMap: glow ? tex() : null, emissiveIntensity: power }));
+}
+const barkMat = () => mat('bark', () => new THREE.MeshLambertMaterial({ map: Tex.bark() }));
+
+// A crown: n cards scattered through an ellipsoid, facing outward. Their normals
+// point out from its middle, so the whole crown shades like one soft round
+// thing, not like a pile of flat cards. Seen from behind a card is not drawn
+// (the far half of the crown is hidden anyway).
+function crown({ n, rx, ry, rz, cy, size, seed }) {
+  let s = seed * 7919;
+  const rnd = () => (s = (s * 9301 + 49297) % 233280) / 233280;
+  const pos = [], nor = [], uv = [], idx = [];
+  const e = new THREE.Euler(), q = new THREE.Quaternion(), face = new THREE.Quaternion(), v = new THREE.Vector3(), c = new THREE.Vector3(), out = new THREE.Vector3(), Z = new THREE.Vector3(0, 0, 1);
+  for (let i = 0; i < n; i++) {
+    const a = rnd() * Math.PI * 2, y = rnd() * 2 - 1, d = Math.cbrt(rnd() * 0.65 + 0.35), h = Math.sqrt(1 - y * y);
+    c.set(Math.cos(a) * h * d * rx, y * d * ry, Math.sin(a) * h * d * rz);
+    out.copy(c).setY(c.y + ry * 0.5).normalize();
+    e.set((rnd() - 0.5) * 1.1, (rnd() - 0.5) * 1.1, rnd() * 3.1); q.setFromEuler(e).premultiply(face.setFromUnitVectors(Z, out));
+    const w = size * (0.75 + rnd() * 0.5), base = pos.length / 3;
+    for (const [px, py, u, t] of [[-1, -1, 0, 0], [1, -1, 1, 0], [1, 1, 1, 1], [-1, 1, 0, 1]]) {
+      v.set(px * w / 2, py * w / 2, 0).applyQuaternion(q).add(c);
+      pos.push(v.x, v.y + cy, v.z); nor.push(out.x, out.y, out.z); uv.push(u, t);
+    }
+    idx.push(base, base + 1, base + 2, base, base + 2, base + 3);
+  }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+  g.setAttribute('normal', new THREE.Float32BufferAttribute(nor, 3));
+  g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
+  g.setIndex(idx);
+  return g;
+}
+
+// A trunk that forks into `count` limbs reaching up and out.
+function limbs(radius, height, reach, rise, count) {
+  const geos = [placed(new THREE.CylinderGeometry(radius * 0.72, radius, height, 7).translate(0, height / 2, 0), 0, 0, 0)];
+  for (let i = 0; i < count; i++) {
+    const a = i * 2.4 + 0.4, r = reach * (0.7 + (i % 3) * 0.15), up = rise * (0.8 + (i % 2) * 0.4);
+    const len = Math.hypot(r, up), tilt = Math.atan2(r, up);
+    const g = new THREE.CylinderGeometry(radius * 0.14, radius * 0.5, len, 5).translate(0, len / 2, 0).rotateX(tilt).rotateY(a);
+    geos.push(g.translate(0, height * 0.92, 0));
+  }
+  return merge(geos);
+}
+
 // Colours of the fake light, as 0..1 RGB.
 export const GLOW = {
   amber: [1, 0.659, 0.314],
@@ -100,22 +154,22 @@ export const ASSETS = {
       };
     },
   },
-  'gold-streetlight': {
-    name: 'Gold streetlight', jp: '金色の街灯', group: 'Street',
-    note: 'The LED lamp with a warm gold head and a gold pool. Parabolica Street.',
+  'ring-streetlight': {
+    name: 'White streetlight', jp: '白い街灯', group: 'Street',
+    note: 'A tall LED lamp with a clean white head and pool. Parabolica Street.',
     kit: () => {
       const pole = lambert(0x2e2a36);
       return {
         parts: [
           part(new THREE.CylinderGeometry(0.1, 0.14, 9, 6), pole, { y: 4.5 }),
           part(new THREE.BoxGeometry(3.4, 0.12, 0.12), pole, { x: 1.6, y: 8.95 }),
-          part(new THREE.BoxGeometry(0.9, 0.1, 0.35), basic(0xffe2a0), { x: 3.2, y: 8.88 }),
+          part(new THREE.BoxGeometry(0.9, 0.1, 0.35), basic(0xf0f4ff), { x: 3.2, y: 8.88 }),
           part(new THREE.CylinderGeometry(0.2, 0.24, 0.5, 6), pole, { y: 0.25 }),
         ],
-        glows: [[3.2, 8.7, 0, 'gold']],
-        pools: [[3.2, 0, 18, 18, 'gold']],
+        glows: [[3.2, 8.7, 0, 'white']],
+        pools: [[3.2, 0, 22, 22, 'lamp']],
         lamps: [[3.2, 8.5, 0]],
-        reflect: [[new THREE.BoxGeometry(1.6, 0.3, 0.8), 0xffd890, 3.2, 8.9, 0]],
+        reflect: [[new THREE.BoxGeometry(1.6, 0.3, 0.8), 0xe4ecff, 3.2, 8.9, 0]],
       };
     },
   },
@@ -182,43 +236,177 @@ export const ASSETS = {
   // --- Nature ---
   tree: {
     name: 'Tree', jp: '木', group: 'Nature',
-    note: 'A dark broadleaf: a trunk that forks, a crown of three clumps (a lighter one on top). Scale it 0.8 to 1.5.',
-    kit: () => {
-      const leaf = lambert(0x1f3320, { flatShading: true }), top = lambert(0x2a4228, { flatShading: true }), bark = lambert(0x2a2018);
-      return {
-        parts: [
-          part(new THREE.IcosahedronGeometry(2.3, 1).scale(1, 1.15, 1), leaf, { y: 5.0, shadow: true }),
-          part(new THREE.IcosahedronGeometry(1.6, 0).scale(1, 0.9, 1), leaf, { x: 1.5, y: 4.2, z: 0.4, ry: 0.7, shadow: true }),
-          part(new THREE.IcosahedronGeometry(1.5, 0), top, { x: -0.5, y: 6.7, z: -0.3, ry: 1.9 }),
-          part(new THREE.CylinderGeometry(0.17, 0.3, 3.4, 6), bark, { y: 1.7 }),
-          part(new THREE.CylinderGeometry(0.07, 0.12, 1.8, 5).translate(0, 0.9, 0), bark, { x: 0.15, y: 2.9, rx: 0.8, ry: 1.3 }),
-        ],
-      };
-    },
+    note: 'A broadleaf: a forked trunk and a crown of leaf cards. Scale it 0.8 to 1.5.',
+    kit: () => ({
+      parts: [
+        { geo: limbs(0.3, 3.4, 2.2, 1.6, 4), mat: barkMat(), shadow: false },
+        { geo: crown({ n: 56, rx: 3.3, ry: 3.1, rz: 3.3, cy: 5.3, size: 2, seed: 5 }), mat: leafMat('leaves', Tex.leaves, 0, 0, THREE.FrontSide), shadow: true },
+      ],
+    }),
   },
   sakura: {
     name: 'Cherry tree', jp: '桜', group: 'Nature',
-    note: 'In blossom: a wide, layered pink crown on a crooked trunk that catches the lamp light. In the parks.',
+    note: 'In full blossom: a wide umbrella of flower on a dark crooked trunk. Lines Parabolica Street; takes the lamps well.',
+    kit: () => ({
+      parts: [
+        { geo: limbs(0.34, 2.8, 3.2, 1.5, 5), mat: barkMat(), shadow: false },
+        { geo: crown({ n: 90, rx: 5.2, ry: 2.3, rz: 5.2, cy: 5.0, size: 2.1, seed: 9 }), mat: leafMat('blossom', Tex.blossom, 0xff9cc0, 0.2, THREE.FrontSide), shadow: true },
+      ],
+    }),
+  },
+  bush: {
+    name: 'Bush', jp: '茂み', group: 'Nature',
+    note: 'A clump of leaf cards. Usually placed squashed: 1.3 wide, 0.8 tall.',
+    kit: () => ({ parts: [{ geo: crown({ n: 14, rx: 1.2, ry: 0.8, rz: 1.2, cy: 0.7, size: 1.3, seed: 3 }), mat: leafMat('leaves', Tex.leaves, 0, 0, THREE.FrontSide) }] }),
+  },
+  cedar: {
+    name: 'Cedar', jp: '杉', group: 'Nature',
+    note: 'A tall Japanese cedar in drooping skirts. Beside the road; the forest behind it is cedar-card.',
     kit: () => {
-      const pinkA = lambert(0xd88aa8, { flatShading: true }), pinkB = lambert(0xeaa6c0, { flatShading: true }), bark = lambert(0x3a2a24);
+      const tiers = [];
+      for (let i = 0; i < 9; i++) {
+        const t = i / 8, rad = 3.1 * (1 - t) ** 0.8 + 0.35, h = 3.6 - t * 1.4;
+        tiers.push(placed(new THREE.CylinderGeometry(rad * 0.16, rad, h, 9, 1, true), 0, 5 + t * 15.5, 0, i * 2.1));
+      }
       return {
         parts: [
-          part(new THREE.IcosahedronGeometry(2.5, 1).scale(1.3, 0.7, 1.3), pinkA, { y: 4.1, shadow: true }),
-          part(new THREE.IcosahedronGeometry(1.7, 0).scale(1.2, 0.7, 1.2), pinkB, { x: 0.8, y: 5.2, z: -0.5, ry: 0.5 }),
-          part(new THREE.IcosahedronGeometry(1.4, 0).scale(1.2, 0.75, 1.2), pinkA, { x: -1.9, y: 3.7, z: 0.9, ry: 1.2 }),
-          part(new THREE.CylinderGeometry(0.16, 0.3, 3.2, 6), bark, { y: 1.6 }),
-          part(new THREE.CylinderGeometry(0.07, 0.13, 2.0, 5).translate(0, 1.0, 0), bark, { x: -0.1, y: 2.6, rx: 0.9, ry: -2.0 }),
+          part(new THREE.CylinderGeometry(0.1, 0.42, 21, 7), barkMat(), { y: 10.5 }),
+          { geo: merge(tiers), mat: leafMat('cedartier', Tex.cedarTier), shadow: true },
         ],
       };
     },
   },
-  bush: {
-    name: 'Bush', jp: '茂み', group: 'Nature',
-    note: 'Two clumps. Usually placed squashed: 1.3 wide, 0.8 tall.',
+  'cedar-card': {
+    name: 'Cedar (far)', jp: '杉林', group: 'Nature',
+    note: 'Three crossed pictures of a cedar: thousands of them make the forest for almost nothing. Takes a colour.',
+    tint: 0xffffff,
+    kit: () => {
+      const p = [0, 1, 2].map((i) => placed(new THREE.PlaneGeometry(7.5, 22).translate(0, 11, 0), 0, 0, 0, i * Math.PI / 3));
+      return { parts: [{ geo: merge(p), mat: leafMat('cedarcard', Tex.cedarCard), tint: true }] };
+    },
+  },
+  fern: {
+    name: 'Bank of ferns', jp: '羊歯', group: 'Nature',
+    note: 'Low green along the edge of the forest.',
+    kit: () => ({ parts: [{ geo: crown({ n: 9, rx: 1.3, ry: 0.4, rz: 1.3, cy: 0.45, size: 1.1, seed: 7 }), mat: leafMat('leaves', Tex.leaves, 0, 0, THREE.FrontSide) }] }),
+  },
+
+  // --- Mountain ---
+  'mountain-lamp': {
+    name: 'Mountain lamp', jp: '山道の灯', group: 'Mountain',
+    note: 'A cold white lamp on a galvanised arm, leaning over the road. Its pool is painted on the road by the track.',
+    kit: () => {
+      const pole = lambert(0x6a6e70);
+      return {
+        parts: [
+          part(new THREE.CylinderGeometry(0.08, 0.11, 7.6, 6), pole, { y: 3.8 }),
+          part(new THREE.BoxGeometry(3.2, 0.09, 0.09), pole, { x: 1.55, y: 7.55 }),
+          part(new THREE.BoxGeometry(0.7, 0.12, 0.3), basic(0xdce8ff), { x: 3, y: 7.45 }),
+        ],
+        glows: [[3, 7.3, 0, 'white']],
+        lamps: [[3, 7.1, 0]],
+        reflect: [[new THREE.BoxGeometry(1.4, 0.3, 0.7), 0xc8d8ff, 3, 7.5, 0]],
+      };
+    },
+  },
+  'curve-mirror': {
+    name: 'Corner mirror', jp: 'カーブミラー', group: 'Mountain',
+    note: 'A round mirror on an orange pole, on the outside of a blind bend.',
     kit: () => ({
       parts: [
-        part(new THREE.IcosahedronGeometry(1.1, 0), lambert(0x2c4426, { flatShading: true }), { y: 0.625 }),
-        part(new THREE.IcosahedronGeometry(0.75, 0), lambert(0x34502c, { flatShading: true }), { x: 0.8, y: 0.5, z: 0.3, ry: 0.8 }),
+        part(new THREE.CylinderGeometry(0.05, 0.05, 3.4, 6), lambert(0xd86a1c), { y: 1.7 }),
+        part(new THREE.CylinderGeometry(0.46, 0.46, 0.07, 16).rotateX(Math.PI / 2), lambert(0xd86a1c), { y: 3.5 }),
+        part(new THREE.CircleGeometry(0.42, 16), mat('mirror', () => new THREE.MeshStandardMaterial({ color: 0x9aa8b8, metalness: 0.9, roughness: 0.12 })), { y: 3.5, z: 0.04 }),
+      ],
+    }),
+  },
+  'rail-post-white': {
+    name: 'Guard rail post', jp: 'ガードレール', group: 'Mountain',
+    kit: () => ({ parts: [part(new THREE.CylinderGeometry(0.05, 0.05, 0.85, 6), lambert(0xd8d8d0), { y: 0.42 })] }),
+  },
+  'stone-lantern': {
+    name: 'Stone lantern', jp: '石灯籠', group: 'Mountain',
+    note: 'A shrine lantern: a stone post, a lit box, a little roof.',
+    kit: () => {
+      const stone = lambert(0x7c7c74);
+      return {
+        parts: [
+          part(new THREE.CylinderGeometry(0.34, 0.42, 0.18, 8), stone, { y: 0.09 }),
+          part(new THREE.CylinderGeometry(0.11, 0.15, 1.1, 8), stone, { y: 0.72 }),
+          part(new THREE.BoxGeometry(0.46, 0.08, 0.46), stone, { y: 1.3 }),
+          part(new THREE.BoxGeometry(0.32, 0.34, 0.32), basic(0xffb868), { y: 1.5 }),
+          part(new THREE.ConeGeometry(0.46, 0.3, 4).rotateY(Math.PI / 4), stone, { y: 1.82 }),
+          part(new THREE.SphereGeometry(0.07, 6, 5), stone, { y: 2.0 }),
+        ],
+        glows: [[0, 1.5, 0, 'amber', 1.6]],
+      };
+    },
+  },
+  torii: {
+    name: 'Road gate', jp: '鳥居', group: 'Mountain',
+    note: 'A vermilion shrine gate wide enough to span the road, +x across it. Scale it to the road; 13.5 m as it stands.',
+    kit: () => {
+      const red = lambert(0xc82a18), black = lambert(0x16120f);
+      return {
+        parts: [
+          ...[-1, 1].flatMap((s) => [
+            part(new THREE.CylinderGeometry(0.34, 0.42, 7.2, 12), red, { x: s * 6.2, y: 3.6 }),
+            part(new THREE.CylinderGeometry(0.5, 0.5, 0.5, 12), black, { x: s * 6.2, y: 0.25 }),
+          ]),
+          part(new THREE.BoxGeometry(14.2, 0.42, 0.42), red, { y: 6.1 }),
+          part(new THREE.BoxGeometry(16.4, 0.5, 0.62), red, { y: 7.32 }),
+          part(new THREE.BoxGeometry(16.8, 0.24, 0.84), black, { y: 7.68 }),
+          part(new THREE.BoxGeometry(0.34, 1, 0.3), red, { y: 6.7 }),
+        ],
+      };
+    },
+  },
+  shrine: {
+    name: 'Small shrine', jp: '神社', group: 'Mountain',
+    note: 'A little hall on a stone base, its doors lit, front at +z.',
+    kit: () => {
+      const wood = lambert(0x4a2e20), red = lambert(0xc82a18), roof = lambert(0x24282a), stone = lambert(0x74746c);
+      const eave = new THREE.ConeGeometry(5.6, 2, 4).rotateY(Math.PI / 4).scale(1, 1, 0.82);
+      return {
+        parts: [
+          part(new THREE.BoxGeometry(7.4, 0.7, 6.4), stone, { y: 0.35 }),
+          part(new THREE.BoxGeometry(5.4, 2.8, 4.4), wood, { y: 2.1 }),
+          part(new THREE.PlaneGeometry(3.2, 2.1), basic(0xd89048), { y: 2, z: 2.22 }),
+          ...[[-2.7, 2.2], [2.7, 2.2], [-2.7, -2.2], [2.7, -2.2], [-1.6, 2.3], [1.6, 2.3]].map(([x, z]) => part(new THREE.CylinderGeometry(0.15, 0.15, 3, 8), red, { x, y: 2.1, z })),
+          part(eave, roof, { y: 4.5 }),
+          part(new THREE.CylinderGeometry(0.09, 0.09, 3.6, 8).rotateZ(Math.PI / 2), lambert(0xd8ccae), { y: 3.2, z: 2.42 }),
+        ],
+        glows: [[0, 2, 2.6, 'amber', 3.4]],
+        pools: [],
+      };
+    },
+  },
+  'rest-house': {
+    name: 'Mountain rest stop', jp: '峠の茶屋', group: 'Mountain',
+    note: 'A low noodle bar with a tin roof and a lit counter, front at +z.',
+    kit: () => {
+      const m = mat('restfront', () => new THREE.MeshBasicMaterial({ map: Tex.konbini() }));
+      const roof = lambert(0x3a3e40), wall = lambert(0x6a5a48), post = lambert(0x2a2420);
+      return {
+        parts: [
+          part(new THREE.BoxGeometry(12, 3.2, 6), wall, { y: 1.6 }),
+          part(new THREE.PlaneGeometry(11.4, 2.3), m, { y: 1.5, z: 3.02 }),
+          part(new THREE.BoxGeometry(13.6, 0.16, 9), roof, { y: 3.5, z: 0.8, rx: 0.14 }),
+          ...[-6, 0, 6].map((x) => part(new THREE.BoxGeometry(0.16, 2.8, 0.16), post, { x, y: 1.4, z: 4.4 })),
+        ],
+        glows: [[-3, 2.4, 3.4, 'white', 3], [3, 2.4, 3.4, 'white', 3]],
+        pools: [[0, 7, 13, 8, 'white']],
+        lamps: [[0, 3, 5]],
+        reflect: [[new THREE.BoxGeometry(11, 2, 0.3), 0xf0f4ff, 0, 1.6, 3]],
+      };
+    },
+  },
+  'sign-rockfall': {
+    name: 'Falling rocks sign', jp: '落石注意', group: 'Mountain',
+    kit: () => ({
+      parts: [
+        part(new THREE.CylinderGeometry(0.04, 0.04, 2.6, 6), lambert(0x8a8e90), { y: 1.3 }),
+        part(new THREE.PlaneGeometry(1, 1), mat('warn', () => new THREE.MeshLambertMaterial({ map: Tex.warnSign('落石注意'), transparent: true, alphaTest: 0.4, side: THREE.DoubleSide })), { y: 2.7 }),
       ],
     }),
   },
@@ -409,12 +597,13 @@ const NEON_GLOW = { pink: 'pink', teal: 'teal', amber: 'amber', violet: [0.63, 0
 });
 
 // The ground pools' looks, shared by every track.
-const POOL_TEX = { warm: () => Tex.lightPool(), cool: () => Tex.lightPool(), white: () => Tex.lightPoolWhite(), pink: () => Tex.lightPoolWhite(), gold: () => Tex.lightPoolWhite(), violet: () => Tex.lightPoolWhite() };
-const POOL_COLOUR = { warm: 0xffffff, cool: 0x9adcc0, white: 0xc8d8ff, pink: 0xff4fa0, gold: 0xffc870, violet: 0x9a6aff };
+const POOL_TEX = { lamp: () => Tex.lightPoolWhite(), warm: () => Tex.lightPool(), cool: () => Tex.lightPool(), white: () => Tex.lightPoolWhite(), pink: () => Tex.lightPoolWhite(), gold: () => Tex.lightPoolWhite(), violet: () => Tex.lightPoolWhite() };
+const POOL_COLOUR = { lamp: 0x7a8498, warm: 0xffffff, cool: 0x9adcc0, white: 0xc8d8ff, pink: 0xff4fa0, gold: 0xffc870, violet: 0x9a6aff };
 function poolMat(kind) {
   return mat('pool-' + kind, () => new THREE.MeshBasicMaterial({ map: POOL_TEX[kind](), color: POOL_COLOUR[kind], transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, polygonOffset: true, polygonOffsetFactor: -4 }));
 }
 
+const CELL = 90, CELL_MIN = 60; // metres, and how many of a thing before it is cut up
 const kitCache = new Map();
 function kitFor(id) {
   if (!kitCache.has(id)) kitCache.set(id, ASSETS[id].kit());
@@ -451,8 +640,8 @@ export class Placer {
     const kit = kitFor(id);
     const v = new THREE.Vector3();
     for (const [gx, gy, gz, c, size] of kit.glows || []) { v.set(gx, gy, gz).applyMatrix4(m); this.glow(v.x, v.y, v.z, c, size); }
-    for (const [px, pz, w, d, kind] of kit.pools || []) { v.set(px, 0, pz).applyMatrix4(m); this.pool(v.x, v.z, w * s[0], d * s[2], kind, ry); }
-    for (const [lx, ly, lz] of kit.lamps || []) this.lamps.push(new THREE.Vector3(lx, ly, lz).applyMatrix4(m));
+    for (const [px, pz, w, d, kind] of kit.pools || []) { v.set(px, 0, pz).applyMatrix4(m); this.pool(v.x, v.z, w * s[0], d * s[2], kind, ry, y); }
+    for (const [lx, ly, lz] of kit.lamps || []) { const l = new THREE.Vector3(lx, ly, lz).applyMatrix4(m); l.floor = y; this.lamps.push(l); }
     for (const [geo, c, rx, ryy, rz] of kit.reflect || []) {
       if (!this.reflectGeos.has(c)) this.reflectGeos.set(c, []);
       this.reflectGeos.get(c).push(geo.clone().translate(rx, ryy, rz).applyMatrix4(m));
@@ -473,8 +662,8 @@ export class Placer {
     g.pos.push(x, y, z);
     g.col.push(...(Array.isArray(colour) ? colour : GLOW[colour]));
   }
-  pool(x, z, w, d = w, kind = 'warm', ry = 0) {
-    (this.pools[kind] ||= []).push(placed(new THREE.PlaneGeometry(w, d), x, 0.03, z, ry, -Math.PI / 2));
+  pool(x, z, w, d = w, kind = 'warm', ry = 0, y = 0) {
+    (this.pools[kind] ||= []).push(placed(new THREE.PlaneGeometry(w, d), x, y + 0.03, z, ry, -Math.PI / 2));
   }
   reflect(geo, colour) {
     if (!this.reflectGeos.has(colour)) this.reflectGeos.set(colour, []);
@@ -485,9 +674,16 @@ export class Placer {
   // Settings can hide them), the reflection group and the lamp spots.
   finish(group, { glowSize = 3.4 } = {}) {
     for (const [id, list] of this.items) {
-      for (const p of kitFor(id).parts) {
-        const mesh = new THREE.InstancedMesh(p.geo, p.mat, list.length);
-        list.forEach(([m, c], i) => {
+      // A long list is cut into cells, so what is behind you is not drawn.
+      const cells = new Map();
+      for (const item of list) {
+        const e = item[0].elements, key = list.length < CELL_MIN ? 0 : `${Math.floor(e[12] / CELL)},${Math.floor(e[14] / CELL)}`;
+        if (!cells.has(key)) cells.set(key, []);
+        cells.get(key).push(item);
+      }
+      for (const cell of cells.values()) for (const p of kitFor(id).parts) {
+        const mesh = new THREE.InstancedMesh(p.geo, p.mat, cell.length);
+        cell.forEach(([m, c], i) => {
           mesh.setMatrixAt(i, m);
           if (p.tint) mesh.setColorAt(i, new THREE.Color(c ?? ASSETS[id].tint ?? 0xffffff));
         });
@@ -643,15 +839,22 @@ function shops(list, group, placer) {
   for (const [c, geos] of awnings) group.add(new THREE.Mesh(merge(geos), lambert(c)));
   for (const [c, geos] of bands) group.add(new THREE.Mesh(merge(geos), basic(c)));
   fronts.forEach((geos, i) => { if (geos.length) group.add(new THREE.Mesh(merge(geos), mat('shopfront' + i, () => new THREE.MeshBasicMaterial({ map: Tex.shopFront(i + 1), color: 0xcccccc })))); });
-  uppers.forEach((geos, i) => { if (geos.length) group.add(new THREE.Mesh(merge(geos), litMat('floors' + i, Tex.floors(i + 1)))); });
+  uppers.forEach((geos, i) => { if (geos.length) group.add(new THREE.Mesh(merge(geos), litMat('floors' + i, Tex.floors(i + 1), Tex.floorsGlow(i + 1)))); });
   if (roofs.length) group.add(new THREE.Mesh(merge(roofs), roofMat()));
 }
 
 // Blocks of flats: balconies and windows all round. { x, z, w, d, h, rot, seed (1-3) }.
 // b.crown: a colour for a lit band round the top (Parabolica's gold).
 function flats(list, group, placer) {
-  const sides = [[], [], []], roofs = [], crowns = new Map();
+  const sides = [[], [], []], roofs = [], crowns = new Map(), slabs = [];
   for (const b of list) {
+    // Real balcony slabs on the two long faces, one a floor, and fins between
+    // the bays: the wall has depth as you pass.
+    for (const side of [0, Math.PI]) {
+      const ang = b.rot + side, fx = Math.sin(ang), fz = Math.cos(ang), sx = Math.cos(ang), sz = -Math.sin(ang);
+      for (let y = 3.2; y < b.h - 1; y += 3.2) slabs.push(placed(new THREE.BoxGeometry(b.w + 0.3, 0.16, 1.1), b.x + fx * (b.d / 2 + 0.55), y, b.z + fz * (b.d / 2 + 0.55), ang));
+      for (let u = -b.w / 2; u <= b.w / 2 + 0.1; u += 8) slabs.push(placed(new THREE.BoxGeometry(0.14, b.h, 1.1), b.x + fx * (b.d / 2 + 0.55) + sx * u, b.h / 2, b.z + fz * (b.d / 2 + 0.55) + sz * u, ang));
+    }
     [[b.w, 0], [b.d, Math.PI / 2], [b.w, Math.PI], [b.d, -Math.PI / 2]].forEach(([len, a], fi) => {
       const g = new THREE.PlaneGeometry(len, b.h);
       const uv = g.attributes.uv;
@@ -675,13 +878,14 @@ function flats(list, group, placer) {
     }
   }
   for (const [col, geos] of crowns) group.add(new THREE.Mesh(merge(geos), basic(col)));
-  sides.forEach((geos, i) => { if (geos.length) group.add(new THREE.Mesh(merge(geos), litMat('flats' + i, Tex.flats(i + 1)))); });
+  sides.forEach((geos, i) => { if (geos.length) group.add(new THREE.Mesh(merge(geos), litMat('flats' + i, Tex.flats(i + 1), Tex.flatsGlow(i + 1)))); });
+  if (slabs.length) group.add(new THREE.Mesh(merge(slabs), mat('flatslab', () => new THREE.MeshLambertMaterial({ map: Tex.concrete(), color: 0xb0aea4 }))));
   if (roofs.length) group.add(new THREE.Mesh(merge(roofs), roofMat()));
 }
 
 // A wall whose lit windows glow but whose walls still take the light.
-function litMat(key, tex) {
-  return mat('lit' + key, () => new THREE.MeshLambertMaterial({ map: tex, emissive: 0xffffff, emissiveMap: tex, emissiveIntensity: 0.75 }));
+function litMat(key, tex, glow) {
+  return mat('lit' + key, () => new THREE.MeshLambertMaterial({ map: tex, emissive: 0xffffff, emissiveMap: glow, emissiveIntensity: 1 }));
 }
 
 // Flat roofs: one material, so snow can whiten every roof at once.

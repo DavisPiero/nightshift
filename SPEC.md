@@ -9,7 +9,7 @@
 3. **It sounds like a real engine.** Deep, layered, reacts to throttle, gear changes and
    lift-off. Never a mosquito.
 4. **Night atmosphere, neon Japan.** Each track has its own light: amber lamps round the
-   harbour, turquoise strips in the Tokyo tunnels. Fog, rain, red tail lights, Japanese signs
+   harbour, turquoise strips in the Tokyo tunnels, cherry blossom under white lamps on Parabolica Street, moonlight and red shrine gates on Yamagiri Pass. Fog, rain, red tail lights, Japanese signs
    and road markings. Realistic and a little pixelated on Medium and High; chunky pixels on Low.
 5. **Menus that feel like a racing game.** See "Look of the menus" below. Lists on the left, the
    thing you pick on the right, the main button bottom right; every button has its sound.
@@ -56,7 +56,7 @@ whole look: change a colour or a font there, once.
   (David, 2026-11-01), and the F1-style sheet on the left: place, who moved, name, gap to the leader,
   last lap; your row amber, the fastest lap teal.
 - Behind the menus: the 3D scene, except the plain screens (Career, Settings).
-- Shop and Garage: everything sits on a real laptop pulled up on the left, the car stands in the rest of the screen, and the laptop can be put down. The Shop is Dave's lot; Dave sits in the right corner talking rubbish.
+- Shop and Garage: everything sits on a real laptop pulled up on the left, the car stands in the rest of the screen, and the laptop can be put down. The Shop is Dave's lot; Dave leans in his open cabin window talking rubbish, his bubble hanging under it.
 - Japanese: on screen titles and in the world only, never on buttons or rows.
 - Motion: quick and smooth. Lists slide in when a screen or tab opens, never on every click.
 - Banned: control hints outside Settings > Controls, except the laptop's NOS row.
@@ -83,8 +83,8 @@ whole look: change a colour or a font there, once.
 6. Realism overhaul (M6, started 2026-10-28; GLB cars done, 2026-10-31). Then the career (2026-10-31):
    racing, four difficulties, money and levels, the shop, the story. **Street stage done.**
    Arlo's fourth notes (2026-11-01), in three parts: (1) feel, road, headlights, phone bin. **Done.**
-   (2) Analytics, laptops in Shop and Garage, Dave's lot. **Done.** (3) Contacts, favours, Sonny, quests,
-   Parabolica fixed, the mountainside map, trackside models up to the cars' quality. **Next.**
+   (2) Analytics, laptops in Shop and Garage, Dave's lot. **Done.** (3) Quick fixes, Parabolica in blossom, Yamagiri Pass,
+   trackside models, far scenery baked into the sky. **Done.** (4) Contacts, favours, Sonny, quests. **Next.**
 7. GT3 and Formula: their cars, circuits and story. Needs models from David.
 8. Saving and settings: the rest (most of it is done in 3).
 9. Polish and release.

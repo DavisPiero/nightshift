@@ -48,7 +48,7 @@ export function defaultSave() {
       xp: 0,                     // experience; the level comes from it (career.js)
       difficulty: 'normal',      // the last difficulty picked
       done: {},                  // per event id: best place
-      tracks: ['starter'],       // tracks played, so open in Race
+      tracks: ['starter'],       // tracks played (the Race menu now opens them by stage)
       seen: [],                  // story scenes already shown
       racer: { name: '', flag: '' }, // who you are: made before the first race
     },

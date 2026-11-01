@@ -10,10 +10,10 @@ import { Controls } from './input/controls.js';
 import { KeyboardSource } from './input/keyboard.js';
 import { TouchSource } from './input/touch.js';
 import { Vehicle } from './physics/vehicle.js';
-import { keepOnTrack } from './physics/walls.js';
+import { keepOnTrack, settleOnRoad } from './physics/walls.js';
 import { RacingLine } from './race/racing-line.js';
 import { Race } from './race/race.js';
-import { RaceView, GhostView } from './race/race-view.js';
+import { RaceView, GhostView, placeOnRoad } from './race/race-view.js';
 import { TimeTrial } from './race/ghost.js';
 import { pickField, makeDriver } from './race/opponents.js';
 import { getDifficulty } from './race/difficulty.js';
@@ -31,6 +31,7 @@ import { getTrack, trackWeathers } from './world/tracks.js';
 import { buildGarage } from './world/garage.js';
 import { Reflections } from './graphics/reflections.js';
 import { buildTrackScene, placeBackdrop } from './world/track-scene.js';
+import { setSceneDetail } from './world/assets.js';
 import { WeatherView } from './world/weather.js';
 import { timeLook, trackTimes, TIMES } from './world/time-of-day.js';
 import { CameraManager } from './cameras/cameras.js';
@@ -171,12 +172,14 @@ class Game {
     if (this.world && this.trackInfo === info) return;
     if (this.world) {
       this.scene.remove(this.world.group, this.world.backdrop);
+      this.world.backdrop.userData.far?.dispose();
       for (const g of [this.world.group, this.world.backdrop, this.world.reflect]) {
         g?.traverse((o) => { o.geometry?.dispose(); for (const m of [].concat(o.material || [])) m.dispose(); });
       }
     }
     this.trackInfo = info;
     this.track = info.path;
+    setSceneDetail((URL_FLAGS.device || this.save.platform) === 'touch' || this.graphicsName === 'low' ? 0.55 : 1);
     this.world = buildTrackScene(this.track, info.def);
     this.scene.add(this.world.group, this.world.backdrop);
     this.world.baseLook = this.world.look;
@@ -202,6 +205,7 @@ class Game {
     for (const m of w.skies || []) { m.map = L.sky; m.needsUpdate = true; }
     for (const g of w.glows) g.material.opacity = L.glow;
     if (!this.inGarage) this.reflections.setWorld(w);
+    w.backdrop.userData.far?.bake(this.renderer.gl, L);
     if (this.weather && this.preset) this.weather.set(this.weatherId, this.preset, this.save.settings.effects);
   }
 
@@ -459,8 +463,9 @@ class Game {
     v.load = v.throttle;
     const hand = (p, q) => Math.sin(a.t * p) + Math.sin(a.t * q + 1) * 0.5;
     a.lookX += (v.x - a.lookX) * (1 - Math.exp(-5 * dt)); a.lookZ += (v.z - a.lookZ) * (1 - Math.exp(-5 * dt));
-    this.camera.position.set(a.cam[0] + hand(0.9, 2.1) * 0.012, 1.05 + hand(1.2, 2.6) * 0.012, a.cam[1] + hand(0.7, 1.9) * 0.012);
-    this.camera.lookAt(a.lookX, 0.75 + hand(1.1, 2.3) * 0.006, a.lookZ);
+    a.camY ??= t.y[t.nearest(a.cam[0], a.cam[1]).index];
+    this.camera.position.set(a.cam[0] + hand(0.9, 2.1) * 0.012, a.camY + 1.05 + hand(1.2, 2.6) * 0.012, a.cam[1] + hand(0.7, 1.9) * 0.012);
+    this.camera.lookAt(a.lookX, t.y[j] + 0.75 + hand(1.1, 2.3) * 0.006, a.lookZ);
     this.camera.fov = 48 - Math.min(1, a.t / (ARRIVE_ROLL + 0.8)) * 5;
     this.camera.near = 0.1;
     this.camera.updateProjectionMatrix();
@@ -476,6 +481,7 @@ class Game {
     fade.classList.add('on');
     setTimeout(() => {
       this.vehicle.reset(a.x, a.z, a.heading);
+      settleOnRoad(this.vehicle, this.track, this.track.nearest(a.x, a.z));
       this.prepare();
       fade.classList.remove('on');
     }, 260);
@@ -544,7 +550,7 @@ class Game {
     });
     this.race.grid(this.trackInfo.def.start);
     this.trackIndex = this.race.player.index;
-    this.raceView.setup(this.race.cars);
+    this.raceView.setup(this.race.cars, this.timeId === 'night');
     this.hud.setRace(this.race);
   }
 
@@ -628,6 +634,7 @@ class Game {
     const t = this.track;
     const i = t.wrap(index);
     this.vehicle.reset(t.x[i], t.z[i], t.headingAt(i));
+    settleOnRoad(this.vehicle, t, { index: i, along: 0 });
     applyWeather(this.vehicle, this.weatherId);
     this.trackIndex = i;
     if (this.cameras) this.cameras.set(this.cameras.mode, this.carRef());
@@ -719,7 +726,7 @@ class Game {
       scene.add(root);
       this.reflections.setWorld(room || this.world);
     }
-    this.model.setLights(!garage && this.timeId !== 'dawn'); // no headlights once it is getting light
+    this.model.setLights(!garage && this.timeId === 'night'); // full dark only: sunset and dawn are bright enough
     this.bonnetUp = garage && this.menuView === 'garage' && this.garageTab === 'bonnet';
     this.model.setBonnet(this.bonnetUp);
     if (garage) {
@@ -733,10 +740,10 @@ class Game {
       const d = Math.atan2(Math.sin(target - this.turnNow), Math.cos(target - this.turnNow));
       this.turnNow += d * Math.min(1, dt * 3);
       root.position.set(0, 0.06, 0);
-      root.rotation.y = this.fixedTurn ?? this.turnHold ?? this.turnNow;
+      root.rotation.set(0, this.fixedTurn ?? this.turnHold ?? this.turnNow, 0);
     } else {
-      root.position.set(v.x, 0, v.z);
-      root.rotation.y = v.heading;
+      settleOnRoad(v, this.track, this.track.nearest(v.x, v.z, this.trackIndex));
+      placeOnRoad(root, v);
     }
     this.shakeBody(dt);
     this.model.update(v, dt);
@@ -754,12 +761,13 @@ class Game {
       .sort((a, b) => a[1] - b[1]);
     for (let i = 0; i < n; i++) this.lampLights[i].position.copy(near[i][0]);
     const sun = this.world.look.sun.dir;
-    this.moon.position.set(v.x + sun[0], sun[1], v.z + sun[2]);
-    this.moon.target.position.set(v.x, 0, v.z);
+    this.moon.position.set(v.x + sun[0], v.roadY + sun[1], v.z + sun[2]);
+    this.moon.target.position.set(v.x, v.roadY, v.z);
 
     if (!garage && this.camera.view?.enabled) { this.camera.clearViewOffset(); this.lensShift = 0; }
     if (this.state === 'menu') {
       if (garage) this.garageCamera(dt); else this.menuCamera(dt);
+      if (room?.daveAt) this.screens.shop.place(room.daveAt, this.camera);
       this.model.setInterior(false);
       this.audio.update(dt, v, this.weatherId, garage ? 0 : 0.25);
     } else {
@@ -772,15 +780,20 @@ class Game {
     }
     this.stage.update(dt);
     this.raceView.update(this.state === 'paused' ? 0 : dt);
-    if (this.trial) this.ghost.update(this.trial.pose());
+    if (this.trial) {
+      const pose = this.trial.pose();
+      if (pose) pose.y = this.track.y[this.track.nearest(pose.x, pose.z).index];
+      this.ghost.update(pose);
+    }
     const live = this.state === 'paused' ? 0 : dt;
     // The paint reflects what is round the car (redone every other frame).
     root.updateMatrixWorld();
-    this.reflections.update(this.renderer.gl, root.position.x, 0.9, root.position.z, garage);
+    this.reflections.update(this.renderer.gl, root.position.x, root.position.y + 0.9, root.position.z, garage);
     if (!garage) {
       this.effects.renderHeight = this.renderer.height;
       this.effects.update(live, v, this.model, this.camera, near, this.weatherId);
       this.weather.update(live, this.camera, v, this.state === 'menu' ? 0 : this.patch || 0);
+      this.world.update?.(live, this.camera, v);
       placeBackdrop(this.world.backdrop, this.camera);
       this.world.backdrop?.userData.sky?.update(live);
     }
@@ -888,16 +901,16 @@ class Game {
       this.flyIndex = ((this.flyIndex ?? this.trackInfo.def.start) + dt * 22) % t.count;
       const i = t.wrap(Math.floor(this.flyIndex)), j = t.wrap(i + 18);
       const side = Math.sin(this.attractAngle * 0.7) * 2.5;
-      this.camera.position.set(t.x[i] + t.leftX(i) * side, this.trackInfo.def.theme === 'underground' ? 3.4 : 5.5, t.z[i] + t.leftZ(i) * side);
-      this.camera.lookAt(t.x[j], 1.2, t.z[j]);
+      this.camera.position.set(t.x[i] + t.leftX(i) * side, t.y[i] + (this.trackInfo.def.theme === 'underground' ? 3.4 : 5.5), t.z[i] + t.leftZ(i) * side);
+      this.camera.lookAt(t.x[j], t.y[j] + 1.2, t.z[j]);
       this.camera.fov = 62;
       this.camera.updateProjectionMatrix();
       return;
     }
     const a = v.heading + 2.2 + Math.sin(this.attractAngle) * 0.9;
     const dist = 7.5, h = 1.6, lookY = 0.7;
-    this.camera.position.set(v.x + Math.sin(a) * dist, h, v.z + Math.cos(a) * dist);
-    this.camera.lookAt(v.x, lookY, v.z);
+    this.camera.position.set(v.x + Math.sin(a) * dist, v.roadY + h, v.z + Math.cos(a) * dist);
+    this.camera.lookAt(v.x, v.roadY + lookY, v.z);
     // Turn the lens left so the car sits on the right, clear of the menu
     // (more on narrow screens, where the menu takes more of the width).
     const aspect = this.renderer.width / Math.max(1, this.renderer.height);

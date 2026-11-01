@@ -1,4 +1,4 @@
-# Hand-off: end of session 18 (2026-11-01)
+# Hand-off: end of session 19 (2026-11-01)
 
 ## Repo state
 - On `main`, everything committed and pushed; no other branches. `main` is the live site. Next work goes on a new branch. David's standing rule for these notes: when a part is finished and checked, merge and push it without asking.
@@ -7,7 +7,14 @@
 `CLAUDE.md`, `STATE.md`, the last 20 lines of `DECISIONS.md`, then this file.
 
 ## What comes next
-Part 3 of David's fourth notes: spelled out under "Next" in `STATE.md`, with his answers in `DECISIONS.md`. He wants each part pushed when finished, without asking.
+Part 4 of David's fourth notes: spelled out under "Next" in `STATE.md`, with his answers in `DECISIONS.md`. He wants each part pushed when finished, without asking.
+
+## How the environments work
+- Road height: `heights` keys in a track's definition; `TrackPath.y`, `.grade`. `keepOnTrack` calls `settleOnRoad`, which sets `vehicle.roadY`, `.slope`, `.slopeSide`. After teleporting a car, call `settleOnRoad` before any camera snap. `placeOnRoad` (race-view.js) tips a body. Strips and walls in `scene-kit.js` follow the height by themselves; a Placer needs the y passed in.
+- Sky bake: `skyBackdrop(farGroup, centre)` or `cityBackdrop`. `backdrop.userData.far` is the `FarBake`; `applyLook` bakes, `WeatherView.set` sets the haze. It must not be `transparent` in Three's eyes or it draws over the world.
+- Trees: `crown()` and `limbs()` in `assets.js`, textures `Tex.leaves`, `blossom`, `cedarTier`, `cedarCard`. Crowns are `FrontSide`: double-sided flips the out-pointing normals and turns half the cards black.
+- A world can have `update(dt, camera, v)` (Parabolica's petals) and `setSnow(on)` (the mountain's ground).
+- Light on a hilly road: `roadGlow` in `mountain-scene.js`, not `place.pool`, which is flat.
 
 ## How the look works
 - Colours, fonts, spacing: the list at the top of `styles/main.css`. Canvas drawings repeat a few of those values (`ui/hud.js`, `ui/screens.js`, `input/touch.js`).
@@ -48,15 +55,13 @@ Part 3 of David's fourth notes: spelled out under "Next" in `STATE.md`, with his
 - Check the printed scale: near 1:1 means the recipe's `axles` fit. Helpers: `listIslands`, `findSteering`, `listCabinNear`. Always check a cockpit by turning the wheel.
 
 ## Open with David
-Ask these first, then start Part 3.
-1. What exactly is wrong with Parabolica Street? Nothing records it.
-2. Are the sprite sheets for Sonny and Dave ready (5 across, 4 down, on black)? Any for Max and Aoi?
-3. Did the iPad hold up in the Shop and Garage, with the second 3D view running all the time? Never tried on a real one.
-4. Do NOS (roar, shake, 30 to 35%), the headlights, the pull-up and the cockpit feel right? Nobody here can hear or feel them.
-5. Do Dave's lines, the lot, the laptop's size and the race laptop's new angle work for him? All guesses.
-6. Does the new look work on every screen, and is the small text right (`--weight`, `--track`)?
-7. Does the racing feel right? Is Hard too hard (a limit bot from last finishes 4th to 7th)?
-8. The Subaru's source, for its credit, and near-miss art for the Mustank's sponsor livery on its shop card.
-9. Older guesses from sessions 15, 16 and before: listed in `STATE.md`.
+Ask these first, then start Part 4.
+1. Can Claude download free CC0 textures and tree models? His answers skipped this; everything is still drawn in code.
+2. Does "race any map in my stage" also mean choosing the map in Career? It is Race, Time Trial and Practice for now.
+3. How does Yamagiri Pass drive, and is 3 laps too long? Is sunset too dark without headlights?
+4. Did the iPad hold up? This update is the heaviest yet.
+5. Are the sprite sheets for Sonny and Dave ready (5 across, 4 down, on black)? Any for Max and Aoi?
+6. Do NOS, the headlights, the pull-up, the cockpit and Dave's lines work for him? All guesses.
+7. Is Hard too hard? The Subaru's source and near-miss art for the Mustank's livery. Older guesses are in `STATE.md`.
 
-Part 3 changes a rule: Sonny's 500 CR entry means "you can never lose money" stops being true for that race type. Update SPEC.md point 9 then.
+Part 4 changes a rule: Sonny's 500 CR entry means "you can never lose money" stops being true for that race type. Update SPEC.md point 9 then.

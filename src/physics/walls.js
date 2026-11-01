@@ -13,8 +13,20 @@ const OUTLINE = [
   [1, 0], [-1, 0], [0, 1], [0, -1],
 ];
 
+// Where the car sits on the road's height: roadY, how steep the road is along
+// the car's nose (slope) and across it, rising to its left (slopeSide). Physics
+// is still flat; the hill only reaches it through `slope`.
+export function settleOnRoad(vehicle, track, near) {
+  if (!track.hilly) return;
+  const i = near.index, g = track.grade[i], d = vehicle.heading - track.headingAt(i);
+  vehicle.roadY = track.y[i] + g * near.along;
+  vehicle.slope = g * Math.cos(d);
+  vehicle.slopeSide = -g * Math.sin(d);
+}
+
 export function keepOnTrack(vehicle, track, hint) {
   const near = track.nearest(vehicle.x, vehicle.z, hint);
+  settleOnRoad(vehicle, track, near);
   const s = vehicle.spec;
   let impact = 0;
   let contact = null;

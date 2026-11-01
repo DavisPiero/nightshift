@@ -3,6 +3,7 @@
 // and AI racing lines. No Three.js here, so physics tests can use it in Node.
 
 const SPACING = 1; // metres between samples
+const HEIGHT_SMOOTH = 45; // metres either side averaged, three times over
 
 function catmull(p0, p1, p2, p3, t) {
   // Centripetal Catmull-Rom would be safer on uneven spacing; uniform is fine
@@ -13,8 +14,9 @@ function catmull(p0, p1, p2, p3, t) {
 
 export class TrackPath {
   // points: [[x, z], ...] in driving order. halfWidth: half the tarmac width.
-  // wall: distance from the centre line to the barriers.
-  constructor({ points, halfWidth, wall, patches = [] }) {
+  // wall: distance from the centre line to the barriers. heights: [[metres, y], ...]
+  // along the road, in order, from 0 (left out, the road is flat at 0).
+  constructor({ points, halfWidth, wall, patches = [], heights }) {
     this.halfWidth = halfWidth;
     this.wall = wall;
     this.patches = patches; // [[from, to], ...] metres along: heavier weather
@@ -64,6 +66,30 @@ export class TrackPath {
       // Signed curvature: positive bends to the left.
       const cross = this.tx[i] * this.tz[q] - this.tz[i] * this.tx[q];
       this.curvature[i] = -cross / SPACING;
+    }
+    // The road's height along its length, smoothed so it has no kinks, and how
+    // steep it is (rise per metre travelled).
+    this.y = new Float32Array(count);
+    this.grade = new Float32Array(count);
+    this.hilly = !!heights;
+    if (heights) {
+      const keys = [...heights, [count, heights[0][1]]];
+      for (let i = 0, n = 0; i < count; i++) {
+        while (keys[n + 1][0] <= i) n++;
+        const [a, ya] = keys[n], [b, yb] = keys[n + 1];
+        this.y[i] = ya + (yb - ya) * (i - a) / (b - a);
+      }
+      let was = this.y.slice();
+      for (let pass = 0; pass < 3; pass++) {
+        let sum = 0;
+        for (let k = -HEIGHT_SMOOTH; k <= HEIGHT_SMOOTH; k++) sum += was[this.wrap(k)];
+        for (let i = 0; i < count; i++) {
+          this.y[i] = sum / (HEIGHT_SMOOTH * 2 + 1);
+          sum += was[this.wrap(i + HEIGHT_SMOOTH + 1)] - was[this.wrap(i - HEIGHT_SMOOTH)];
+        }
+        was = this.y.slice();
+      }
+      for (let i = 0; i < count; i++) this.grade[i] = (this.y[this.wrap(i + 1)] - this.y[this.wrap(i - 1)]) / (2 * SPACING);
     }
   }
 

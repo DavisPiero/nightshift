@@ -18,8 +18,9 @@ export function strip(track, inner, outer, y, { step = 2, uScale = 1, vScale = 1
     const i = track.wrap(k);
     const lx = track.leftX(i), lz = track.leftZ(i);
     const d = k; // metres travelled (1 sample per metre)
-    pos.push(track.x[i] + lx * inner, y, track.z[i] + lz * inner);
-    pos.push(track.x[i] + lx * outer, y, track.z[i] + lz * outer);
+    const ry = y + track.y[i];
+    pos.push(track.x[i] + lx * inner, ry, track.z[i] + lz * inner);
+    pos.push(track.x[i] + lx * outer, ry, track.z[i] + lz * outer);
     uv.push(0, d * vScale, (outer - inner) * uScale, d * vScale);
     if (n > 0) {
       const a = (n - 1) * 2, b = n * 2;
@@ -63,7 +64,7 @@ export function wallStrip(track, offset, y0, y1, step = 4, uScale = 0.5, facingI
   for (let k = 0; k <= track.count; k += step) {
     const i = track.wrap(k);
     const x = track.x[i] + track.leftX(i) * offset, z = track.z[i] + track.leftZ(i) * offset;
-    pos.push(x, y0, z, x, y1, z);
+    pos.push(x, y0 + track.y[i], z, x, y1 + track.y[i], z);
     uv.push(k * uScale, 0, k * uScale, (y1 - y0) * uScale);
     if (n > 0) {
       const a = (n - 1) * 2, b = n * 2;
@@ -107,7 +108,7 @@ export function fenceFrame(track, offset, y0, y1, every = 4) {
   for (let k = 0; k < track.count; k += every) {
     const i = track.wrap(k);
     const x = track.x[i] + track.leftX(i) * offset, z = track.z[i] + track.leftZ(i) * offset;
-    geos.push(placed(new THREE.BoxGeometry(0.08, y1 - y0 + 0.1, 0.08), x, (y0 + y1) / 2, z, track.headingAt(i)));
+    geos.push(placed(new THREE.BoxGeometry(0.08, y1 - y0 + 0.1, 0.08), x, (y0 + y1) / 2 + track.y[i], z, track.headingAt(i)));
   }
   return merge(geos);
 }

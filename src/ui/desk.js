@@ -6,6 +6,7 @@
 import { buildLaptop } from '../world/props-devices.js';
 
 const $ = (sel) => document.querySelector(sel);
+const LEAN = 0.09; // radians the laptop leans over to the left, so more of the scene shows
 const PANELS = { shop: ['#shop-desk', 800, 500], garage: ['#garage-desk', 800, 500] };
 
 export class Desk {
@@ -31,7 +32,7 @@ export class Desk {
   // the width, and the keyboard runs off the bottom of the screen.
   pose(a) {
     const scale = Math.min(1.14, a * 0.78), half = 1.65 * scale, H = 2.0;
-    return { x: -a * H + half + 0.14, y: H - 0.44 - 2.1 * scale, z: 0, rx: 0.1, ry: 0.1, rz: 0, scale };
+    return { x: -a * H + half + 0.2, y: H - 0.44 - 2.1 * scale, z: 0, rx: 0.1, ry: 0.1, rz: LEAN, scale };
   }
 
   lift() {

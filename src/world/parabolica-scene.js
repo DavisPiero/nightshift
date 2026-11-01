@@ -3,16 +3,17 @@
 // it, the town in ordered blocks: shops shoulder to shoulder under one roof
 // line, a taller corner building at each end, a side street between blocks;
 // awnings, lit sign bands, paper lanterns and neon; blocks of flats behind
-// in a steady rhythm with lit gold crowns. The road is four lanes with a gold
-// centre line, lit by tall gold lamps, between concrete blocks with catch
-// fences. Footbridges cross the straights and an elevated expressway crosses
-// over the back of the circuit. The colours are purple, pink and gold
-// (David, 2026-10-26): violet walls and sky, pink neon, gold light.
+// in a steady rhythm with lit crowns. The road is four lanes with a gold centre
+// line, lit by tall white lamps, between concrete blocks, and cherry trees in
+// full blossom line both sides of it the whole way round (David, 2026-11-01):
+// a pink tunnel, petals drifting across the road and lying along its edges.
+// Footbridges cross the straights and an elevated expressway crosses over the
+// back of the circuit. Violet walls and sky, pink neon, white light.
 // Every prop comes from the asset library (assets.js).
 
 import * as THREE from 'three';
 import { Tex } from '../graphics/textures.js';
-import { rng, strip, merge, wallStrip, placed, fenceFrame } from './scene-kit.js';
+import { rng, strip, merge, wallStrip, placed } from './scene-kit.js';
 import { Placer, roofMat } from './assets.js';
 import { cityBackdrop, reflectSky } from './track-scene.js';
 
@@ -110,23 +111,23 @@ export function buildParabolica(track, def) {
   }
   kerbGeos.forEach((geos, i) => { if (geos.length) group.add(new THREE.Mesh(merge(geos), kerbMat[i])); });
 
-  // --- Edges: concrete blocks, catch fences, pavements ---
+  // --- Edges: concrete blocks and pavements, petals lying along them ---
   const blockMat = new THREE.MeshLambertMaterial({ map: Tex.barrier(), color: 0xd8c8e0 });
   group.add(new THREE.Mesh(merge([1, -1].map((s) => wallStrip(track, s * W, 0, 1.0, 2, 0.5))), blockMat));
   group.add(new THREE.Mesh(merge([1, -1].map((s) => strip(track, s * W, s * (W + 0.6), 1.0, { step: 2 }))), new THREE.MeshLambertMaterial({ color: 0x9a9890 })));
-  const fenceMat = new THREE.MeshLambertMaterial({ map: Tex.fence(), transparent: true, alphaTest: 0.3, side: THREE.DoubleSide, color: 0x9a8aa8 });
-  group.add(new THREE.Mesh(merge([1, -1].map((s) => wallStrip(track, s * (W + 0.3), 1.0, 3.6, 4, 2.5))), fenceMat));
-  group.add(new THREE.Mesh(merge([1, -1].map((s) => fenceFrame(track, s * (W + 0.3), 1.0, 3.6))), new THREE.MeshLambertMaterial({ color: 0x3a3442 })));
   const pavement = new THREE.MeshLambertMaterial({ map: Tex.concrete(), color: 0x7c7c7a });
   for (const s of [1, -1]) group.add(new THREE.Mesh(strip(track, s * (W + 0.6), s * (W + 5), 0.12, { step: 2, uScale: 0.3, vScale: 0.3 }), pavement));
 
-  // --- Lamps: tall gold lamps every 34 m, alternating sides ---
+  const petalMat = new THREE.MeshLambertMaterial({ map: Tex.petals(), transparent: true, alphaTest: 0.2, depthWrite: false, emissive: 0xc06a88, emissiveMap: Tex.petals(), emissiveIntensity: 0.25, polygonOffset: true, polygonOffsetFactor: -3 });
+  group.add(new THREE.Mesh(merge([1, -1].flatMap((s) => [strip(track, s * (W + 0.6), s * (W + 5), 0.135, { step: 2, uScale: 0.1, vScale: 0.1 }), strip(track, s * (hw + 0.1), s * (W - 0.02), 0.016, { step: 2, uScale: 0.1, vScale: 0.1 })])), petalMat));
+
+  // --- Lamps: tall white lamps every 34 m, alternating sides ---
   let flip = 1;
   for (let k = 8; k < track.count; k += 34) {
     flip = -flip;
     const lx = track.leftX(k), lz = track.leftZ(k);
     const off = flip * (W + 1.4);
-    place.add('gold-streetlight', track.x[k] + lx * off, 0, track.z[k] + lz * off, Math.atan2(lz * flip, -lx * flip));
+    place.add('ring-streetlight', track.x[k] + lx * off, 0, track.z[k] + lz * off, Math.atan2(lz * flip, -lx * flip));
   }
 
   // --- Landmarks first, so the town is built round them ---
@@ -207,7 +208,7 @@ export function buildParabolica(track, def) {
         place.add(VENDING[(blockNo + i) % 3], x, 0.12, z, facing(kk, OUT));
       }
       const [gx, gz] = along(kk + 7, OUT, W + 9);
-      place.pool(gx, gz, 10, 14, 'gold', head(kk));
+      place.pool(gx, gz, 10, 14, 'white', head(kk));
     }
     k = Math.max(kk, k + 4) + 14;
     blockNo++;
@@ -254,6 +255,17 @@ export function buildParabolica(track, def) {
     group.add(new THREE.LineSegments(wg, new THREE.LineBasicMaterial({ color: 0x18181c })));
   }
 
+  // --- The cherry trees: both sides of the road, all the way round ---
+  // Close enough that the crowns reach out over the blocks. Left out only where
+  // something stands there already, or in a tight corner's run-off.
+  for (let k = 0; k < track.count; k += 7) {
+    for (const s of [1, -1]) {
+      const [x, z] = along(k + (s > 0 ? 0 : 3.5), s, W + 3.3 + r() * 0.9);
+      if (near(x, z) < W + 2.4 || spots.some((p) => Math.hypot(p[0] - x, p[1] - z) < p[2] * 0.6)) continue;
+      place.add('sakura', x, 0.12, z, r() * 6, 0.92 + r() * 0.38);
+    }
+  }
+
   // --- Inside: the park ---
   // A hedge along the fence, round lamps along a path, and trees: mostly
   // dark broadleaves, with clumps of cherry blossom.
@@ -276,7 +288,7 @@ export function buildParabolica(track, def) {
     if (!inside(poly, x, z)) continue;
     const d = near(x, z);
     if (d < W + 8 || d > W + 130) continue; // a deep belt of trees, open lawns in the middle
-    const cherry = Math.sin(x * 0.013) * Math.cos(z * 0.011) > 0.55; // they grow in clumps
+    const cherry = Math.sin(x * 0.013) * Math.cos(z * 0.011) > 0.25; // they grow in clumps
     place.add(cherry ? 'sakura' : 'tree', x, 0, z, r() * 6, 0.8 + r() * 0.6);
     if (cherry) blossom++;
   }
@@ -289,21 +301,53 @@ export function buildParabolica(track, def) {
   const { glows, reflect, lamps } = place.finish(group);
 
   const skies = [];
-  const backdrop = cityBackdrop(r, skies, { count: 90, minH: 30, maxH: 140, windows: Tex.skylineNeon() });
+  const backdrop = cityBackdrop(r, { count: 760, minH: 30, maxH: 130, windows: Tex.skylineNeon(), signs: [0xff4f9a, 0xffc860, 0xe8ecff], centre: [track.x[0], 0, track.z[0] + 420] });
   reflect.add(reflectSky(skies));
   reflect.add(viaduct.userData.reflect);
 
+  const petals = fallingPetals();
+  group.add(petals.points);
+
   return {
-    group, lamps, glows, roadMat, backdrop, reflect, skies,
+    group, lamps, glows, roadMat, backdrop, reflect, skies, update: petals.update,
+    setSnow(on) { petals.points.visible = !on; petalMat.visible = !on; },
     snowy: [[park.material, 0xb8c0c8], [pavement, 0xc8ccd0], [city.material, 0x9a9ea4], [roofMat(), 0xc4cad0]],
     look: {
       fog: { clear: 0x140c20, rain: 0x14101e, fog: 0x261c34, snow: 0x1c1826 },
       hemi: [0x5a4280, 0x1a1020, 1.0],
       moon: 0.3,
-      lamp: 0xffc878, lampPower: 125,  // gold
-      skyGlow: 0xb0408a, // the neon's pink, low in the violet sky
+      lamp: 0xe8eeff, lampPower: 125,  // white
+      skyGlow: 0x8a3a7a, // the neon's pink, low in the violet sky
       reflectBg: 0x1a0c22,
       ground: 0x0e0e12,
+    },
+  };
+}
+
+// Petals drifting down round the camera; the car stirs them as it goes by.
+function fallingPetals(count = 260, box = 26) {
+  const r = rng(5), pos = new Float32Array(count * 3), p = new Float32Array(count * 4);
+  for (let i = 0; i < count; i++) p.set([(r() - 0.5) * box * 2, r() * 8, (r() - 0.5) * box * 2, r() * 6.3], i * 4);
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.BufferAttribute(pos, 3).setUsage(THREE.DynamicDrawUsage));
+  const points = new THREE.Points(g, new THREE.PointsMaterial({ color: new THREE.Color(1.2, 0.72, 0.82), size: 0.09, map: Tex.glow(), transparent: true, alphaTest: 0.1, depthWrite: false }));
+  points.frustumCulled = false;
+  let t = 0;
+  return {
+    points,
+    update(dt, camera, v) {
+      t += dt;
+      const cx = camera.position.x, cz = camera.position.z;
+      for (let i = 0; i < count; i++) {
+        const j = i * 4;
+        let x = p[j] - v.vx * dt * 0.8, y = p[j + 1] - 0.7 * dt, z = p[j + 2] - v.vz * dt * 0.8;
+        if (y < 0) y += 8;
+        if (x < -box) x += box * 2; else if (x > box) x -= box * 2;
+        if (z < -box) z += box * 2; else if (z > box) z -= box * 2;
+        p[j] = x; p[j + 1] = y; p[j + 2] = z;
+        pos[i * 3] = cx + x + Math.sin(t * 1.1 + p[j + 3]) * 0.7; pos[i * 3 + 1] = y; pos[i * 3 + 2] = cz + z + Math.cos(t * 0.9 + p[j + 3]) * 0.7;
+      }
+      g.attributes.position.needsUpdate = true;
     },
   };
 }

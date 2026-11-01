@@ -239,9 +239,10 @@ class SkidMarks {
   }
 
   // Lay a segment for wheel w from its last point to (x, z).
-  mark(w, x, z, side, strength) {
+  mark(w, x, z, y, strength) {
     const last = this.last[w];
-    this.last[w] = { x, z };
+    y += 0.012;
+    this.last[w] = { x, z, y };
     if (!last || strength <= 0) return;
     const dx = x - last.x, dz = z - last.z, l = Math.hypot(dx, dz);
     if (l < 0.05 || l > 3) return;
@@ -249,7 +250,7 @@ class SkidMarks {
     const i = this.next;
     this.next = (this.next + 1) % this.max;
     const p = this.pos, b = i * 12;
-    p.set([last.x + nx, 0.012, last.z + nz, last.x - nx, 0.012, last.z - nz, x + nx, 0.012, z + nz, x - nx, 0.012, z - nz], b);
+    p.set([last.x + nx, last.y, last.z + nz, last.x - nx, last.y, last.z - nz, x + nx, y, z + nz, x - nx, y, z - nz], b);
     this.alpha.fill(Math.min(0.55, strength * 0.6), i * 4, i * 4 + 4);
     const a = this.mesh.geometry.attributes;
     a.position.needsUpdate = true; a.alpha.needsUpdate = true;
@@ -323,7 +324,7 @@ export class Effects {
       const wheel = model.wheels[2 + w];
       wheel.steer.getWorldPosition(_v);
       const marking = this.on.skids && !wet && (v.rearSlide > 0.45 || v.spin > 0.35) && v.speed > 2;
-      if (marking) this.skids.mark(w, _v.x, _v.z, 0, Math.min(1, v.rearSlide + v.spin));
+      if (marking) this.skids.mark(w, _v.x, _v.z, v.roadY, Math.min(1, v.rearSlide + v.spin));
       else this.skids.lift(w);
     }
     this.smokeAcc += dt;
