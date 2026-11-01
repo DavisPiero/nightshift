@@ -74,7 +74,7 @@ export class CareerScreen {
     const el = $('#career-info');
     el.innerHTML = `<div class="ttl"><span>${ACTS[e.act].name}</span></div>`
       + `<div class="info-name"><span class="name">${e.name}</span></div>`
-      + `<canvas width="240" height="150"></canvas>`
+      + `<canvas width="480" height="300"></canvas>`
       + `<dl><dt>Track</dt><dd>${t.name}, ${e.laps} laps</dd><dt>Conditions</dt><dd>${WEATHER[e.weather].name}, ${TIMES[e.time].name}</dd>`
       + `<dt>Rivals</dt><dd><span class="cls cls-${classFor(level)} mini">${classFor(level)}</span> ${level}${e.rival ? ' and Max' : ''}</dd>`
       + `<dt>Your car</dt><dd><span class="cls cls-${rating.cls} mini">${rating.cls}</span> ${rating.pi} ${car.model}</dd>`

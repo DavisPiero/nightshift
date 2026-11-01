@@ -207,7 +207,7 @@ export class Garage {
       });
       const cv = it.querySelector('canvas'), g = cv.getContext('2d');
       if (id) drawRim(cv, id, l.rimColour !== null ? hex(l.rimColour) : '#b8bcc0');
-      else { g.fillStyle = '#0a0b0c'; g.beginPath(); g.arc(32, 32, 32, 0, Math.PI * 2); g.fill(); g.fillStyle = '#7fa7ab'; g.font = '14px "Jersey 10", monospace'; g.textAlign = 'center'; g.fillText('STOCK', 32, 37); }
+      else { g.fillStyle = '#0a0b0c'; g.beginPath(); g.arc(32, 32, 32, 0, Math.PI * 2); g.fill(); g.fillStyle = '#c9ccd1'; g.font = '14px "Jersey 10", monospace'; g.textAlign = 'center'; g.fillText('STOCK', 32, 37); }
     };
     rimItem(null, 'Stock wheels');
     for (const [id, r] of Object.entries(RIMS)) rimItem(id, r.name);

@@ -8,8 +8,13 @@
 
 ## What comes next
 1. Ask David how Part 1 drives, and if he has Arlo's reaction.
-2. Part 2, the UI rework, then Part 3, story, phone and laptop. Both are in the plan of session 16; the briefs are his notes, kept in `STATE.md` under Next.
+2. Part 3: story, phone and laptop. The brief is in `STATE.md` under Next; his answers are at the end of `DECISIONS.md`.
 3. Use `/notes` for any new notes.
+
+## How the look works
+- Colours, fonts, spacing: the list at the top of `styles/main.css`. Canvas drawings repeat a few of those values (`ui/hud.js`, `ui/screens.js`, `input/touch.js`).
+- A new DotGothic16 element may need adding to the outline rule under the list (`--weight`).
+- New update: new `id` and lines in `ui/notice.js`.
 
 ## How the racing works
 - `Race.step`: slipstream, drivers, walls, then `knocks()` (`physics/knocks.js`). Drivers think every 0.1 to 0.24 s (`AIDriver.think`) and steer to `plan`, an offset across the road.

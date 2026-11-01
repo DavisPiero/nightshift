@@ -11,8 +11,8 @@
 4. **Night atmosphere, neon Japan.** Each track has its own light: amber lamps round the
    harbour, turquoise strips in the Tokyo tunnels. Fog, rain, red tail lights, Japanese signs
    and road markings. Realistic and a little pixelated on Medium and High; chunky pixels on Low.
-5. **Menus that feel like a game.** See "Look of the menus" below. Lists on the left, the
-   thing you pick on the right, the primary button bottom right; every button has its sound.
+5. **Menus that feel like a racing game.** See "Look of the menus" below. Lists on the left, the
+   thing you pick on the right, the main button bottom right; every button has its sound.
 6. **Cars worth looking at.** Each car is recognisably its real cousin from any angle, and its
    paint shines with the lights round it, so even a black car shows its shape.
 7. **A garage worth coming back to**: a lock-up workshop with the car on a turntable, where you
@@ -30,25 +30,26 @@ Johnny takes you back to the Tokyo tunnels where he learned; then home; then the
 Tachibana, a GT3 scout, is watching. Beat Max at level 100 and sign. To be continued.
 
 ## Look of the menus
-The one style sheet for every screen: a mix of the old Microsoft desktop and David's racing-game
-references (2026-10-31). The bevels and pixel fonts of the first; the layout and colour of the second.
-- Logo: NIGHTSHIFT in chrome, leaning forward, with a pink 夜勤 stamp, as before.
-- Fonts: Jersey 10 for titles and buttons, DotGothic16 for text, same sizes as before.
-- Windows: grey (#c0c0c0) with a raised edge and a dark title bar running out to teal.
-- Screen names: a black tag with a pink edge. Full-page screens sit on a teal desk.
-- Cards: every car is a white card with the same picture (one camera, one light), name, price,
-  class and rating. Used wherever a car is picked. What you picked has a yellow box.
-- Buttons: grey and raised, pressed in when held, a dotted box on focus. A toggle that is on
-  stays pressed in on a fine grey-and-white check. Main action solid hot pink.
-- Lists: a white sunken box; rows are flat, the picked one black with a yellow edge.
-- Meters are block progress bars. Tips are pale yellow tooltips.
-- HUD: a round rev dial at the bottom centre, ring of blocks with gear and speed inside, in the
-  same grey, green and red; and a teal map with no frame, its corners fading out (David, 2026-10-31).
-  In a race, an F1-style sheet on the left: place, who moved, name, gap to the leader, last lap;
-  your row amber, the fastest lap teal (Arlo's notes, 2026-11-01). The map shows about 500 m (Settings > Map zoom) with your car low on it.
-- Behind the menus: the 3D scene, except the desk screens (Career, Shop, Settings).
+One look for every screen (David, 2026-11-01). The list at the top of `styles/main.css` is the
+whole look: change a colour or a font there, once.
+- Colour: black and titanium for the base; white, amber and teal for everything else. No pink.
+  Amber is the main action and you. Teal is what is picked and good news. Colours from the
+  world (neon, paint) stay in the world.
+- Fonts: Jersey 10 for titles and numbers, DotGothic16 for text, bold and thickened because it is thin.
+- Panels: near-black with a thin titanium edge. A bar along the top of each screen: Back, the name,
+  your level and money.
+- Layouts from David's references, not their colours: Automobilista's picture tiles with a name band
+  on the home screen and its setup panels, Forza's car strip and stats, thin line meters.
+- Cards: every car on dark, the same picture, name, price, class and rating. Picked has a teal edge.
+- The main button is amber, leans like the logo, bottom right. One on a screen.
+- Logo: NIGHTSHIFT in chrome, leaning forward, with an amber 夜勤 stamp.
+- HUD: a round rev dial at the bottom centre, white into amber. The map is only the track, straight
+  on the picture, about 500 m (Settings > Map zoom). In a race: your place and lap in a box at the top
+  (David, 2026-11-01), and the F1-style sheet on the left: place, who moved, name, gap to the leader,
+  last lap; your row amber, the fastest lap teal.
+- Behind the menus: the 3D scene, except the plain screens (Career, Shop, Settings).
 - Japanese: on screen titles and in the world only, never on buttons or rows.
-- Motion: quick and stepped. Lists slide in when a screen or tab opens, never on every click.
+- Motion: quick and smooth. Lists slide in when a screen or tab opens, never on every click.
 - Banned: control hints outside Settings > Controls.
 
 ## Milestones

@@ -38,7 +38,7 @@ const ridges = (x, y, w, h, n) => Array.from({ length: n }, (_, i) => `<rect x="
 const ART = {
   throttle: `<svg viewBox="0 0 62 75">${'<defs>' + metal('mg') + '</defs>'}<rect x="3" y="2" width="56" height="71" rx="7" fill="#1a1d1f"/><rect x="5" y="3" width="52" height="68" rx="6" fill="url(#mg)"/>${ridges(11, 9, 40, 56, 8)}</svg>`,
   brake: `<svg viewBox="0 0 59 52">${'<defs>' + metal('mb') + '</defs>'}<rect x="2" y="2" width="55" height="48" rx="8" fill="#1a1d1f"/><rect x="4" y="3" width="51" height="45" rx="7" fill="url(#mb)"/><rect x="9" y="8" width="41" height="35" rx="4" fill="#15181a"/>${ridges(12, 11, 35, 29, 5).replaceAll('#15181a', '#24282b')}</svg>`,
-  // A real handbrake: a metal arm with a ridged rubber grip and a pink
+  // A real handbrake: a metal arm with a ridged rubber grip and an amber
   // release button, rising out of a leather gaiter on the console.
   handbrake: `<svg viewBox="0 0 84 50"><defs>${metal('mh')}</defs>`
     + '<rect x="2" y="37" width="52" height="11" rx="3" fill="#121416"/><rect x="4" y="38" width="48" height="4" rx="2" fill="#2b3033"/>'
@@ -46,7 +46,7 @@ const ART = {
     + '<g transform="rotate(-26 22 33)"><rect x="16" y="28.5" width="62" height="9" rx="4.5" fill="#0d0f10"/><rect x="18" y="29.5" width="58" height="7" rx="3.5" fill="url(#mh)"/>'
     + '<rect x="40" y="27.5" width="34" height="11" rx="5.5" fill="#181b1d"/>'
     + Array.from({ length: 7 }, (_, i) => `<rect x="${43 + i * 4.2}" y="28.5" width="1.6" height="9" fill="#2d3236"/>`).join('')
-    + '<rect x="73" y="29" width="8" height="8" rx="3" fill="#ff2e88"/><rect x="74" y="29.8" width="5" height="2" rx="1" fill="#ff9cc6"/></g></svg>',
+    + '<rect x="73" y="29" width="8" height="8" rx="3" fill="#ffb000"/><rect x="74" y="29.8" width="5" height="2" rx="1" fill="#ff9cc6"/></g></svg>',
 };
 
 // Base sizes in CSS pixels before the size setting.
