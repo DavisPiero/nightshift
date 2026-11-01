@@ -1,13 +1,26 @@
-# Hand-off: end of session 19 (2026-11-01)
+# Hand-off: end of session 20 (2026-11-02)
 
 ## Repo state
-- On `main`, everything committed and pushed; no other branches. `main` is the live site. Next work goes on a new branch. David's standing rule for these notes: when a part is finished and checked, merge and push it without asking.
+- On `main`, everything committed and pushed; no other branches. `main` is the live site. Next work goes on a new branch.
 
 ## Read first
 `CLAUDE.md`, `STATE.md`, the last 20 lines of `DECISIONS.md`, then this file.
 
 ## What comes next
-Part 4 of David's fourth notes: spelled out under "Next" in `STATE.md`, with his answers in `DECISIONS.md`. He wants each part pushed when finished, without asking.
+Nothing is queued: Arlo's fourth notes are finished. Start with what David and Arlo found playing it.
+
+## How Part 4 works
+- Drift: `vehicle.drift`, set in `checkDrift`, moved in `stepDrift`, which takes over from the tyre forces. Angles are at the top of `vehicle.js`. `c.park` is the finish's version of it.
+- Finish: `FinishDriver` replaces the player's driver after the flag (`takeover`). `driver.parked` ends the wait. `cameras.finish(true)` swings the camera. `ui/tally.js` shows what `results()` already banked.
+- Warm tyres: `race.warm`, `v.launchLeft`, `v.burnout` (smoke at a standstill).
+- Fight for P1: `race.hunt` from `difficulty.js`; `driver.huntGoal`, eased into `driver.hunt`.
+- Sound: a new one-off is a function in `FX` in `audio/sfx.js`; play it with `audio.fx(name, v)` in the world or `audio.ui(name)` in the menus. `pick(kind, n)` picks a version without repeats. `audio/rivals.js` owns the rival voices. `EngineVoice.dispose()` stops one properly.
+- Contacts: `CONTACTS` in `career/contacts.js`, met when a scene id is in `career.seen` (`dave-lot` is set by opening the Shop). `call()` returns a message the phone shows. `clock.now()`, never `Date.now()`, so `?hours=` works.
+- Invites: `currentInvite(career)` is worked out from `career.sonny.since`; add a race to `RACES`. An invite is event-shaped with `invite: true`. Career's `pick` is `'invite'`.
+- Jobs: a line in `QUESTS` in `career/quests.js`, `done(r)` looks at the finished race.
+- Prices: always `priceOf(save, car)`, and `paid(save, deal)` after buying.
+- Same world: `Reflections.sampleRoad` is the look down at the road. Sprites: `tools/character-sprites.mjs`; `blobs: true` for a sheet with poses too close for columns.
+- A sprite person: `sprite: true` and `voice` in `PEOPLE`; images in `assets/story/<id>/`. Dave's moods are `DAVE_MOODS`.
 
 ## How the environments work
 - Road height: `heights` keys in a track's definition; `TrackPath.y`, `.grade`. `keepOnTrack` calls `settleOnRoad`, which sets `vehicle.roadY`, `.slope`, `.slopeSide`. After teleporting a car, call `settleOnRoad` before any camera snap. `placeOnRoad` (race-view.js) tips a body. Strips and walls in `scene-kit.js` follow the height by themselves; a Placer needs the y passed in.
@@ -34,7 +47,7 @@ Part 4 of David's fourth notes: spelled out under "Next" in `STATE.md`, with his
 - Analytics: `race/analytics.js`, its numbers are checked at the end of `tools/ai-bench.mjs`.
 - `game.device` is whichever of the phone and laptop is up. Both have `nav`, `press` and a key listener. `DeviceStage` (world/props-devices.js) draws them; `stage.update` runs from `render`.
 - A new mail: a line in `MAIL` in `career/inbox.js`, with `when(career)`.
-- A new Johnny line: `j('mood', 'text')` in `story.js`. Moods are the list at the top of `tools/johnny-sprites.mjs`. `{name}` and `{home}` work in any line.
+- A new Johnny line: `j('mood', 'text')` in `story.js`. Moods are the lists at the top of `tools/character-sprites.mjs`. `{name}` and `{home}` work in any line.
 
 ## How the racing works
 - `Race.step`: slipstream, drivers, walls, then `knocks()` (`physics/knocks.js`). Drivers think every 0.1 to 0.24 s (`AIDriver.think`) and steer to `plan`, an offset across the road.
@@ -56,13 +69,8 @@ Part 4 of David's fourth notes: spelled out under "Next" in `STATE.md`, with his
 - Check the printed scale: near 1:1 means the recipe's `axles` fit. Helpers: `listIslands`, `findSteering`, `listCabinNear`. Always check a cockpit by turning the wheel.
 
 ## Open with David
-Ask these first, then start Part 4.
-1. Can Claude download free CC0 textures and tree models? His answers skipped this; everything is still drawn in code.
-2. Does "race any map in my stage" also mean choosing the map in Career? It is Race, Time Trial and Practice for now.
-3. How does Yamagiri Pass drive, and is 3 laps too long? Is sunset too dark without headlights?
-4. Did the iPad hold up? This update is the heaviest yet.
-5. Are the sprite sheets for Sonny and Dave ready (5 across, 4 down, on black)? Any for Max and Aoi?
-6. Do NOS, the headlights, the pull-up, the cockpit and Dave's lines work for him? All guesses.
-7. Is Hard too hard? The Subaru's source and near-miss art for the Mustank's livery. Older guesses are in `STATE.md`.
-
-Part 4 changes a rule: Sonny's 500 CR entry means "you can never lose money" stops being true for that race type. Update SPEC.md point 9 then.
+Ask these first.
+1. How do the drift, warm tyres, the fight for P1, the finishes and the sounds feel and sound? Nobody here can feel or hear them.
+2. Does High run smoothly? Has it been tried on a real iPad?
+3. Sprite sheets for Sonny, Max and Aoi? Keep Dave's cigarette pose?
+4. Are 15% for Dave's jobs and country of origin for car types right? Other guesses are in `STATE.md`.

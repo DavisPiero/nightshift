@@ -3,15 +3,17 @@
 // nothing to compare with, gets none.
 
 const NOTICE = {
-  id: '2026-11-01-notes4-3',
+  id: '2026-11-02-notes4-4',
   subject: 'What’s new',
   lines: [
-    'New track: Yamagiri Pass. Three hairpins up, a ridge under the shrine gates, and a long fast drop home.',
-    'Parabolica Street is lined with cherry blossom, the whole way round.',
-    'Every Street track is open to race from the start.',
-    'New trees and buildings everywhere, and a real city on the horizon.',
-    'Dave has moved into his cabin window.',
-    'No headlights at sunset either.',
+    'Your phone has Contacts. Johnny does favours, Dave has jobs, and Sonny has races that cost you if you lose them.',
+    'The handbrake gives you a proper drift now.',
+    'Hold the throttle in the countdown to warm your tyres.',
+    'Take the lead and they come after you.',
+    'Finish with a slide to a stop and watch your pay count up.',
+    'More tracks earlier in the career.',
+    'Sound for everything, and you can hear the other cars.',
+    'High graphics has no pixels now. Cars sit in the light of the road they are on.',
   ],
 };
 

@@ -4,13 +4,13 @@
 1. **In the car within seconds.** Career, Race: two taps to the next race. Or Race, track, car, race
    settings, Race: four taps, each screen remembering your last pick.
 2. **Driving that forgives.** The car has weight and slides, but assists catch spins,
-   countersteer for you a little and hold a drift once it starts. A kid with a keyboard
+   countersteer for you a little and hold a drift once it starts. The handbrake with the wheel over gives a clean drift that holds and straightens by itself. A kid with a keyboard
    or an iPad should be able to drift on the first lap and never spin into a wall by accident.
 3. **It sounds like a real engine.** Deep, layered, reacts to throttle, gear changes and
    lift-off. Never a mosquito.
 4. **Night atmosphere, neon Japan.** Each track has its own light: amber lamps round the
    harbour, turquoise strips in the Tokyo tunnels, cherry blossom under white lamps on Parabolica Street, moonlight and red shrine gates on Yamagiri Pass. Fog, rain, red tail lights, Japanese signs
-   and road markings. Realistic and a little pixelated on Medium and High; chunky pixels on Low.
+   and road markings. Realistic and a little pixelated on Medium; no pixels on High; chunky pixels on Low.
 5. **Menus that feel like a racing game.** See "Look of the menus" below. Lists on the left, the
    thing you pick on the right, the main button bottom right; every button has its sound.
 6. **Cars worth looking at.** Each car is recognisably its real cousin from any angle, and its
@@ -20,8 +20,8 @@
 8. **Three ways to drive.** The race settings screen has a dropdown: Race; Time Trial, endless laps
    against a ghost of your best lap, saved per track and car; Practice, just you and the road.
 9. **A career worth finishing.** From the docks to the top: Street (levels 0-100), GT3 (100-150),
-   Formula (150-200 and on). Every race pays, you can never lose money, and cars cost real effort
-   (about 60 races and 6 hours to finish Street). Told in short pixel-art scenes.
+   Formula (150-200 and on). Every race pays, an event can never lose you money (only Sonny's invites can: CR 500, one try,
+   podium or nothing), and cars cost real effort (about 60 races and 6 hours to finish Street). Told in short pixel-art scenes.
 10. **A moment before the lights.** Career only: a short scene of you pulling up (one press skips it),
    a laptop over whichever camera you had on (one press goes on), then the countdown. It has two
    tabs: Upgrades, and Analytics (every driver, their car and numbers, their style, who is most likely
@@ -44,7 +44,7 @@ whole look: change a colour or a font there, once.
   Amber is the main action and you. Teal is what is picked and good news. Colours from the
   world (neon, paint) stay in the world.
 - Fonts: Jersey 10 for titles and numbers, DotGothic16 for text, bold and thickened because it is thin.
-- Panels: near-black with a thin titanium edge. A bar along the top of each screen: Back, the name,
+- Panels: near-black with a thin titanium edge and slightly rounded corners. A bar along the top of each screen: Back, the name,
   your level and money.
 - Layouts from David's references, not their colours: Automobilista's picture tiles with a name band
   on the home screen and its setup panels, Forza's car strip and stats, thin line meters.
@@ -60,7 +60,7 @@ whole look: change a colour or a font there, once.
 - Japanese: on screen titles and in the world only, never on buttons or rows.
 - Motion: quick and smooth. Lists slide in when a screen or tab opens, never on every click.
 - Banned: control hints outside Settings > Controls, except the laptop's NOS row.
-- Phone: the small button beside the gear. An old flip phone, a real model, tilted, on the right: inbox and updates. A bar along the top has Back and the bin; the bin always asks first.
+- Phone: the small button beside the gear. An old flip phone, a real model, tilted, on the right: inbox, updates and contacts; the amber button shuts it. A bar along the top has Back and the bin; the bin always asks first.
 
 ## Milestones
 1. Foundation: loop, platform screen. **Done.**
@@ -84,14 +84,14 @@ whole look: change a colour or a font there, once.
    racing, four difficulties, money and levels, the shop, the story. **Street stage done.**
    Arlo's fourth notes (2026-11-01), in three parts: (1) feel, road, headlights, phone bin. **Done.**
    (2) Analytics, laptops in Shop and Garage, Dave's lot. **Done.** (3) Quick fixes, Parabolica in blossom, Yamagiri Pass,
-   trackside models, far scenery baked into the sky. **Done.** (4) Contacts, favours, Sonny, quests. **Next.**
+   trackside models, far scenery baked into the sky. **Done.** (4) Contacts, favours, Sonny, quests, drift, finishes, sound, High without pixels, the car in its world. **Done.**
 7. GT3 and Formula: their cars, circuits and story. Needs models from David.
 8. Saving and settings: the rest (most of it is done in 3).
 9. Polish and release.
 
 ## Not building
 - Damage, fuel, tyre wear, or anything that punishes casual play.
-- A simulator: no clutch pedal, no tyre temperatures, no setup sheets.
+- A simulator: no clutch pedal, no tyre temperatures, no setup sheets. (Warm tyres in the countdown are one launch bonus, not a temperature.)
 - Cyberpunk clutter (holograms, chrome everywhere) or a glossy modern look in the world.
   Shine is for the cars' paint and glass.
 - Real badges, logos or exact real car names (near-miss names are fine).

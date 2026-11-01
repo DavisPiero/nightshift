@@ -820,6 +820,7 @@ class Game {
     const live = this.state === 'paused' ? 0 : dt;
     // The paint reflects what is round the car (redone every other frame).
     root.updateMatrixWorld();
+    if (!room && this.preset.smooth) this.reflections.sampleRoad(this.renderer.gl, this.scene, root, root.position.x, root.position.y, root.position.z);
     this.reflections.update(this.renderer.gl, root.position.x, root.position.y + 0.9, root.position.z, garage);
     if (!garage) {
       this.effects.renderHeight = this.renderer.height;

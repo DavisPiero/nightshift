@@ -41,3 +41,33 @@ The oldest phase, 2026-10-25 (Milestones 1 to 3). Newer ones are in DECISIONS.md
 - 2026-10-25: Second car: "2009 Dodga Challenjer SRT8", built from the real car's figures, left-hand drive, its own V8 sound profile.
 - 2026-10-25: Gear changes now dip the engine note for real (the old dip was overwritten every frame) and clunk; turbo cars whistle and flutter.
 - 2026-10-25: Controllers through the Gamepad API (standard layout), including menu navigation.
+- 2026-10-26: Look changed to neon Japan (David's references in Reference/User Interface). UI: Jersey 10 titles, DotGothic16 text, turquoise frames with glow, pink main action (was orange). Replaces the Courtside look.
+- 2026-10-26: The "no neon / cyan out of the 3D world" rule is lifted: each track has a light colour; the Underground's is turquoise.
+- 2026-10-26: Track and car pick follow Automobilista 2: a scrolling list on the left, a preview on the right, Continue (or Race) bottom right; weather in a panel along the bottom right.
+- 2026-10-26: The track preview is the track itself: picking one loads it and the camera flies along it behind the menu.
+- 2026-10-26: Car bodies are made from profile curves (plan, sill, shoulder, bonnet, roof) into smooth panels with crisp edges between them; lamps and vents are laid on the surface (src/vehicles/body.js). Replaces the boxy lofts.
+- 2026-10-26: Third car, 2017 Nissani GT-Ar (R35), from David's reference sheet; four-wheel drive like the real one (30% to the front). Class S 862. Added alongside the R34, not replacing it (David confirmed).
+- 2026-10-26: Paint and glass reflect a small cube photo of the bright things round the car (lamps, tunnel lights, garage panels), retaken every other frame. Cheap enough for iPad; makes black paint readable.
+- 2026-10-26: The Garage and car-pick screens show the car on a turntable in its own lock-up garage scene (after Reference/Tracks/garage.jpg), not parked on the track. Lights off, running lights on.
+- 2026-10-26: Underground: 2.46 km closed loop of Tokyo-style shield tunnel, three lanes, walls at 8.2 m; no rain (Clear and Fog only, fog as exhaust haze).
+- 2026-10-26: The car and weather tag at the top left of the driving screen is gone (David).
+- 2026-10-26: Headless screenshots through Chrome's DevTools protocol on the GPU (tools/shot.mjs): seconds, not minutes, and no window.
+- 2026-10-26: Garage mods: every part and look is fitted at once and is free (money is Milestone 7); "Reset" asks twice.
+- 2026-10-26: Builds: up to 3 named builds per car (save version 3); the one marked RACING is driven and rated in the car pick. A version 2 save becomes "My build".
+- 2026-10-26: Ride height is a look (Stock, Low, Slammed; Slammed needs coilovers) that also lowers the centre of gravity; suspension parts no longer lower the car on their own.
+- 2026-10-26: Paint, finish, decals and wheels are looks only. Wheel size is not offered (it would need physics and arch work).
+- 2026-10-26: Garage ratings compare with stock: green pips gained, red lost. The Engine tab shows a dyno chart (power and torque, stock faint behind).
+- 2026-10-26: The garage camera moves to suit the tab (wheels close up, rear for wing and kit, front three-quarter for parts).
+- 2026-10-26: Asset library: every prop is a named kit in src/world/assets.js, placed by a Placer that instances each one (one draw call per part). Tracks never build props themselves. `?library` shows each one.
+- 2026-10-26: Time of day: Sunset (18:40), Night (02:00), Dawn (05:10). Light only, never physics. Lamps stay on at sunset and dawn. The Underground is Night only.
+- 2026-10-26: Snow is a fourth weather: grip 0.68 (0.62 in a flurry), slide 0.86; it lies on verges, ground and roofs; the road stays dark and wet. 0.62 made the bot slide wide in Parabolica's fast sweepers.
+- 2026-10-26: Weather patches are fixed stretches of each track (on straights where possible) where the chosen weather gets heavier: more rain or snow, nearer fog, a little less grip, eased in and out over 30 m. Clear has none.
+- 2026-10-26: Parabolica Street: Monza's shape at about 60% (3.62 km), drawn as straights and arcs (a turtle). Chicanes opened up; the Curva Grande is two arcs with a short straight between; walls 3.5 m beyond the road edge; the start is about 600 m before the first chicane.
+- 2026-10-26: Parabolica Street's light is pink neon (shop signs and spill) under cool white LED lamps; the park is inside the loop, the town outside.
+- 2026-10-26: David confirmed Parabolica Street's shape, name and light (pink neon, white lamps), and this session's guesses: snow grip 0.68, no patches in Clear, lamps on at sunset and dawn, walls 3.5 m out.
+- 2026-10-26: David confirmed all older open guesses as they stand: the R35 is "2017 Nissani GT-Ar"; the Challenjer keeps its newer face with 2009 name and figures; pink main buttons; no rain in the Underground; garage headlights lit, beams off; parts free and fitted at once; 3 builds per car; slammed needs coilovers; race number 08; Feel panel values as they are; classes R34 A 756, Challenjer B 635, R35 S 862.
+- 2026-10-26: m4-world signed off, merged to main and pushed.
+- 2026-10-26: The R34 is hidden, not deleted (David): out of the car list, kept for the bench; the GT-Ar is the default car.
+- 2026-10-26: Menus restyled after the Street-Spec logo, pixel fonts kept (David). Style sheet in SPEC.md; replaces the window-bar look. Second "looks like Courtside" note, so the fix is a written style sheet.
+- 2026-10-26: Drive flow is Track, Car, Race settings, Race (four taps); weather and time left the car screen (David).
+- 2026-10-26: Walls push the car off with at least 0.8-2.2 m/s and turn the nose away, so it never grinds along them. Bench: steered into the wall it touches 3% of the time (was 85%).

@@ -9,8 +9,19 @@
 // things and a `look.reflectBg` colour; see setWorld(). At sunset and dawn a
 // sky dome adds the warm horizon and the sun itself, so the paint catches
 // the low light as you drive into it.
+//
+// So that the car is lit by the same light as the road under it, a small camera
+// looks straight down at the real road beside the car a few times a second. What
+// it sees becomes the ground in the reflections and a soft panel of the same light
+// overhead: under an amber lamp the car is amber, in a turquoise tunnel it is
+// turquoise, and it changes as you drive from pool to pool. Only the car uses
+// these reflections, so the world's own look is untouched.
 
 import * as THREE from 'three';
+
+const PROBE = 8;       // pixels across the look at the road
+const OVERHEAD = 1.5;  // how much of the road's light also comes from above
+const _lit = new THREE.Color();
 
 export class Reflections {
   constructor() {
@@ -26,6 +37,15 @@ export class Reflections {
     this.sky = new THREE.Mesh(dome, new THREE.MeshBasicMaterial({ vertexColors: true, side: THREE.BackSide, fog: false, depthWrite: false }));
     this.sky.renderOrder = -1;
     this.scene.add(this.sky);
+    // Overhead: the road's light coming from above too.
+    this.over = new THREE.Mesh(new THREE.PlaneGeometry(60, 60), new THREE.MeshBasicMaterial({ color: 0x000000, side: THREE.DoubleSide, fog: false }));
+    this.over.rotation.x = Math.PI / 2;
+    this.scene.add(this.over);
+    this.probe = new THREE.WebGLRenderTarget(PROBE, PROBE, { depthBuffer: true });
+    this.probeCam = new THREE.OrthographicCamera(-3.5, 3.5, 3.5, -3.5, 0.5, 9);
+    this.probeCam.up.set(0, 0, 1);
+    this.pixels = new Uint8Array(PROBE * PROBE * 4);
+    this.lit = new THREE.Color(0);
     this.current = null;
     this.frame = 0;
     this.every = 2; // frames between updates
@@ -43,6 +63,8 @@ export class Reflections {
     this.scene.fog = new THREE.Fog(bg, 30, 180);
     this.ground.material.color.setHex(world.look?.ground ?? 0x0a0c0c);
     this.ground.visible = world.look?.reflectGround !== false;
+    this.over.material.color.setHex(0);
+    this.lit.setHex(0);
     this.setSky(world.look, bg);
     this.frame = 0;
   }
@@ -68,11 +90,38 @@ export class Reflections {
     col.needsUpdate = true;
   }
 
+  // A look at the road beside the car (see the top of the file). hide: the car.
+  // The first look at a new place snaps; after that it eases.
+  sampleRoad(gl, world, hide, x, y, z) {
+    if (this.frame % 8) return;
+    const cam = this.probeCam, auto = gl.shadowMap.autoUpdate;
+    cam.position.set(x, y + 5, z);
+    cam.lookAt(x, y, z);
+    cam.updateMatrixWorld();
+    hide.visible = false;
+    gl.shadowMap.autoUpdate = false;
+    gl.setRenderTarget(this.probe);
+    gl.render(world, cam);
+    gl.readRenderTargetPixels(this.probe, 0, 0, PROBE, PROBE, this.pixels);
+    gl.setRenderTarget(null);
+    gl.shadowMap.autoUpdate = auto;
+    hide.visible = true;
+    let r = 0, g = 0, b = 0;
+    for (let i = 0; i < this.pixels.length; i += 4) { r += this.pixels[i]; g += this.pixels[i + 1]; b += this.pixels[i + 2]; }
+    const k = 1 / (PROBE * PROBE * 255);
+    _lit.setRGB(r * k, g * k, b * k);
+    this.lit.lerp(_lit, this.lit.r + this.lit.g + this.lit.b ? 0.3 : 1);
+    this.ground.visible = true;
+    this.ground.material.color.copy(this.lit);
+    this.over.material.color.copy(this.lit).multiplyScalar(OVERHEAD);
+  }
+
   // Re-take the reflection from where the car is (every few frames, or now).
   update(gl, x, y, z, force = false) {
     if (!force && this.frame++ % this.every) return;
     this.camera.position.set(x, y, z);
     this.ground.position.set(x, y - 0.9, z);
+    this.over.position.set(x, y + 9, z);
     this.sky.position.set(x, y, z);
     this.current?.traverse((o) => { if (o.userData.follow) o.position.set(x, y + o.userData.follow, z); });
     this.camera.updateMatrixWorld();

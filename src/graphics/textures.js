@@ -434,13 +434,16 @@ export const Tex = {
   }, { nearest: false })),
 
   // Soft dark blob under the car.
-  blobShadow: () => cached('blob', () => canvasTexture([32, 64], (g, w, h) => {
-    const grad = g.createRadialGradient(w / 2, h / 2, 2, w / 2, h / 2, h / 2);
-    grad.addColorStop(0, 'rgba(0,0,0,0.85)');
-    grad.addColorStop(0.6, 'rgba(0,0,0,0.6)');
-    grad.addColorStop(1, 'rgba(0,0,0,0)');
-    g.fillStyle = grad;
-    g.fillRect(0, 0, w, h);
+  // The shadow under a car: nearly black where the body meets the road, fading
+  // softly out past the car, and clear long before the edge of its picture.
+  blobShadow: () => cached('blob', () => canvasTexture([96, 192], (g, w, h) => {
+    const im = g.createImageData(w, h), step = (a, b, x) => { const k = Math.max(0, Math.min(1, (x - a) / (b - a))); return k * k * (3 - 2 * k); };
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+      const u = (Math.abs(x + 0.5 - w / 2) / w * 2) * 1.45, v = (Math.abs(y + 0.5 - h / 2) / h * 2) * 2.7; // metres from the middle
+      const qx = Math.max(0, u - 0.62), qy = Math.max(0, v - 1.75), d = Math.hypot(qx, qy) - 0.28; // outside a rounded box
+      im.data[(y * w + x) * 4 + 3] = 255 * (0.95 * (1 - step(-0.3, 0.12, d)) + 0.55 * (1 - step(-0.1, 0.5, d))) / 1.1;
+    }
+    g.putImageData(im, 0, 0);
   }, { nearest: false })),
 
   // A glow sprite for lamps and lights.

@@ -1,5 +1,16 @@
 # Changelog
 
+## Arlo's fourth notes, part 4 (2026-11-02)
+- Contacts on your phone: Johnny's favour (10% off one type of car, once a day), Dave's jobs (15% off any car), Sonny's invites (one a day, CR 500, one try, podium or nothing, big money).
+- The handbrake gives you a clean drift that holds and straightens by itself.
+- Hold the throttle in the countdown: the tyres smoke, and you get a better start.
+- Rivals fight to take P1 back. The Speeder style is now Reckless.
+- Races end in a slide to a stop, and your CR and XP count up.
+- Yamagiri Pass and Parabolica Street turn up much earlier in the career.
+- Sound effects for nearly everything, several versions of each, and you can hear rival engines.
+- High graphics has no pixels and a softer bloom. Rounded corners on the menus. Dave has his real face.
+- Cars pick up the light of the road they are on, with a proper shadow underneath.
+
 ## Arlo's fourth notes, part 3: places (2026-11-01)
 - New track: Yamagiri Pass. A mountain road with real hills, three hairpins, a ridge under red shrine gates and the valley's lights far below.
 - Parabolica Street is lined with cherry blossom the whole way round, with white lamps and petals in the air.

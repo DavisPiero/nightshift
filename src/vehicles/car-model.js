@@ -299,18 +299,28 @@ export function buildCar(spec, look = spec.paint, { simple = false } = {}) {
 
   // Blob shadow (always on; real shadows are a Graphics setting).
   const L = B.z1 - B.z0;
-  const blob = new THREE.Mesh(new THREE.PlaneGeometry(2.3, L + 0.4), new THREE.MeshBasicMaterial({ map: Tex.blobShadow(), transparent: true, depthWrite: false }));
+  const blob = new THREE.Mesh(new THREE.PlaneGeometry(2.9, L + 1), new THREE.MeshBasicMaterial({ map: Tex.blobShadow(), transparent: true, depthWrite: false }));
   blob.rotation.x = -Math.PI / 2;
   blob.position.set(0, 0.02, (B.z0 + B.z1) / 2);
   blob.renderOrder = 1;
   root.add(blob);
+
+  // The tail lights' red, lying on the road behind the car.
+  let spill = null;
+  if (!simple) {
+    spill = new THREE.Mesh(new THREE.PlaneGeometry(2.6, 3.4), new THREE.MeshBasicMaterial({ map: glowTex, color: 0xff2010, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, opacity: 0.2 }));
+    spill.rotation.x = -Math.PI / 2;
+    spill.position.set(0, 0.03, B.z0 - 1.2);
+    spill.renderOrder = 1;
+    root.add(spill);
+  }
 
   // Merge the parts that never move into one mesh per material (materials
   // stay shared, so paint and brake lights still change).
   mergeChildren(body, new Set(beams));
   mergeChildren(cockpit);
 
-  root.traverse((o) => { if (o.isMesh && o !== blob) o.castShadow = true; });
+  root.traverse((o) => { if (o.isMesh && o !== blob && o !== spill) o.castShadow = true; });
   for (const b of beams) b.castShadow = false;
 
   let glowOn = true, beamsOn = true, inside = false, lightsOn = true;
@@ -388,6 +398,7 @@ export function buildCar(spec, look = spec.paint, { simple = false } = {}) {
       if (mats.lampF) mats.lampF.emissiveIntensity = lightsOn ? 2.6 : 0.08;
       for (const g of tailGlows) { g.material.opacity = brake ? 1 : 0.4; g.scale.setScalar(brake ? 1.1 : 0.6); }
       if (brakeLamp) brakeLamp.intensity = lightsOn ? (brake ? 6 : 0.8) : 0;
+      if (spill) { spill.visible = lightsOn; spill.material.opacity = brake ? 0.6 : 0.16; }
       reverseLight.color.setHex(v.gearbox.gear === -1 ? 0xffffff : 0x777777);
     },
     dispose() {
