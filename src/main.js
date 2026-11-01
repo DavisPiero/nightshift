@@ -481,6 +481,7 @@ class Game {
     fade.classList.add('on');
     setTimeout(() => {
       this.vehicle.reset(a.x, a.z, a.heading);
+      settleOnRoad(this.vehicle, this.track, this.track.nearest(a.x, a.z));
       this.prepare();
       fade.classList.remove('on');
     }, 260);
@@ -633,6 +634,7 @@ class Game {
     const t = this.track;
     const i = t.wrap(index);
     this.vehicle.reset(t.x[i], t.z[i], t.headingAt(i));
+    settleOnRoad(this.vehicle, t, { index: i, along: 0 });
     applyWeather(this.vehicle, this.weatherId);
     this.trackIndex = i;
     if (this.cameras) this.cameras.set(this.cameras.mode, this.carRef());

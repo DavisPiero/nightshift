@@ -9,10 +9,11 @@ node tools/shot.mjs "[
  {\"q\":\"screen=tracks&track=starter&time=sunset\",\"out\":\"$TMP/starter.png\",\"js\":\"$J nightshift.flyIndex=260\",\"after\":2.5},
  {\"q\":\"screen=tracks&track=underground\",\"out\":\"$TMP/underground.png\",\"js\":\"$J nightshift.flyIndex=420\",\"after\":2.5},
  {\"q\":\"screen=tracks&track=parabolica\",\"out\":\"$TMP/parabolica.png\",\"js\":\"$J nightshift.flyIndex=40\",\"after\":2.5},
+ {\"q\":\"screen=tracks&track=mountain&time=sunset\",\"out\":\"$TMP/mountain.png\",\"js\":\"$J nightshift.flyIndex=1240\",\"after\":2.5},
  {\"q\":\"screen=garage&car=impreza-gc8\",\"out\":\"$TMP/garage.png\",\"js\":\"$J document.querySelector('#wallet').style.display='none'\",\"after\":3}
 ]" | grep -v '^saved'
 mkdir -p assets/loading
-for t in starter underground parabolica garage; do
+for t in starter underground parabolica mountain garage; do
   sips -s format jpeg -s formatOptions 72 "$TMP/$t.png" --out "assets/loading/$t.jpg" >/dev/null
 done
 rm -r "$TMP"

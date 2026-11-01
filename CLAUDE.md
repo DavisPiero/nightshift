@@ -16,8 +16,8 @@ way they are, HANDOFF.md for how the last session ended. BRIEF.md is the origina
 - Automatic gearbox is the default. Manual is optional and must never be needed to be quick.
 - Art: realistic (since Milestone 6, 2026-10-28): physically based materials and tone mapping, drawn a little pixelated on Medium and High (David, 2026-10-31). Low graphics keeps the old chunky-pixel look. Story pictures stay pixel art.
   Neon Japan is the theme (David, 2026-10-26): each track has its own light colour (the
-  Starter Track warm amber, the Underground turquoise, Parabolica Street pink neon under
-  white lamps), with neon signs and Japanese text as accents. Cars have clear-coated paint that reflects the lights round them; the world
+  Starter Track warm amber, the Underground turquoise, Parabolica Street pink neon and cherry
+  blossom under white lamps, Yamagiri Pass cold moonlight with red shrine gates), with neon signs and Japanese text as accents. Cars have clear-coated paint that reflects the lights round them; the world
   stays matte.
 - Cars have near-miss names ("Nissani Skyliner") and no real badges, logos or exact real names; the real
   make and model live in each recipe's `identity`. Every car comes from a GLB in `GLB/` (git-ignored, David's
@@ -27,7 +27,7 @@ way they are, HANDOFF.md for how the last session ended. BRIEF.md is the origina
   to replace. Authors are credited in README.md. The Impreza's source is unknown: David chose to publish it
   anyway (2026-10-31); add its credit to README.md once he knows it.
 - UI (David, 2026-11-01): black and titanium base; white, amber and teal for all colour; no pink. Clean, not pixelated, with layouts from his racing-game references and none of their colours. Fonts stay: Jersey 10 for titles and numbers, DotGothic16 for text, always bold and thickened. Every colour, font and size lives in the list at the top of `styles/main.css`: change them there, never on a screen. See SPEC.md, "Look of the menus". References: `Reference/User Interface`.
-- Career is the main mode: Street, GT3, then Formula. Cars cost CR in the shop, tracks unlock by being played, and the only way to go faster for good is a faster car: no permanent parts. One-race upgrades are bought on the laptop before a career race (`src/career/upgrades.js`). The garage is looks only. GT3 and Formula have no cars yet, so the story ends at level 100 with "to be continued".
+- Career is the main mode: Street, GT3, then Formula. Cars cost CR in the shop, every track in your stage is open to race (David, 2026-11-01), and the only way to go faster for good is a faster car: no permanent parts. One-race upgrades are bought on the laptop before a career race (`src/career/upgrades.js`). The garage is looks only. GT3 and Formula have no cars yet, so the story ends at level 100 with "to be continued".
 - Control hints appear only in Settings > Controls. One exception (David, 2026-11-01): the laptop's NOS row names its key.
 - Sound only from code or from recordings we are allowed to redistribute (credit them).
 - `Reference/` holds David's reference images (`User Interface`, `Cars`, `Tracks`). It is
@@ -42,7 +42,7 @@ way they are, HANDOFF.md for how the last session ended. BRIEF.md is the origina
 - Look at it without opening a window: `node tools/shot.mjs "screen=garage&car=countach-qv" out.png`
   (headless Chrome; see the top of the file for several shots, sizes and running JavaScript).
 - Smoke test (headless Chrome: computer/clear, iPad/rain, the Countash on the Underground,
-  Parabolica Street in snow at dawn, then a race against seven AI cars; a bot drives for 20 s
+  Parabolica Street in snow at dawn, a race on Yamagiri Pass in the rain, then a race against seven AI cars; a bot drives for 20 s
   through both cameras, then the career and driving benches; about 8 minutes, so run it in the
   background): `./tools/smoke.sh`
 - AI bench: `node tools/ai-bench.mjs` (about 5 minutes: races, rival tuning, lap times per difficulty). Run it after changing the AI, physics or a track.
@@ -54,7 +54,7 @@ way they are, HANDOFF.md for how the last session ended. BRIEF.md is the origina
 - Look at a car from every side: `node tools/turnaround.mjs countach-qv` (add `cockpit` first for the driver's seat), saved in `review/turn/`. Recapture cars: `npm install`, then `node tools/capture-car.mjs`.
 - Add a car: put the GLB in `GLB/`, write a recipe in `tools/car-recipes.mjs` (`findSteering` and `listIslands` help), `node tools/capture-car.mjs <id>`. It prints the scale: near 1:1 means the axles are right.
 - New props go in the asset library (`src/world/assets.js`) and are placed through a `Placer`;
-  check each one on the `?library` page.
+  check each one on the `?library` page. Anything too far away to move as you drive goes in the sky bake (`skyBackdrop` in `track-scene.js`), not the world.
 
 ## Code map
 - `src/main.js` start-up, game states (menu, driving, paused), smoke-test bot
@@ -62,8 +62,8 @@ way they are, HANDOFF.md for how the last session ended. BRIEF.md is the origina
 - `src/input/` the shared control state, keyboard (rebindable), touch (joystick, buttons, layout editor), gamepad
 - `src/physics/` car physics (`vehicle.js`), gearbox, wall collisions, two cars touching (`knocks.js`), weather grip table (with weather patches)
 - `src/vehicles/` car list with specs, prices and tiers (`cars.js`), looks: paint, finish, decals, wheels, ride height (`looks.js`), home flags (`flags.js`), Feel on top of a car's numbers (`tuning.js`), ratings (`stats.js`), car bodies from profile curves (`body.js`), each car's shape and details (`car-model.js`), cars from GLBs (`captured.js`, files in `assets/cars/`: `<id>-lite.bin` loads at start-up, `<id>.bin` with every triangle replaces it on computers), real 3D rims (`wheels.js`), the cabin seen from the driver's seat (`cabin.js`), the bonnet and engine bay (`engine-bay.js`)
-- `src/world/` track centre-line maths and the turtle that draws tracks (`track-path.js`), the track list and points, the asset library and Placer (`assets.js`), the phone and laptop models on their own canvas (`props-devices.js`), shared scenery pieces (`scene-kit.js`), the harbour scenery and the city backdrop (`track-scene.js`), the Underground (`underground.js`, `underground-scene.js`), Parabolica Street (`parabolica.js`, `parabolica-scene.js`), the garage scene (`garage.js`), Dave's lot (`dealership.js`), time of day (`time-of-day.js`), weather visuals and snow (`weather.js`)
-- `src/graphics/` renderer with colour grade, dither, bloom (FFT convolution on High, a blur chain on Medium), speed blur with a cockpit mask and the low sun's glare, painted textures, vector pictures turned into pixel bitmaps (`pixel-art.js`), effects (sprite smoke, spark streaks, skid marks), paint reflections (`reflections.js`), the sky dome shader (`sky.js`)
+- `src/world/` track centre-line maths, road height and the turtle that draws tracks (`track-path.js`), the track list and points, the asset library and Placer (`assets.js`), the phone and laptop models on their own canvas (`props-devices.js`), shared scenery pieces (`scene-kit.js`), the harbour scenery and the city backdrop (`track-scene.js`), the Underground (`underground.js`, `underground-scene.js`), Parabolica Street (`parabolica.js`, `parabolica-scene.js`), Yamagiri Pass (`mountain.js`, `mountain-scene.js`), the garage scene (`garage.js`), Dave's lot (`dealership.js`), time of day (`time-of-day.js`), weather visuals and snow (`weather.js`)
+- `src/graphics/` renderer with colour grade, dither, bloom (FFT convolution on High, a blur chain on Medium), speed blur with a cockpit mask and the low sun's glare, painted textures, vector pictures turned into pixel bitmaps (`pixel-art.js`), effects (sprite smoke, spark streaks, skid marks), paint reflections (`reflections.js`), the sky dome shader (`sky.js`), far scenery baked into the sky (`far-bake.js`)
 - `src/cameras/` chase and cockpit cameras, camera shake, `speedRush` (the one number for how fast it should feel)
 - `src/audio/` engine, tyres, wind, impacts, backfires, rain and night ambience (`audio.js`), menu sounds (`ui-sounds.js`), all synthesised
 - `src/race/` the racing line (`racing-line.js`), AI drivers (`ai-driver.js`), the four difficulties (`difficulty.js`), picking and tuning the rivals (`opponents.js`), the race manager: grid, countdown, laps, places, slipstream (`race.js`), Time Trial timing and its ghost (`ghost.js`), the laptop's Analytics (`analytics.js`), the rival cars and ghost on screen (`race-view.js`)

@@ -3,13 +3,15 @@
 // nothing to compare with, gets none.
 
 const NOTICE = {
-  id: '2026-11-01-notes4-2',
+  id: '2026-11-01-notes4-3',
   subject: 'What’s new',
   lines: [
-    'New: Analytics on the race laptop. Know who you are up against.',
-    'The Shop is now Dave\'s lot. Walk round a car before you buy it.',
-    'The Garage has moved onto a laptop, so the car has more room.',
-    'No headlights at dawn.',
+    'New track: Yamagiri Pass. Three hairpins up, a ridge under the shrine gates, and a long fast drop home.',
+    'Parabolica Street is lined with cherry blossom, the whole way round.',
+    'Every Street track is open to race from the start.',
+    'New trees and buildings everywhere, and a real city on the horizon.',
+    'Dave has moved into his cabin window.',
+    'No headlights at sunset either.',
   ],
 };
 

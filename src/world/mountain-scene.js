@@ -160,10 +160,7 @@ export function buildMountain(track, def) {
   const lampAt = (k) => {
     const [x, z] = along(k, W + 0.6), i = at(k);
     place.add('mountain-lamp', x, track.y[i], z, Math.atan2(-track.leftZ(i), track.leftX(i)));
-    const g = strip(track, -hw - 2, hw + 2, 0.03, { step: 2, from: k - 14, to: k + 14, closed: false, uScale: 1 / (2 * hw + 4), vScale: 1 });
-    const u = g.attributes.uv;
-    for (let q = 0; q < u.count; q++) u.setY(q, (u.getY(q) - (k - 14)) / 28);
-    pools.push(g);
+    pools.push([k, 15, hw + 2.2]);
   };
   const lampSpots = new Set();
   for (let k = 40; k < n; k += 86) lampSpots.add(k);
@@ -203,13 +200,10 @@ export function buildMountain(track, def) {
     place.add('torii', x, y, z, head(k), 1);
     if (g % 2) continue;
     for (const s of [1, -1]) { const [lx, lz] = along(k, s * 5); place.glow(lx, y + 5.3, lz, [1, 0.36, 0.14], 2.4); }
-    const pg = strip(track, -hw, hw, 0.03, { step: 2, from: k - 8, to: k + 8, closed: false, uScale: 1 / (2 * hw), vScale: 1 });
-    const u = pg.attributes.uv;
-    for (let q = 0; q < u.count; q++) u.setY(q, (u.getY(q) - (k - 8)) / 16);
-    redPools.push(pg);
+    redPools.push([k, 9, hw + 0.6]);
     if (g % 4 === 0) { const l = new THREE.Vector3(x, y + 5.4, z); l.floor = y; place.lamps.push(l); }
   }
-  group.add(new THREE.Mesh(merge(redPools), new THREE.MeshBasicMaterial({ map: Tex.lightPoolWhite(), color: 0xc83418, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, polygonOffset: true, polygonOffsetFactor: -4 })));
+  group.add(roadGlow(track, redPools, 0x7a2010));
   // The shrine, on its shelf above the drop, stone lanterns up to it.
   {
     const [x, z] = along(SHRINE, W + 15);
@@ -236,16 +230,10 @@ export function buildMountain(track, def) {
       col.position.set(x, y + roofH / 2, z); col.rotation.y = head(k);
       group.add(col);
     }
-    const shedPools = (k) => {
-      const g = strip(track, -hw - 1, hw + 1, 0.03, { step: 2, from: k - 12, to: k + 12, closed: false, uScale: 1 / (2 * hw + 2), vScale: 1 });
-      const u = g.attributes.uv;
-      for (let q = 0; q < u.count; q++) u.setY(q, (u.getY(q) - (k - 12)) / 24);
-      pools.push(g);
-    };
     for (let k = SHED[0] + 8; k < SHED[1]; k += 16) {
       const [x, z] = along(k, 0), y = roadY(k);
       place.glow(x, y + roofH - 0.3, z, 'white', 1.4);
-      shedPools(k);
+      pools.push([k, 13, hw + 1.4]);
       const l = new THREE.Vector3(x, y + roofH - 0.6, z); l.floor = y; place.lamps.push(l);
       const bar = new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.08, 1.8), new THREE.MeshBasicMaterial({ color: 0xe4ecff }));
       bar.position.set(x, y + roofH - 0.05, z); bar.rotation.y = head(k);
@@ -253,7 +241,7 @@ export function buildMountain(track, def) {
     }
   }
 
-  if (pools.length) group.add(new THREE.Mesh(merge(pools), new THREE.MeshBasicMaterial({ map: Tex.lightPoolWhite(), color: 0x8ea8d8, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, polygonOffset: true, polygonOffsetFactor: -4 })));
+  group.add(roadGlow(track, pools, 0x46566e));
 
   // --- The forest ---
   // Close to the road, real cedars; behind them, three crossed pictures of a
@@ -316,6 +304,29 @@ export function buildMountain(track, def) {
       ground: 0x0c0e12,
     },
   };
+}
+
+// Light painted down the road, following its hills: [metres, half length, half
+// width] for each pool, soft to nothing at the edges.
+function roadGlow(track, list, colour) {
+  const pos = [], col = [], idx = [], c = new THREE.Color(colour), ACROSS = 6;
+  for (const [k, len, wide] of list) {
+    const base = pos.length / 3;
+    for (let d = -len; d <= len; d++) {
+      const i = track.wrap(k + d);
+      for (let a = 0; a <= ACROSS; a++) {
+        const s = a / ACROSS * 2 - 1, f = Math.max(0, 1 - Math.hypot(d / len, s)) ** 1.5;
+        pos.push(track.x[i] + track.leftX(i) * s * wide, track.y[i] + 0.05, track.z[i] + track.leftZ(i) * s * wide);
+        col.push(c.r * f, c.g * f, c.b * f);
+        if (d < len && a < ACROSS) { const p = base + (d + len) * (ACROSS + 1) + a, n = ACROSS + 1; idx.push(p, p + 1, p + n, p + 1, p + n + 1, p + n); }
+      }
+    }
+  }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+  g.setAttribute('color', new THREE.Float32BufferAttribute(col, 3));
+  g.setIndex(idx);
+  return new THREE.Mesh(g, new THREE.MeshBasicMaterial({ vertexColors: true, transparent: true, depthWrite: false, side: THREE.DoubleSide, blending: THREE.AdditiveBlending, polygonOffset: true, polygonOffsetFactor: -4 }));
 }
 
 // What the bake sees from the mountain: ranges one behind the other, a valley

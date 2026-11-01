@@ -30,7 +30,7 @@ export const TRACKS = [
   {
     id: 'parabolica',
     name: 'Parabolica Street',
-    blurb: 'A city ring road round a park, shaped like Monza. Long straights, two chicanes, the Lesmos and the long Parabolica.',
+    blurb: 'A city ring road lined with cherry blossom, shaped like Monza. Long straights, two chicanes, the Lesmos and the long Parabolica.',
     corners: 11,
     jp: 'パラボリカ通り',
     stage: 'street',

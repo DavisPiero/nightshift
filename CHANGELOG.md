@@ -1,5 +1,12 @@
 # Changelog
 
+## Arlo's fourth notes, part 3: places (2026-11-01)
+- New track: Yamagiri Pass. A mountain road with real hills, three hairpins, a ridge under red shrine gates and the valley's lights far below.
+- Parabolica Street is lined with cherry blossom the whole way round, with white lamps and petals in the air.
+- Every Street track is open to race from the start.
+- New trees and buildings on every track, and a far bigger city on the horizon, baked into the sky so it costs almost nothing.
+- Dave has moved into his cabin window. The Shop and Garage laptops lean left. No headlights at sunset.
+
 ## Arlo's notes, part 3: the story (2026-11-01)
 - A new story: you are a data analyst, it all happens in Japan, and the ending starts Johnny's team.
 - Johnny has a new look with 20 expressions, and he hops when his expression changes.
