@@ -43,7 +43,7 @@ Nothing is queued: Arlo's fourth notes are finished. Start with what David and A
 - Phone: `save.binned` holds deleted mail ids (`bin` in `inbox.js`). `asking` is "are you sure?", `onBin` means the bin is picked.
 - Road: `Tex.road(width)` gives one tile of the road's width by 32 m as map and bump. Headlights: `Tex.headlightPattern` is projected by the spot light.
 - Shop and Garage laptop: `ui/desk.js`, `Desk.sync(screen)` from `Screens.showEl`. `DeviceStage.pin(el, w, h)` lays `.desk-panel` over the display each frame. `desk.inset` feeds the lens shift. `game.room` picks the scene (garage or Dave's lot).
-- New line for Dave: `career/dave.js`. Stand-in face: a branch in `tools/story-paint.mjs`, `node tools/story-art.mjs faces`.
+- New line for Dave: `[mood, words]` in `career/dave.js`. Sonny's stand-in face: a branch in `tools/story-paint.mjs`, `node tools/story-art.mjs faces`.
 - Analytics: `race/analytics.js`, its numbers are checked at the end of `tools/ai-bench.mjs`.
 - `game.device` is whichever of the phone and laptop is up. Both have `nav`, `press` and a key listener. `DeviceStage` (world/props-devices.js) draws them; `stage.update` runs from `render`.
 - A new mail: a line in `MAIL` in `career/inbox.js`, with `when(career)`.
