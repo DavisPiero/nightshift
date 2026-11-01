@@ -1,7 +1,7 @@
 # Hand-off: end of session 18 (2026-11-01)
 
 ## Repo state
-- On `main`, everything committed and pushed; no other branches. `main` is the live site. Next work goes on a new branch; merge only when David signs off (he says "push" for merge everything and push).
+- On `main`, everything committed and pushed; no other branches. `main` is the live site. Next work goes on a new branch. David's standing rule for these notes: when a part is finished and checked, merge and push it without asking.
 
 ## Read first
 `CLAUDE.md`, `STATE.md`, the last 20 lines of `DECISIONS.md`, then this file.
@@ -48,4 +48,15 @@ Part 3 of David's fourth notes: spelled out under "Next" in `STATE.md`, with his
 - Check the printed scale: near 1:1 means the recipe's `axles` fit. Helpers: `listIslands`, `findSteering`, `listCabinNear`. Always check a cockpit by turning the wheel.
 
 ## Open with David
-Everything under "Open with David" in STATE.md.
+Ask these first, then start Part 3.
+1. What exactly is wrong with Parabolica Street? Nothing records it.
+2. Are the sprite sheets for Sonny and Dave ready (5 across, 4 down, on black)? Any for Max and Aoi?
+3. Did the iPad hold up in the Shop and Garage, with the second 3D view running all the time? Never tried on a real one.
+4. Do NOS (roar, shake, 30 to 35%), the headlights, the pull-up and the cockpit feel right? Nobody here can hear or feel them.
+5. Do Dave's lines, the lot, the laptop's size and the race laptop's new angle work for him? All guesses.
+6. Does the new look work on every screen, and is the small text right (`--weight`, `--track`)?
+7. Does the racing feel right? Is Hard too hard (a limit bot from last finishes 4th to 7th)?
+8. The Subaru's source, for its credit, and near-miss art for the Mustank's sponsor livery on its shop card.
+9. Older guesses from sessions 15, 16 and before: listed in `STATE.md`.
+
+Part 3 changes a rule: Sonny's 500 CR entry means "you can never lose money" stops being true for that race type. Update SPEC.md point 9 then.

@@ -82,6 +82,9 @@ whole look: change a colour or a font there, once.
 5. Night circuit: a second, full track.
 6. Realism overhaul (M6, started 2026-10-28; GLB cars done, 2026-10-31). Then the career (2026-10-31):
    racing, four difficulties, money and levels, the shop, the story. **Street stage done.**
+   Arlo's fourth notes (2026-11-01), in three parts: (1) feel, road, headlights, phone bin. **Done.**
+   (2) Analytics, laptops in Shop and Garage, Dave's lot. **Done.** (3) Contacts, favours, Sonny, quests,
+   Parabolica fixed, the mountainside map, trackside models up to the cars' quality. **Next.**
 7. GT3 and Formula: their cars, circuits and story. Needs models from David.
 8. Saving and settings: the rest (most of it is done in 3).
 9. Polish and release.

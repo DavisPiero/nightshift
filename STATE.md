@@ -10,8 +10,9 @@ Part 2 of 3 is live: tabs and Analytics on the race laptop, Shop and Garage on a
 David said: push each part when finished, without asking.
 
 ## Open with David
-- Sprite sheets for Sonny and Dave are coming from him (5 across, 4 down, on black). Dave's painted stand-in is up until then; Sonny's comes in Part 3.
-- Dave's lines, the look of the lot, the laptop's size on screen, and "Most trouble" wording are all Claude's guesses. Same question for Max and Aoi.
+- Sprite sheets for Sonny and Dave are coming from him (5 across, 4 down, on black). Dave's painted stand-in is up until then; Sonny's comes in Part 3. Same question for Max and Aoi.
+- What exactly is wrong with Parabolica Street? David says it still needs fixing; nothing records what. Ask before Part 3's track work.
+- Guesses (session 18): Dave's lines, backstory and sign; the look of the lot; the laptop's size on screen; the race laptop's new angle; Analytics columns and "Most trouble" wording; you counted as mid-field in the prediction; headlight strength; pull-up timing; NOS sounds.
 - Does NOS feel right? Nobody here can hear the roar. "30%" is set as how far ahead of the same car a held bottle gets you.
 - Are the headlights bright enough? One number in `car-model.js`.
 - Does the new look work on every screen he uses? Is the small text right now (`--weight`, `--track`)?
