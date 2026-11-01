@@ -9,6 +9,7 @@
 import * as THREE from 'three';
 
 const TITANIUM = 0x8d9198, DARK = 0x1a1c20, BLACK = 0x0b0c0e;
+const _corner = new THREE.Vector3();
 const std = (color, metalness = 0.3, roughness = 0.5) => new THREE.MeshStandardMaterial({ color, metalness, roughness });
 
 // A slab with rounded corners, lying in x-y, `d` thick, front face at z = d/2.
@@ -156,9 +157,11 @@ export class DeviceStage {
     this.place?.();
   }
 
-  // pose(aspect) gives where it sits: { x, y, z, rx, ry, rz, scale }.
-  show(device, pose) {
+  // pose(aspect) gives where it sits: { x, y, z, rx, ry, rz, scale }. behind:
+  // it sits under the menus, and leaves clicks to them.
+  show(device, pose, { behind = false } = {}) {
     this.setup();
+    this.canvas.classList.toggle('behind', behind);
     if (this.model) this.scene.remove(this.holder);
     this.model = device;
     this.holder = new THREE.Group();
@@ -194,6 +197,7 @@ export class DeviceStage {
     const open = Math.max(0, Math.min(1, (k - 0.35) / 0.65));
     m.hinge.rotation.x = m.shut + (m.open - m.shut) * (1 - (1 - open) ** 2);
     this.renderer.render(this.scene, this.camera);
+    if (this.pinned) this.placePin(k);
     if (this.closing && k <= 0) {
       this.scene.remove(this.holder);
       this.model = null;
@@ -201,6 +205,38 @@ export class DeviceStage {
       const d = this.done; this.done = null;
       d?.();
     }
+  }
+
+  // Lay an HTML element, w by h, over the model's display; it follows every
+  // move. null lets go.
+  pin(el, w, h) {
+    if (this.pinned) this.pinned.el.style.transform = '';
+    this.pinned = el ? { el, w, h } : null;
+    this.pinRight = 0;
+  }
+
+  // The element's corners go where the display's corners are on screen: a
+  // perspective matrix, worked out from those four points.
+  placePin(k) {
+    const { el, w, h } = this.pinned, screen = this.model.screen, W = window.innerWidth, H = window.innerHeight;
+    const a = screen.geometry.parameters.width / 2, b = screen.geometry.parameters.height / 2;
+    screen.updateWorldMatrix(true, false);
+    const [p0, p1, p2, p3] = [[-a, b], [a, b], [a, -b], [-a, -b]].map(([x, y]) => {
+      const v = _corner.set(x, y, 0).applyMatrix4(screen.matrixWorld).project(this.camera);
+      return [(v.x + 1) / 2 * W, (1 - v.y) / 2 * H];
+    });
+    const dx1 = p1[0] - p2[0], dx2 = p3[0] - p2[0], sx = p0[0] - p1[0] + p2[0] - p3[0];
+    const dy1 = p1[1] - p2[1], dy2 = p3[1] - p2[1], sy = p0[1] - p1[1] + p2[1] - p3[1];
+    const den = dx1 * dy2 - dx2 * dy1, g = (sx * dy2 - dx2 * sy) / den, c = (dx1 * sy - sx * dy1) / den;
+    const m = [
+      (p1[0] - p0[0] + g * p1[0]) / w, (p1[1] - p0[1] + g * p1[1]) / w, 0, g / w,
+      (p3[0] - p0[0] + c * p3[0]) / h, (p3[1] - p0[1] + c * p3[1]) / h, 0, c / h,
+      0, 0, 1, 0,
+      p0[0], p0[1], 0, 1,
+    ];
+    el.style.transform = `matrix3d(${m.map((n) => n.toFixed(8)).join(',')})`;
+    el.style.opacity = Math.max(0, Math.min(1, (k - 0.7) / 0.3));
+    this.pinRight = Math.max(p1[0], p2[0]) / W;
   }
 
   // Where a click at (x, y) in the window lands on the display, or null.

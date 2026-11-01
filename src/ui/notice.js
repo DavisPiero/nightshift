@@ -3,14 +3,13 @@
 // nothing to compare with, gets none.
 
 const NOTICE = {
-  id: '2026-11-01-notes4-1',
+  id: '2026-11-01-notes4-2',
   subject: 'What’s new',
   lines: [
-    'NOS hits much harder: flames, roar and shake. Hold it for more.',
-    'NOS now costs CR 1500.',
-    'A closer cockpit view, a real road and better headlights.',
-    'Delete mail on your phone.',
-    'Your camera stays as you left it before a race.',
+    'New: Analytics on the race laptop. Know who you are up against.',
+    'The Shop is now Dave\'s lot. Walk round a car before you buy it.',
+    'The Garage has moved onto a laptop, so the car has more room.',
+    'No headlights at dawn.',
   ],
 };
 

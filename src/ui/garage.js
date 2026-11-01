@@ -1,9 +1,9 @@
-// The Garage screen: where you look at your cars and make them yours. A rail
-// of tabs down the left (Paint, Decals, Wheels, Stance, Bonnet, My Cars); each
-// opens a small pop-up with its choices, and closing it gives the car the whole
-// screen. Drag round the car to look at it, scroll or pinch to zoom. Its
-// ratings sit bottom right. Everything here is looks: nothing changes how a
-// car drives.
+// The Garage screen: where you look at your cars and make them yours. It all
+// sits on the laptop on the left (ui/desk.js): tabs along the top (Paint, Decals,
+// Wheels, Stance, Bonnet, My Cars), their choices, the car's ratings. Putting the
+// laptop down gives the car the whole screen. Drag round the car to look at it,
+// scroll or pinch to zoom. Everything here is looks: nothing changes how a car
+// drives.
 
 import { getCar, carTitle } from '../vehicles/cars.js';
 import { PALETTE, FINISHES, DECALS, DECAL_COLOURS, RIMS, RIM_COLOURS, CALIPER_COLOURS, RIDE } from '../vehicles/looks.js';
@@ -22,11 +22,11 @@ export class Garage {
   constructor(game, screens) {
     this.game = game;
     this.screens = screens;
-    this.tab = null; // the open pop-up, or none
+    this.tab = null; // the open tab, or none while the laptop is down
+    this.last = 'paint';
     const tabs = $('#garage-tabs');
-    tabs.innerHTML = TABS.map(([id, name]) => `<button class="tab" data-gtab="${id}">${name}</button>`).join('');
-    for (const b of tabs.querySelectorAll('.tab')) b.addEventListener('click', () => (this.tab === b.dataset.gtab ? this.close() : this.show(b.dataset.gtab)));
-    $('#garage-close').addEventListener('click', () => this.close());
+    tabs.innerHTML = TABS.map(([id, name]) => `<button class="tier" data-gtab="${id}"><span>${name}</span></button>`).join('');
+    for (const b of tabs.querySelectorAll('.tier')) b.addEventListener('click', () => this.show(b.dataset.gtab));
     const step = (d) => {
       const owned = game.save.garage.owned;
       const i = owned.indexOf(screens.pick.car);
@@ -36,46 +36,28 @@ export class Garage {
     $('#garage-prev').addEventListener('click', () => step(-1));
     $('#garage-next').addEventListener('click', () => step(1));
     this.orbitControls($('#scr-garage'));
-    window.addEventListener('resize', () => this.measure());
+    game.desk.onToggle.garage = (up) => { if (up) this.show(this.last); else this.close(); };
   }
 
   get car() { return getCar(this.screens.pick.car); }
   get look() { return carLook(this.game.save, this.car); }
 
-  open() { this.close(); }
+  open() {}
 
   show(tab) {
-    this.tab = tab;
+    this.tab = this.last = tab;
     this.game.garageTab = tab; // the camera moves to suit the tab
     this.game.orbitReset();
-    for (const b of document.querySelectorAll('#garage-tabs .tab')) b.classList.toggle('on', b.dataset.gtab === tab);
-    const pop = $('#garage-pop');
-    pop.hidden = false;
-    pop.classList.remove('pop'); void pop.offsetWidth; pop.classList.add('pop');
-    $('#garage-pop-title').textContent = TABS.find(([id]) => id === tab)[1];
+    for (const b of document.querySelectorAll('#garage-tabs .tier')) b.classList.toggle('on', b.dataset.gtab === tab);
     this.fill(true);
-    this.measure();
   }
 
-  // Close the pop-up: the car gets the screen and the camera stands back.
+  // The laptop went down: the car gets the screen and the camera stands back.
   close() {
     this.tab = null;
     this.game.garageTab = null;
     this.game.orbitReset();
-    for (const b of document.querySelectorAll('#garage-tabs .tab')) b.classList.remove('on');
-    $('#garage-pop').hidden = true;
     this.fill();
-    this.measure();
-  }
-
-  // How much of the screen's left side the rail and pop-up cover, so the
-  // camera can keep the car in the space that is left.
-  measure() {
-    requestAnimationFrame(() => {
-      const pop = $('#garage-pop'), rail = $('#garage-tabs');
-      const el = pop.hidden ? rail : pop;
-      this.game.garageInset = el.offsetParent ? el.getBoundingClientRect().right / window.innerWidth : 0;
-    });
   }
 
   // Drag on the scene to look round the car; scroll or pinch to zoom.

@@ -75,6 +75,31 @@ window.paint = (id, blink) => {
     rim('M122 60 C120 84 116 100 108 112', '#ffa050', 1.5);
     g.restore();
     rim('M4 200 C8 170 30 152 60 142', '#4ff0e0', 1.5);
+  } else if (id.startsWith('face-dave')) {
+    // Stand-in until David's sheet: a faded work shirt, an old hat, sunnies, a
+    // big grey moustache, not a care in the world.
+    P('M2 200 C6 170 30 152 62 142 L108 142 C138 152 164 170 168 200 Z', '#7a8a6a', 2.5);
+    P('M62 142 L84 176 L108 142 L120 150 L98 200 L70 200 L48 150 Z', '#8e9e7c', 2);
+    P('M70 146 L84 172 L100 146 Q84 156 70 146 Z', '#c89468');
+    R(112, 170, 26, 18, '#6a7a5a'); R(112, 170, 26, 2, '#4a5840');
+    g.save();
+    head({ skin: '#cc8f62', skinD: '#a26c46', skinDD: '#784c30', skinL: '#e8b284', eye: '#2a2018', brow: '#8a8478',
+      browL: 'M72 62 Q80 57 90 62 L90 64 Q80 60 72 65 Z', browR: 'M100 62 Q108 57 118 60 L118 62 Q108 60 100 64 Z' });
+    // Sunnies, pushed a little down his nose.
+    P('M66 70 L92 70 L90 84 Q78 88 68 84 Z', '#16161c', 1.6);
+    P('M98 70 L120 68 L118 82 Q108 87 100 84 Z', '#16161c', 1.6);
+    R(90, 72, 10, 2, '#16161c'); R(72, 73, 8, 2, '#5a6a8a'); R(104, 72, 7, 2, '#5a6a8a');
+    // The moustache, and a lazy half smile under it.
+    P('M70 106 Q84 94 95 101 Q106 92 118 102 Q112 112 96 108 Q84 114 70 106 Z', '#b4aea2', 1.6);
+    P('M82 112 Q94 116 106 110', null); rim('M82 113 Q94 117 106 111', '#5e2622', 1.6);
+    // A hat that has been left on a dashboard for thirty years.
+    P('M34 58 Q84 44 138 54 Q144 60 134 62 Q84 56 40 66 Q30 64 34 58 Z', '#7a5a38', 2.5);
+    P('M58 54 C60 26 76 18 94 18 C112 18 124 28 124 52 Q90 46 58 54 Z', '#8e6c46', 2.5);
+    P('M58 54 Q90 46 124 52 L124 46 Q90 40 58 48 Z', '#4a3420');
+    clip(HEAD, () => { spots(62, 96, 58, 30, 120, '#8a7c70'); });
+    rim('M122 60 C120 84 116 100 108 112', '#ffa050', 1.5);
+    g.restore();
+    rim('M166 198 C160 170 138 152 110 144', '#ffa050', 1.5);
   } else if (id.startsWith('face-max')) {
     // Black race jacket with a pink stripe, collar up.
     P('M2 200 C6 170 30 152 62 142 L108 142 C138 152 164 170 168 200 Z', '#15151c', 2.5);

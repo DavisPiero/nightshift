@@ -39,6 +39,8 @@ import { Hud } from './ui/hud.js';
 import { Screens } from './ui/screens.js';
 import { loadSave, writeSave, carLook } from './save/save.js';
 import { DeviceStage } from './world/props-devices.js';
+import { Desk } from './ui/desk.js';
+import { buildDealership } from './world/dealership.js';
 import { Phone } from './ui/phone.js';
 import { Laptop } from './ui/laptop.js';
 import { showNotice } from './ui/notice.js';
@@ -117,10 +119,11 @@ class Game {
     this.feel = new FeelPanel(this);
     Object.assign(CAMERA_FEEL, FeelPanel.cameraFeel(this.save));
     this.hud = new Hud(document.querySelector('#hud'));
+    this.stage = new DeviceStage(document.querySelector('#device'));
+    this.desk = new Desk(this, this.stage);
     this.screens = new Screens(this);
     // The phone and the laptop; `device` is whichever is up.
     this.device = null;
-    this.stage = new DeviceStage(document.querySelector('#device'));
     this.phone = this.screens.phone = new Phone(this, this.stage);
     this.laptop = new Laptop(this, this.stage);
     this.screens.phone.refresh();
@@ -696,21 +699,27 @@ class Game {
   }
 
   // --- per screen frame ---
-  // The Garage and car-pick screens show the car in the garage; everything
-  // else shows it on the track.
-  get inGarage() { return this.state === 'menu' && (this.menuView === 'garage' || this.menuView === 'setup'); }
+  // The Garage and car-pick screens show the car in the garage, the Shop on
+  // Dave's lot (built the first time you go); everything else on the track.
+  get room() {
+    if (this.state !== 'menu') return null;
+    if (this.menuView === 'garage' || this.menuView === 'setup') return this.garage;
+    if (this.menuView !== 'shop') return null;
+    if (!this.lot) { this.lot = buildDealership(); this.lot.scene.environment = this.reflections.texture; }
+    return this.lot;
+  }
 
   render(dt) {
     const v = this.vehicle;
     const root = this.model.root;
-    const garage = this.inGarage;
-    const scene = garage ? this.garage.scene : this.scene;
-    if (garage) this.garage.update(dt);
+    const room = this.room, garage = !!room;
+    const scene = garage ? room.scene : this.scene;
+    if (garage) room.update(dt);
     if (root.parent !== scene) {
       scene.add(root);
-      this.reflections.setWorld(garage ? this.garage : this.world);
+      this.reflections.setWorld(room || this.world);
     }
-    this.model.setLights(!garage);
+    this.model.setLights(!garage && this.timeId !== 'dawn'); // no headlights once it is getting light
     this.bonnetUp = garage && this.menuView === 'garage' && this.garageTab === 'bonnet';
     this.model.setBonnet(this.bonnetUp);
     if (garage) {
@@ -810,6 +819,7 @@ class Game {
   // Which camera spot the garage scene uses: the car pick, or the garage's
   // current tab (several tabs share a spot).
   garageView() {
+    if (this.menuView === 'shop') return this.room.views.show;
     const v = this.garage.views;
     if (this.menuView === 'setup') return v.setup;
     const t = this.garageTab;
@@ -846,14 +856,15 @@ class Game {
     if (this.orbit) {
       const o = this.orbit, c = Math.cos(o.pitch);
       pos.set(Math.sin(o.yaw) * c, Math.sin(o.pitch), Math.cos(o.yaw) * c).multiplyScalar(o.dist).add(look);
-      // Stay inside the room (the walls are 5.25 m and 5.5 m from the middle).
-      pos.set(Math.max(-4.9, Math.min(4.9, pos.x)), Math.max(0.35, Math.min(3.4, pos.y)), Math.max(-5.1, Math.min(5.15, pos.z)));
+      // Stay inside the room (the garage's walls are 5.25 m and 5.5 m from the middle).
+      const b = this.room.bounds ?? { x: [-4.9, 4.9], y: [0.35, 3.4], z: [-5.1, 5.15] }, keep = (n, [lo, hi]) => Math.max(lo, Math.min(hi, n));
+      pos.set(keep(pos.x, b.x), keep(pos.y, b.y), keep(pos.z, b.z));
     }
     this.camPos = (this.camPos || pos.clone()).lerp(pos, k);
     this.camLook = (this.camLook || look.clone()).lerp(look, k);
     this.camera.position.copy(this.camPos);
     this.camera.lookAt(this.camLook);
-    const shift = this.menuView === 'garage' ? (this.garageInset || 0) / 2 : 0;
+    const shift = this.menuView === 'garage' || this.menuView === 'shop' ? this.desk.inset / 2 : 0;
     this.lensShift = (this.lensShift ?? shift) + (shift - (this.lensShift ?? shift)) * (dt ? Math.min(1, dt * 6) : 1);
     const W = this.renderer.width, H = this.renderer.height;
     if (Math.abs(this.lensShift) > 0.002) this.camera.setViewOffset(W, H, -this.lensShift * W, 0, W, H);
@@ -872,7 +883,7 @@ class Game {
   menuCamera(dt) {
     const v = this.vehicle;
     this.attractAngle += dt * 0.12;
-    if (['tracks', 'race', 'career', 'shop'].includes(this.menuView)) {
+    if (['tracks', 'race', 'career'].includes(this.menuView)) {
       const t = this.track;
       this.flyIndex = ((this.flyIndex ?? this.trackInfo.def.start) + dt * 22) % t.count;
       const i = t.wrap(Math.floor(this.flyIndex)), j = t.wrap(i + 18);

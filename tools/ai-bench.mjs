@@ -17,6 +17,7 @@ import { Race } from '../src/race/race.js';
 import { DIFFICULTY } from '../src/race/difficulty.js';
 import { pickField, makeDriver, tunedSpec } from '../src/race/opponents.js';
 import { carStats } from '../src/vehicles/stats.js';
+import { analyse } from '../src/race/analytics.js';
 
 const DT = 1 / 120;
 let failed = 0;
@@ -111,5 +112,27 @@ for (const def of [STARTER_TRACK, UNDERGROUND_TRACK]) {
     if (id === 'hard') check(gains.every((g) => g < 7), 'on Hard nobody should pass the whole field in one lap');
   }
 }
+// The laptop's predicted standings against real races of eight AI drivers. 1 is
+// the exact order, 0 is no better than a guess.
+console.log('Predicted standings');
+{
+  let sum = 0, n = 0, podium = 0;
+  for (const def of [STARTER_TRACK, UNDERGROUND_TRACK]) for (let seed = 1; seed <= 8; seed++) {
+    const track = new TrackPath(def), line = new RacingLine(track);
+    const field = pickField({ count: 8, pi: 600 + seed * 20, difficulty: 'normal', rival: seed % 3 === 0, seed: seed * 77 });
+    const cars = field.map((f, i) => ({ id: f.id, name: f.name, car: f.car, rival: f.persona.rival, vehicle: new Vehicle(f.spec), driver: makeDriver(line, f, 'normal', 1, seed + i) }));
+    const race = new Race(track, line, cars, { laps: 3, weather: 'clear' });
+    race.grid(def.start); race.go();
+    const predicted = analyse(race.cars).rows.map((r) => r.name);
+    for (let t = 0; t < 340 && race.state !== 'finished'; t += DT) race.step(DT);
+    const real = race.order.map((c) => c.name);
+    sum += 1 - 6 * predicted.reduce((d, name, i) => d + (i - real.indexOf(name)) ** 2, 0) / (8 * 63);
+    n++;
+    if (real.slice(0, 3).includes(predicted[0])) podium++;
+  }
+  console.log(`  rank match ${(sum / n).toFixed(2)}, predicted winner on the podium ${podium} of ${n}`);
+  check(sum / n > 0.6, 'the laptop\'s predictions should beat a guess');
+}
+
 if (failed) { console.log(`\n${failed} check(s) failed`); process.exit(1); }
 console.log('\nAll AI checks passed.');

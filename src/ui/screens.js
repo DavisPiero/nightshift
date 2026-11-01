@@ -68,8 +68,7 @@ export class Screens {
       if (!top || game.state === 'driving' || e.nsCaptured) return;
       if (e.code === 'Escape' && top !== 'pause' && top !== 'platform' && top !== 'main' && top !== 'results') {
         e.preventDefault();
-        if (top === 'garage' && this.garage.tab) this.garage.close(); // a pop-up closes first
-        else this.back();
+        this.back();
         game.controls.actions.delete('pause'); // this Escape only meant Back
         return;
       }
@@ -129,7 +128,6 @@ export class Screens {
       if (b.matches('[data-back], .back')) return 'back';
       if (b.id === 'race-go' || b.id === 'career-go') return 'race';
       if (b.matches('#tracks-go, #setup-go, #career-go, #res-go, .tile, [data-platform]')) return 'confirm';
-      if (b.id === 'garage-close') return 'close';
       if (b.matches('.grail .tab')) return b.classList.contains('on') ? 'close' : 'tab';
       if (b.matches('.swatch')) return 'paint';
       if (b.matches('.tabs .tab, .seg .btn, .key, .row .btn')) return 'toggle';
@@ -203,6 +201,8 @@ export class Screens {
     el.classList.add('in');
     // Number the items so they arrive one after another.
     el.querySelectorAll('.stack, .list, .choices').forEach((list) => [...list.children].forEach((c, i) => c.style.setProperty('--i', i)));
+    if (name !== 'shop' && this.game.menuView === 'shop') this.game.showCar(this.pick.car); // back to the car you own
+    this.game.desk.sync(name);
     this.game.onScreen(name);
     const first = el.querySelector('.list .on') || el.querySelector('.btn.pri, .btn');
     if (first && matchMedia('(hover: hover)').matches) first.focus({ preventScroll: true });

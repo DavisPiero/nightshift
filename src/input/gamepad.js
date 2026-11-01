@@ -77,6 +77,8 @@ export class GamepadSource {
       const y = p.axes[1] || 0;
       const dir = down(BTN.down) || y > 0.6 ? 1 : down(BTN.up) || y < -0.6 ? -1 : 0;
       if (dir && now - this.lastNav > 180) { this.lastNav = now; dev.nav(dir); }
+      const across = down(BTN.left) || down(BTN.right) || Math.abs(p.axes[0] || 0) > 0.6;
+      if (across && !dir && now - this.lastNav > 280) { this.lastNav = now; dev.side?.(); }
       if (fresh(BTN.a)) dev.press();
       if (fresh(BTN.b)) dev.go ? dev.go() : dev.back();
     } else if (top) {
