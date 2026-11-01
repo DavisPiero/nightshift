@@ -38,6 +38,11 @@ import { GameAudio } from './audio/audio.js';
 import { Hud } from './ui/hud.js';
 import { Screens } from './ui/screens.js';
 import { loadSave, writeSave, carLook } from './save/save.js';
+import { DeviceStage } from './world/props-devices.js';
+import { Phone } from './ui/phone.js';
+import { Laptop } from './ui/laptop.js';
+import { showNotice } from './ui/notice.js';
+import { upgradedSpec, NOS_SECONDS } from './career/upgrades.js';
 
 const _sun = new THREE.Vector3(), _dir = new THREE.Vector3();
 
@@ -111,6 +116,13 @@ class Game {
     Object.assign(CAMERA_FEEL, FeelPanel.cameraFeel(this.save));
     this.hud = new Hud(document.querySelector('#hud'));
     this.screens = new Screens(this);
+    // The phone and the laptop; `device` is whichever is up.
+    this.device = null;
+    this.stage = new DeviceStage(document.querySelector('#device'));
+    this.phone = this.screens.phone = new Phone(this, this.stage);
+    this.laptop = new Laptop(this, this.stage);
+    this.screens.phone.refresh();
+    for (const ev of ['keydown', 'pointerdown']) window.addEventListener(ev, () => { if (this.state === 'arrive') this.endArrive(); }, true);
     if (URL_FLAGS.debug) this.hud.toggleDebug();
     document.querySelector('#layout-done').addEventListener('click', () => this.editTouchLayout(false));
     document.querySelector('#layout-reset').addEventListener('click', () => this.touch.resetLayout());
@@ -188,9 +200,9 @@ class Game {
     if (this.weather && this.preset) this.weather.set(this.weatherId, this.preset, this.save.settings.effects);
   }
 
-  // The numbers the car drives with: stock, plus Feel.
+  // The numbers the car drives with: stock, plus Feel, plus this race's upgrades.
   currentSpec() {
-    return buildSpec(this.carSpec, this.save.settings.feel[this.carSpec.id]);
+    return upgradedSpec(buildSpec(this.carSpec, this.save.settings.feel[this.carSpec.id]), this.raceSetup?.upgrades);
   }
 
   // Any car's numbers (no Feel settings): for menus and ratings.
@@ -211,7 +223,7 @@ class Game {
   buildCarModel() {
     const parent = this.model?.root.parent || this.scene;
     if (this.model) { this.model.root.removeFromParent(); this.model.dispose?.(); }
-    this.model = buildCar(this.specFor(this.carSpec.id), carLook(this.save, this.carSpec));
+    this.model = buildCar(this.specFor(this.carSpec.id), { ...carLook(this.save, this.carSpec), homeFlag: this.save.career.racer.flag });
     this.model.bodyY = this.model.body.position.y;
     // Rebuilt while the bonnet is up (a new paint, say): keep it up.
     if (this.bonnetUp) this.model.setBonnet(true, true);
@@ -381,7 +393,7 @@ class Game {
     this.hud.setTouch(this.save.platform === 'touch');
     this.hud.setTrack(this.track, this.trackInfo.def.start);
     this.touch.show(this.save.platform === 'touch');
-    this.raceSetup = { track, mode, laps, difficulty, rivals, event, pi: pi || this.currentRating().pi, seed: 1 + Math.floor(Math.random() * 1e6) };
+    this.raceSetup = { track, mode, laps, difficulty, rivals, event, pi: pi || this.currentRating().pi, seed: 1 + Math.floor(Math.random() * 1e6), upgrades: {} };
     this.restartCar();
     this.audio.resume();
     if (!held) this.go();
@@ -390,6 +402,93 @@ class Game {
   go() {
     if (this.race) this.race.go();
     if (this.state === 'loading') { this.controls.releaseAll(); this.state = 'driving'; }
+  }
+
+  // --- before a career race: pull up to the grid (a few seconds, one press
+  // skips it), fade to your cockpit, the laptop, then the lights. ---
+  arrive() {
+    const p = this.race.player, t = this.track;
+    this.state = 'arrive';
+    this.hud.show(false);
+    this.touch.show(false);
+    this.arrival = { t: 0, x: this.vehicle.x, z: this.vehicle.z, heading: this.vehicle.heading, index: p.index, offset: p.offset };
+    document.querySelector('#arrive-skip').hidden = false;
+    // From the kerb on your side, so no other car stands in the way.
+    const i = t.wrap(p.index + 4), out = Math.sign(p.offset || 1) * (t.halfWidth + 1.4);
+    this.arrival.cam = [t.x[i] + t.leftX(i) * out, t.z[i] + t.leftZ(i) * out];
+  }
+
+  // The car rolls along the middle of the road and into its slot. The physics
+  // is not running: it is only put where the picture wants it.
+  arriveFrame(dt) {
+    const a = this.arrival, v = this.vehicle, t = this.track;
+    a.t += dt;
+    const k = Math.min(1, a.t / 3), left = 44 * (1 - k) ** 2.2;
+    const at = a.index - left, j = t.wrap(Math.floor(at)), n = t.wrap(j + 1), f = at - Math.floor(at);
+    const o = a.offset * (1 - Math.min(1, left / 7)), was = [v.x, v.z];
+    const mix = (p, q) => p + (q - p) * f;
+    v.x = mix(t.x[j], t.x[n]) + t.leftX(j) * o; v.z = mix(t.z[j], t.z[n]) + t.leftZ(j) * o; v.heading = t.headingAt(j);
+    const moved = Math.hypot(v.x - was[0], v.z - was[1]);
+    v.frontWheelAngle += moved / 0.32; v.rearWheelAngle += moved / 0.32;
+    this.camera.position.set(a.cam[0], 1.05, a.cam[1]);
+    this.camera.lookAt(v.x, 0.75, v.z);
+    this.camera.fov = 46;
+    this.camera.near = 0.1;
+    this.camera.updateProjectionMatrix();
+    if (k >= 1) this.endArrive();
+  }
+
+  endArrive() {
+    if (this.state !== 'arrive') return;
+    const a = this.arrival, fade = document.querySelector('#fade');
+    this.state = 'fading';
+    document.querySelector('#arrive-skip').hidden = true;
+    fade.classList.add('on');
+    setTimeout(() => {
+      this.vehicle.reset(a.x, a.z, a.heading);
+      this.prepare();
+      fade.classList.remove('on');
+    }, 260);
+  }
+
+  // The cockpit and the laptop. No changing camera until the lights go out.
+  // The camera you saved in Settings stays saved.
+  prepare() {
+    this.state = 'laptop';
+    this.cameraHeld = true;
+    this.cameras.set('cockpit', this.carRef());
+    this.laptop.open(this.raceSetup.upgrades, () => this.lights());
+  }
+
+  // Off the laptop and into the countdown. What you bought is on the car now.
+  lights() {
+    this.fitUpgrades();
+    this.hud.show(true);
+    this.touch.show(this.save.platform === 'touch');
+    this.state = 'loading';
+    this.go();
+  }
+
+  fitUpgrades() {
+    const u = this.raceSetup?.upgrades;
+    this.vehicle.setSpec(this.currentSpec());
+    this.vehicle.nosLeft = u?.nos ? NOS_SECONDS : 0;
+    this.hud.setNos(!!u?.nos);
+    this.touch.setNos(!!u?.nos);
+  }
+
+  // Race again from the results: a new race, so back to the laptop. Outside
+  // the career, straight to the lights.
+  raceAgain() {
+    const r = this.raceSetup;
+    if (!r?.event) { this.restart(); return; }
+    this.screens.closeAll();
+    r.upgrades = {};
+    this.restartCar();
+    this.state = 'loading';
+    this.hud.show(false);
+    this.touch.show(false);
+    this.prepare();
   }
 
   // Line up a new race on the grid (or, with no rivals, just drive). Keeps
@@ -410,7 +509,7 @@ class Game {
     const field = pickField({ count: r.rivals, pi: r.pi, difficulty: r.difficulty, rival: !!r.event?.rival, seed: r.seed });
     const cars = field.map((f, n) => ({ id: f.id, name: f.name, car: f.car, look: f.look, rival: f.persona.rival, vehicle: new Vehicle(f.spec), driver: makeDriver(line, f, r.difficulty, grip, r.seed + n) }));
     for (const c of cars) applyWeather(c.vehicle, this.weatherId);
-    cars.splice(Math.min(d.start - 1, cars.length), 0, { id: 'you', name: 'You', car: `${this.carSpec.make} ${this.carSpec.model}`, vehicle: this.vehicle, driver: null });
+    cars.splice(Math.min(d.start - 1, cars.length), 0, { id: 'you', name: this.save.career.racer.name || 'You', car: `${this.carSpec.make} ${this.carSpec.model}`, vehicle: this.vehicle, driver: null });
     this.race = new Race(this.track, line, cars, {
       laps: r.laps, weather: this.weatherId, band: d.band,
       takeover: (c) => new AIDriver(line, c.vehicle.spec, { pace: 0.7, aggression: 0.2, consistency: 1 }, { weatherGrip: grip }),
@@ -441,6 +540,7 @@ class Game {
     this.resetCar(this.trackInfo.def.start);
     this.effects.reset();
     this.buildRace();
+    this.fitUpgrades();
     this.cameras.set(this.cameras.mode, this.carRef());
   }
 
@@ -480,6 +580,7 @@ class Game {
 
   toMain(screen = 'main') {
     this.raceSetup = null;
+    this.cameraHeld = false;
     this.screens.reset('main');
     if (screen !== 'main') this.screens.open(screen);
     this.hud.show(false);
@@ -512,7 +613,7 @@ class Game {
     if (c.takeAction('feel')) this.feel.toggle();
     if (this.state === 'driving') {
       if (c.takeAction('pause')) { this.pauseGame(); return; }
-      if (c.takeAction('camera')) this.nextCamera();
+      if (c.takeAction('camera') && !this.cameraHeld) this.nextCamera();
       if (c.takeAction('reset')) this.backOnTrack();
       const input = this.smoke ? this.smoke.input(dt, this) : c.poll(dt);
       if (this.race) this.raceStep(dt, input);
@@ -560,7 +661,7 @@ class Game {
       this.cameras.bump(race.playerKnock + 2);
     }
     if (race.lights !== was && race.state === 'countdown' && race.lights <= 3) this.audio.ui('count');
-    if (was > 0 && race.state === 'racing') this.audio.ui('go');
+    if (was > 0 && race.state === 'racing') { this.audio.ui('go'); this.cameraHeld = false; }
     if (race.state === 'finished' && !this.finishClock) { this.finishClock = 2.6; this.audio.ui('flag'); }
     if (this.finishClock > 0 && (this.finishClock -= dt) <= 0 && !this.smoke) {
       this.state = 'results';
@@ -629,11 +730,13 @@ class Game {
       this.model.setInterior(false);
       this.audio.update(dt, v, this.weatherId, garage ? 0 : 0.25);
     } else {
-      if (this.state === 'driving' || this.state === 'loading' || this.state === 'results') this.cameras.update(this.carRef(), dt);
-      this.model.setInterior(this.cameras.mode === 'cockpit');
+      if (this.state === 'arrive') this.arriveFrame(dt);
+      else if (this.state !== 'paused' && this.state !== 'fading') this.cameras.update(this.carRef(), dt);
+      this.model.setInterior(this.cameras.mode === 'cockpit' && this.state !== 'arrive');
       this.audio.update(dt, v, this.weatherId, 1, this.weather.k);
       this.hud.draw(v, dt);
     }
+    this.stage.update(dt);
     this.raceView.update(this.state === 'paused' ? 0 : dt);
     if (this.trial) this.ghost.update(this.trial.pose());
     const live = this.state === 'paused' ? 0 : dt;
@@ -651,9 +754,9 @@ class Game {
     const fxs = this.save.settings.effects;
     // Speed blur starts at 80 km/h and is full at 180 (Arlo's notes: 160 in the
     // Subaro should feel fast).
-    const fast = Math.max(0, Math.min(1, (v.speed * 3.6 - 80) / 100));
+    const fast = Math.max(v.nosOn ? 0.75 : 0, Math.min(1, (v.speed * 3.6 - 80) / 100));
     const blur = fxs.motionBlur === false || garage || this.state !== 'driving' ? 0 : fast ** 1.3 * 0.72 * CAMERA_FEEL.rush;
-    this.renderer.setLens({ blur, aberration: fxs.lens, bloom: fxs.bloom !== false, dirt: fxs.lensDirt !== false, cabin: this.cameras.mode === 'cockpit' ? this.model.root : null, soft: garage ? 0.25 : 1 });
+    this.renderer.setLens({ blur, aberration: fxs.lens, bloom: fxs.bloom !== false, dirt: fxs.lensDirt !== false, cabin: this.cameras.mode === 'cockpit' && this.state !== 'arrive' ? this.model.root : null, soft: garage ? 0.25 : 1 });
     this.renderer.render(scene, this.camera);
 
     if (this.hud.debugOn) {
@@ -834,13 +937,13 @@ fontReady.catch(() => {}).then(() => carsReady).finally(() => {
   if (URL_FLAGS.library) { document.querySelector('#boot')?.remove(); import('./ui/library.js').then((m) => m.startLibrary(URL_FLAGS)); return; }
   const game = new Game();
   if (URL_FLAGS.smoke) game.smoke = new SmokeTest();
+  showNotice(game); // this update's mail
   window.nightshift = game; // handy from the browser console
   // The world is built: fade the start-up screen once a frame is drawn.
   const boot = document.querySelector('#boot');
-  // Keep the boot text up long enough to read, then show the notice board.
+  // Keep the boot text up long enough to read.
   const hide = () => setTimeout(() => {
     boot.classList.add('done'); setTimeout(() => boot.remove(), 450);
-    if (!URL_FLAGS.device && !new URLSearchParams(location.search).has('screen')) import('./ui/notice.js').then((m) => m.showNotice(game));
   }, 1700);
   if (URL_FLAGS.smoke || URL_FLAGS.shot) boot.remove();
   else requestAnimationFrame(() => requestAnimationFrame(hide));

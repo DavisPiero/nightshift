@@ -1,5 +1,14 @@
 # Changelog
 
+## Arlo's notes, part 3: the story (2026-11-01)
+- A new story: you are a data analyst, it all happens in Japan, and the ending starts Johnny's team.
+- Johnny has a new look with 20 expressions, and he hops when his expression changes.
+- Make your racer: Johnny asks your name and nationality. Your name is on the race sheet, and your home flag is a decal.
+- A flip phone beside the Settings gear, with your mail and what's new.
+- Before a career race: pull up to the grid, then buy one-race upgrades on the laptop in your cockpit.
+- NOS, Engine map, Sticky tyres and Hard brakes. NOS is on Shift, a touch button and the right bumper.
+- Pay reworked, with something new to spend it on. The small text is a little easier to read.
+
 ## A new look (2026-11-01)
 - Every screen redone: black and titanium, with white, amber and teal. No pink, cleaner, sharper.
 - New home screen of picture tiles, a bar along the top of every screen, new car cards with sharper pictures.

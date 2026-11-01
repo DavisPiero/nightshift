@@ -1,6 +1,7 @@
 // Small textures painted in code at low resolution, with nearest-neighbour
 // magnification so they read as chunky texels up close, like a PS2 game.
 
+import { flagCanvas } from '../vehicles/flags.js';
 import * as THREE from 'three';
 
 // Seeded random so textures look the same on every load.
@@ -644,6 +645,13 @@ export const Tex = {
     g.textAlign = 'center'; g.textBaseline = 'middle';
     g.fillText('08', w / 2, h / 2 + 2);
   })),
+
+  // Your home flag on clear, ready to lay on a door.
+  flag: (id) => cached('flag' + id, () => canvasTexture([128, 128], (g, w) => {
+    const h = Math.round(w * 2 / 3), c = flagCanvas(id, w - 8, h - 8);
+    g.clearRect(0, 0, w, w);
+    g.drawImage(c, 4, (w - h) / 2 + 4);
+  }, { nearest: false })),
 
   // A vertical sticker of Japanese text, white (tinted by the material).
   sticker: (text) => cached('sticker' + text, () => canvasTexture([32, 32 * text.length], (g, w, h) => {

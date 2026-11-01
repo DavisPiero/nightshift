@@ -12,6 +12,7 @@ import { Gearbox } from './gearbox.js';
 const G = 9.81;
 const AIR = 1.2;
 const RPM_PER_RADS = 60 / (2 * Math.PI);
+const NOS_BOOST = 1.5;     // drive force while NOS burns
 
 export const DEFAULT_ASSISTS = {
   steering: true,    // countersteers for you a little when the tail slides
@@ -50,6 +51,7 @@ export class Vehicle {
     // Road surface, set by the weather: grip multiplies tyre friction, slide
     // is the share of grip left when fully sideways (wet roads let go sooner).
     this.surface = { grip: 1, slide: 1 };
+    this.nosLeft = 0;         // seconds of NOS in the bottle (career/upgrades.js)
     this.reset(0, 0, 0);
   }
 
@@ -83,6 +85,7 @@ export class Vehicle {
     this.wallPivot = 0;       // yaw rate (rad/s) from leaning on a wall at low speed
     this.wallTimer = 0;
     this.draft = 0;           // 0..1, how far into another car's slipstream (race.js)
+    this.nosOn = false;
     this.gearbox.gear = 1;
     this.gearbox.shiftTimer = 0;
   }
@@ -176,6 +179,9 @@ export class Vehicle {
         driveForce *= 1 - (1 - (s.accelScale ?? 1)) * (1 - k * k * (3 - 2 * k));
       }
       if (vLong < -0.5 && !reversing) driveForce = Math.max(driveForce, 0);
+      // NOS burns while held on the throttle in a forward gear, and only then.
+      this.nosOn = !!c.nos && this.nosLeft > 0 && this.throttle > 0.3 && gb.gear > 0;
+      if (this.nosOn) { this.nosLeft = Math.max(0, this.nosLeft - dt); driveForce *= NOS_BOOST; }
     }
     if (reversing) driveForce = -driveForce;
 

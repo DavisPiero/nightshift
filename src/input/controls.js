@@ -1,13 +1,14 @@
 // One control state for the car, whatever is driving it. Keyboard, touch
 // and (later) gamepad sources each fill in their own state; this merges them.
 // Physics only ever sees: steer -1..1 (+1 = right), throttle 0..1,
-// brake 0..1, handbrake true/false, gearUp / gearDown (one step each press).
+// brake 0..1, handbrake true/false, gearUp / gearDown (one step each press),
+// nos true/false.
 // Menu actions (camera, reset, pause, debug) arrive as one-shot "actions".
 
 export class Controls {
   constructor() {
     this.sources = [];
-    this.state = { steer: 0, throttle: 0, brake: 0, handbrake: false, gearUp: false, gearDown: false };
+    this.state = { steer: 0, throttle: 0, brake: 0, handbrake: false, gearUp: false, gearDown: false, nos: false };
     this.actions = new Set();
   }
 
@@ -20,7 +21,7 @@ export class Controls {
   // Called once per physics step.
   poll(dt) {
     const s = this.state;
-    s.steer = 0; s.throttle = 0; s.brake = 0; s.handbrake = false; s.gearUp = false; s.gearDown = false;
+    s.steer = 0; s.throttle = 0; s.brake = 0; s.handbrake = false; s.gearUp = false; s.gearDown = false; s.nos = false;
     for (const src of this.sources) {
       if (!src.enabled) continue;
       const v = src.read(dt);
@@ -30,6 +31,7 @@ export class Controls {
       s.handbrake = s.handbrake || v.handbrake;
       s.gearUp = s.gearUp || v.gearUp;
       s.gearDown = s.gearDown || v.gearDown;
+      s.nos = s.nos || !!v.nos;
     }
     return s;
   }

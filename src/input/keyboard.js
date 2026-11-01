@@ -8,6 +8,7 @@ export const DEFAULT_KEYS = {
   left: ['KeyA', 'ArrowLeft'],
   right: ['KeyD', 'ArrowRight'],
   handbrake: ['Space', ''],
+  nos: ['ShiftLeft', 'ShiftRight'],
   gearUp: ['KeyE', ''],
   gearDown: ['KeyQ', ''],
   camera: ['KeyC', ''],
@@ -18,7 +19,7 @@ export const DEFAULT_KEYS = {
 // Shown in Settings, in this order.
 export const KEY_LABELS = {
   throttle: 'Accelerate', brake: 'Brake / reverse', left: 'Steer left', right: 'Steer right',
-  handbrake: 'Handbrake', gearUp: 'Gear up (manual)', gearDown: 'Gear down (manual)',
+  handbrake: 'Handbrake', nos: 'NOS', gearUp: 'Gear up (manual)', gearDown: 'Gear down (manual)',
   camera: 'Change camera', reset: 'Back on track', pause: 'Pause',
 };
 
@@ -83,6 +84,7 @@ export class KeyboardSource {
       throttle: d.has('throttle') ? 1 : 0,
       brake: d.has('brake') ? 1 : 0,
       handbrake: d.has('handbrake'),
+      nos: d.has('nos'),
       gearUp: this.pressed.has('gearUp'),
       gearDown: this.pressed.has('gearDown'),
     };

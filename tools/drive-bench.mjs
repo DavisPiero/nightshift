@@ -4,6 +4,7 @@
 // It exits with code 1 if a check fails (spins with assists on, a lap that
 // can't be finished, and so on).
 
+import { NOS_SECONDS } from '../src/career/upgrades.js';
 import { Vehicle, DEFAULT_ASSISTS } from '../src/physics/vehicle.js';
 import { SKYLINER_R34 as CAR } from "../src/vehicles/cars.js";
 import { TrackPath } from '../src/world/track-path.js';
@@ -121,6 +122,19 @@ for (const [name, speed, script, secs] of tests) {
   console.log(`  ${name.padEnd(36)} on: max slide ${deg(on.maxBeta).padStart(3)}°${on.spun ? ' SPUN' : '     '} end ${on.endKmh.toFixed(0).padStart(3)} km/h | off: ${deg(off.maxBeta).padStart(3)}°${off.spun ? ' SPUN' : ''}`);
   check(!on.spun, name + ' should not spin with assists on');
   check(on.maxBeta < 1.25, name + ' should stay under ~70° of slide with assists on');
+}
+
+console.log('NOS');
+{
+  // Nothing without a bottle; a real kick with one, and it runs out.
+  const plain = new Vehicle(CAR, DEFAULT_ASSISTS), nos = new Vehicle(CAR, DEFAULT_ASSISTS);
+  nos.nosLeft = NOS_SECONDS;
+  for (let t = 0; t < 4; t += DT) { plain.step(DT, controls({ throttle: 1, nos: true })); nos.step(DT, controls({ throttle: 1, nos: true })); }
+  console.log(`  after 4 s: ${kmh(plain).toFixed(0)} km/h without, ${kmh(nos).toFixed(0)} km/h with, ${nos.nosLeft.toFixed(1)} s left`);
+  check(plain.nosLeft === 0 && !plain.nosOn, 'no bottle, no NOS');
+  check(kmh(nos) > kmh(plain) * 1.15, 'NOS should be a real boost');
+  for (let t = 0; t < 3; t += DT) nos.step(DT, controls({ throttle: 1, nos: true }));
+  check(nos.nosLeft === 0 && !nos.nosOn, 'NOS should run out');
 }
 
 console.log('Lap of ' + TEST_ROAD.name);

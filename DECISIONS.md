@@ -1,46 +1,7 @@
 # Decisions
 
-One line each, newest last.
+One line each, newest last. The oldest phase is in DECISIONS-archive.md.
 
-- 2026-10-25: No Vite or build step; plain ES modules with Three.js r170 vendored. Matches David's other games on GitHub Pages; nothing to build before publishing.
-- 2026-10-25: Custom arcade physics instead of a physics library. Easier to tune for forgiving drifts and identical at any frame rate.
-- 2026-10-25: Physics is a bicycle model (one front and one rear tyre pair) with three assists (steering, stability, drift), all on by default.
-- 2026-10-25: Rear tyres grip 8% more than the fronts so the car is calm when coasting; throttle and handbrake are what free the tail.
-- 2026-10-25: Engine sound synthesised in code (layered harmonics, crank pulse, sub-bass, intake noise) until we have recordings we may redistribute. Built so a sample player can replace it.
-- 2026-10-25: The scene is drawn at 360/480/720 lines (Low/Medium/High) and scaled up with square pixels, plus a colour grade and 6-bit dither. The retro look also comes from low-poly models and tiny textures.
-- 2026-10-25: Only the few lamps nearest the car get real lights; every lamp has a painted light pool on the road. Keeps iPads fast.
-- 2026-10-25: Walls are the track's own centre-line data (distance from centre), not separate collision meshes. Same data will drive checkpoints and AI.
-- 2026-10-25: The car is right-hand drive (Japanese), so the cockpit camera sits on the right.
-- 2026-10-25: Holding brake at a standstill selects reverse; holding throttle at a standstill selects first. Same in auto and manual.
-- 2026-10-25: STATE.md replaces the brief's PROJECT_STATUS.md (David's usual state file).
-- 2026-10-25: Repo DavisPiero/nightshift, public, GitHub Pages from main.
-- 2026-10-25: The smoke test runs its loop on a timer and at Low graphics, because headless Chrome never fires animation frames.
-- 2026-10-25: Assists must keep a held handbrake at full lock under ~70° of slide; checked by the bench.
-- 2026-10-25: First drive signed off and merged; GitHub Pages serves main.
-- 2026-10-25: Cars are modelled on real cars with near-miss names ("Nissani Skyliner"), no logos. David's call; replaces "original designs only".
-- 2026-10-25: The R34 stays rear-drive (the real one is four-wheel drive) so it is still easy to drift.
-- 2026-10-25: Body lean capped at about 3° and pivots near axle height, so the body never dips into the road.
-- 2026-10-25: Lift-off: the auto box holds a gear when coasting, stronger engine braking, plus 0.6 m/s² of arcade drag. 100 km/h becomes about 60 after 8 s (was 86).
-- 2026-10-25: Walls test eight points round the body and push back with a real impulse at the contact point; light pushes slide freely so the car can never be pinned.
-- 2026-10-25: At walking pace the front tyres' sideways force fades out; it was dragging the car when pulling away at full lock.
-- 2026-10-25: The cockpit camera never rolls with the body: the horizon stays level.
-- 2026-10-25: UI in Courtside's pixel style (Jersey 10 from Google Fonts), orange for the main action, cyan for selection.
-- 2026-10-25: Weather is one table (grip, slide, fog) read by physics, bench, menus and visuals. Rain grip 0.74, fog 0.93.
-- 2026-10-25: "Race" means free driving on the chosen track until lap timing exists (Milestone 6).
-- 2026-10-25: Low resolution (360 lines) is the default on every device.
-- 2026-10-25: Lamps, buildings, parked cars and props are instanced or merged; parked cars are baked into one set of meshes.
-- 2026-10-25: Touch controls save positions as screen fractions and are placed by dragging in Settings, not by hand-tuned numbers.
-- 2026-10-25: Exhaust pops are timed by the flames effect and played by audio, so sound and flame always match.
-- 2026-10-25: Moths and floating dust removed (David: "weird multi-coloured dots" round the lamps).
-- 2026-10-25: Ratings are measured from the physics, not hand-picked: Speed (top speed), Acceleration (0-100 and 80-160), Braking (100-0), Handling (grip with downforce x agility), 1-10 each; weighted into a 1-1000 score.
-- 2026-10-25: Classes: D <400, C 400-549, B 550-699, A 700-799, S 800-899, X 900+. Stock: R34 A 756, Challenjer B 635.
-- 2026-10-25: Parts are upgrade levels per slot (no tuning sliders, per the spec's "no setup sheets"). A part is a function that changes a copy of the car's numbers.
-- 2026-10-25: The car's final numbers = stock car, then parts, then Feel panel values (src/vehicles/tuning.js). Physics only sees the result.
-- 2026-10-25: Feel panel (F4) lets David tune handling and camera by feel; values save per car on his device and "Copy values" hands them over to make permanent. Fix to the cause of repeated feel notes.
-- 2026-10-25: Turbo cars have boost with lag; a big turbo really lags. The rev limiter follows the wheels, so wheelspin never cuts power (more power used to launch slower).
-- 2026-10-25: Second car: "2009 Dodga Challenjer SRT8", built from the real car's figures, left-hand drive, its own V8 sound profile.
-- 2026-10-25: Gear changes now dip the engine note for real (the old dip was overwritten every frame) and clunk; turbo cars whistle and flutter.
-- 2026-10-25: Controllers through the Gamepad API (standard layout), including menu navigation.
 - 2026-10-26: Look changed to neon Japan (David's references in Reference/User Interface). UI: Jersey 10 titles, DotGothic16 text, turquoise frames with glow, pink main action (was orange). Replaces the Courtside look.
 - 2026-10-26: The "no neon / cyan out of the 3D world" rule is lifted: each track has a light colour; the Underground's is turquoise.
 - 2026-10-26: Track and car pick follow Automobilista 2: a scrolling list on the left, a preview on the right, Continue (or Race) bottom right; weather in a panel along the bottom right.
@@ -187,4 +148,14 @@ One line each, newest last.
 - 2026-11-01: Rev dial, map, track outlines, weather icons, the gear and the car cards are drawn sharp now, not as small pixel bitmaps. The car cards are 840 x 420. The 3D view and story pictures keep their pixels.
 - 2026-11-01: The notice board is one window, shown once per update (id in ui/notice.js, `save.notice`); a brand-new player never sees it. Reminder and You got mail are gone; mail comes back on the phone in Part 3.
 - 2026-11-01: The race sheet and Time Trial panel use the game's fonts (David). Lap moved from the sheet to the top box, which keeps the sheet to the order.
-
+- 2026-11-01: Secondary font eased (David): outline 0.4 to 0.3 px, letter spacing 0.02 to 0.035 em (`--weight`, `--track`).
+- 2026-11-01: Johnny's 20 expressions are cut from David's sheet by `tools/johnny-sprites.mjs`: only black reached from outside him goes, so shirt and goggles stay; lined up on shoulders and goggles; 3 sheet pixels to one. Faces in his sheet have no matching closed eyes, so he has no blink.
+- 2026-11-01: Story rewritten (David's brief): Japan only, data analyst, no dock work. The harbor stays as a place. "The Old Country" is now "Under Tokyo", "Back Home" is "Back to the Harbor". The ending is his: you sign only with Johnny as engineer, which starts his team. The wording is Claude's.
+- 2026-11-01: Your racer lives in `career.racer`. Johnny asks in the intro; Skip still stops at the form. A save that already passed the intro gets a short `paperwork` scene on opening Career. Save stays version 6: the new fields fill in by themselves and bumping would wipe the garage.
+- 2026-11-01: Home flag is a decal on each door (Garage > Decals), 27 flags drawn in code. Guess at David's "paint option".
+- 2026-11-01: The phone and laptop are real 3D models on their own see-through canvas with a second renderer, made on first use. Reasons: they work over any screen, and the game's picture pipeline stays out of them. Their displays are 2D canvases; a click is turned into a place on the display.
+- 2026-11-01: Updates arrive as phone mail, replacing the pop-up window. "You got mail" flags on the home screen. Guess at David's "notifications such as updates".
+- 2026-11-01: One-race upgrades: NOS 1000 CR (6 s, 1.5 times the drive force), Engine map 700 (+8%), Sticky tyres 500 (+6%), Hard brakes 300 (+10%). Each can be bought once a race, several at once, money back until Race is pressed. A restart keeps them and fills the NOS again; Back on track keeps what is left; Race again is a new race, so back to the laptop. Rivals' level ignores them.
+- 2026-11-01: Pre-race is career only. The cockpit stays after the laptop until you change camera (allowed from the green light); your saved camera is not overwritten.
+- 2026-11-01: Pay with upgrades in: event pay 1800 + 7800k CR (was 1500 + 6500k), XP 220 + 400k (was 250 + 450k). A player spending a fifth of the top prize on upgrades: 61 races, 6.2 hours, cars at races 7, 18, 33, 60 (before: 6, 15, 28, 48 with nothing to spend on).
+- 2026-11-01: "No performance parts" is now "no permanent parts" (David).

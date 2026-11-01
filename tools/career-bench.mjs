@@ -1,6 +1,7 @@
 // Career bench: plays the Street stage in Node with a made-up player who
 // finishes second on Normal, replaying the newest race whenever a level gate
-// is in the way, and buys the next car as soon as it can afford it. Prints how
+// is in the way, spends about a fifth of each race's top prize on one-race
+// upgrades, and buys the next car as soon as it can afford it. Prints how
 // many races the career takes and when each car arrives, and checks the
 // numbers stay in the range David asked for: "the career should take a while".
 //   node tools/career-bench.mjs
@@ -28,7 +29,7 @@ check(new Set(EVENTS.map((e) => e.id)).size === EVENTS.length, 'event ids must b
 
 const career = { cr: 0, xp: 0, done: {}, tracks: [], seen: [], difficulty: 'normal' };
 const shop = [...CARS].filter((c) => c.price).sort((a, b) => a.price - b.price);
-let races = 0, seconds = 0;
+let races = 0, seconds = 0, spent = 0;
 const log = [];
 for (let guard = 0; guard < 2000; guard++) {
   const next = EVENTS.find((e) => !cleared(career, e));
@@ -38,6 +39,8 @@ for (let guard = 0; guard < 2000; guard++) {
   const e = lock ? EVENTS[n - 1] : next; // level gate: replay the last race
   const first = !cleared(career, e);
   const place = 2;
+  const parts = Math.min(career.cr, Math.round(e.cr * 0.2)); // the laptop, before the race
+  career.cr -= parts; spent += parts;
   bank(career, eventPay(e, place, 'normal', first));
   if (first) career.done[e.id] = place;
   races++; seconds += lap[e.track] * e.laps + 60;
@@ -50,7 +53,7 @@ for (let guard = 0; guard < 2000; guard++) {
 }
 console.log(log.join('\n'));
 const hours = seconds / 3600;
-console.log(`\nStreet: ${races} races, ${hours.toFixed(1)} hours, level ${levelFor(career.xp)}, CR ${career.cr} left, ${shop.length} cars unbought (${ACTS.length} acts, ${EVENTS.length} events; level 100 needs ${XP_TO(100)} XP)`);
+console.log(`\nStreet: ${races} races, ${hours.toFixed(1)} hours, level ${levelFor(career.xp)}, CR ${career.cr} left, CR ${spent} on upgrades, ${shop.length} cars unbought (${ACTS.length} acts, ${EVENTS.length} events; level 100 needs ${XP_TO(100)} XP)`);
 check(EVENTS.every((e) => cleared(career, e)), 'the career should be finishable');
 check(hours > 3 && hours < 9, 'Street should take between 3 and 9 hours');
 check(!shop.length, 'every Street car should be affordable by the end');

@@ -740,8 +740,8 @@ function decals({ B, add, look, sh, bonnet }) {
   } else if (look.decal === 'side') {
     add(B.decal(B.z0 + 0.15, B.z1 - 0.15, 5.25, 5.5, { lift: 0.006, nz: 60, nt: 1 }), colour);
   } else {
-    const number = look.decal === 'number';
-    const map = number ? Tex.roundel(look.decalColour) : Tex.sticker('走り屋');
+    const flag = look.decal === 'flag', number = look.decal === 'number' || flag;
+    const map = flag ? Tex.flag(look.homeFlag) : number ? Tex.roundel(look.decalColour) : Tex.sticker('走り屋');
     const mat = new THREE.MeshStandardMaterial({ map, transparent: true, alphaTest: 0.4, roughness: 0.4, color: number ? 0xffffff : look.decalColour, polygonOffset: true, polygonOffsetFactor: -2 });
     if (number) {
       const zc = (wf - r + (wr + r)) / 2 + 0.25;
@@ -756,8 +756,8 @@ function decals({ B, add, look, sh, bonnet }) {
 // Decals on a captured body, projected straight on (see captured.js).
 function capturedDecals({ add, look, cap }) {
   const def = cap.def, [wf, wr] = def.wheels.z, r = def.wheels.r;
-  const number = look.decal === 'number', kanji = look.decal === 'kanji';
-  const map = number ? Tex.roundel(look.decalColour) : kanji ? Tex.sticker('走り屋') : stripeTexture(look.decal);
+  const flag = look.decal === 'flag', number = look.decal === 'number' || flag, kanji = look.decal === 'kanji';
+  const map = flag ? Tex.flag(look.homeFlag) : number ? Tex.roundel(look.decalColour) : kanji ? Tex.sticker('走り屋') : stripeTexture(look.decal);
   map.wrapS = map.wrapT = THREE.ClampToEdgeWrapping;
   const mat = new THREE.MeshStandardMaterial({ map, transparent: true, alphaTest: 0.4, roughness: 0.35, metalness: 0.1, color: number ? 0xffffff : look.decalColour, polygonOffset: true, polygonOffsetFactor: -2, depthWrite: false });
   if (look.decal === 'stripes') {

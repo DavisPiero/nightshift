@@ -34,7 +34,9 @@ export class CareerScreen {
     this.fillList();
     this.fillInfo();
     this.game.loadTrack(this.event.track);
+    // An old save has a story but no racer: Johnny asks now.
     if (!c.seen.includes('intro')) this.screens.story('intro');
+    else if (!c.racer.name) this.screens.story('paperwork');
   }
 
   fillList() {

@@ -32,7 +32,8 @@
   --px: "Jersey 10", ui-monospace, "Courier New", monospace;
   --dot: "DotGothic16", "Jersey 10", ui-monospace, monospace;
   --bold: 700;                          /* DotGothic16 is thin: always bold, */
-  --weight: 0.4px;                      /* and thickened a little more (see below) */
+  --weight: 0.3px;                      /* and thickened a little more (see below) */
+  --track: 0.035em;                     /* the little space between its letters */
 
   /* Shape and motion */
   --gap: 16px;
@@ -48,7 +49,7 @@
 html, body {
   margin: 0; height: 100%; overflow: hidden;
   background: var(--black); color: var(--text);
-  font: var(--bold) 16px/1.35 var(--dot); letter-spacing: 0.02em;
+  font: var(--bold) 16px/1.35 var(--dot); letter-spacing: var(--track);
   user-select: none; -webkit-user-select: none;
   -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent;
   touch-action: none; overscroll-behavior: none;
@@ -188,7 +189,16 @@ h1, h2, h3, p { margin: 0; }
 .w-bar { display: inline-block; width: 80px; height: 4px; background: var(--line); }
 .w-bar i { display: block; height: 100%; background: var(--teal); }
 .w-cr { font: 30px/1 var(--px); color: var(--amber); }
-body:has(#scr-main:not([hidden])) #wallet { right: calc(max(16px, var(--sr)) + 58px); top: max(20px, var(--st)); }
+body:has(#scr-main:not([hidden])) #wallet { right: calc(max(16px, var(--sr)) + 116px); top: max(20px, var(--st)); }
+
+/* The phone button, beside the gear, and the mail flag under it. */
+#phone-btn { right: calc(max(16px, var(--sr)) + 58px); }
+.ph-dot { position: absolute; top: -7px; right: -7px; min-width: 20px; height: 20px; padding: 0 5px; font: 18px/19px var(--px); text-align: center; color: var(--ink); background: var(--amber); }
+#phone-tip { position: absolute; top: calc(max(16px, var(--st)) + 54px); right: calc(max(16px, var(--sr)) + 58px); padding: 2px 10px 4px; font: 22px/1 var(--px); color: var(--ink); background: var(--amber); -webkit-text-stroke: 0; }
+#device { position: fixed; inset: 0; z-index: 12; width: 100%; height: 100%; touch-action: none; }
+#fade { position: fixed; inset: 0; z-index: 25; background: #000; opacity: 0; pointer-events: none; transition: opacity 250ms linear; }
+#fade.on { opacity: 1; }
+#arrive-skip { position: fixed; z-index: 13; top: max(14px, var(--st)); right: max(16px, var(--sr)); background: var(--panel); }
 
 /* ---------- pick screens: a list on the left, details on the right */
 .screen.select, .screen.shop { align-items: stretch; justify-content: flex-start; }
@@ -201,7 +211,7 @@ body:has(#scr-main:not([hidden])) #wallet { right: calc(max(16px, var(--sr)) + 5
 .list::-webkit-scrollbar-thumb { background: var(--line); }
 .list .grp, .tab-body h3 { margin: 7px 0 2px; padding-bottom: 4px; font: 21px/1 var(--px); color: var(--titanium-hi); letter-spacing: 0.05em; display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; border-bottom: 1px solid var(--line); }
 .list .grp:first-child { margin-top: 0; }
-.list .grp .muted { font: var(--bold) 13px/1.2 var(--dot); letter-spacing: 0.02em; }
+.list .grp .muted { font: var(--bold) 13px/1.2 var(--dot); letter-spacing: var(--track); }
 .grp.shut { opacity: 0.55; }
 .item { display: flex; align-items: center; gap: 12px; padding: 9px 12px 10px; min-height: 64px; flex-shrink: 0; }
 .item .num { font: 26px/1 var(--px); color: var(--titanium); width: 30px; }
@@ -454,6 +464,13 @@ input[type=range]::-moz-range-thumb { width: 12px; height: 22px; border: 0; bord
 #race-big.go { color: var(--amber); font-size: 120px; }
 #race-big.on { animation: lamp 260ms var(--ease) both; }
 @keyframes lamp { from { transform: translate(-50%, -50%) scale(1.4); opacity: 0.4; } to { transform: translate(-50%, -50%); } }
+#nos { position: absolute; left: 50%; bottom: max(14px, var(--sb)); transform: translateX(calc(-100% - 112px)); display: flex; align-items: center; gap: 8px; padding: 4px 10px 6px; background: var(--panel); border: 1px solid var(--line); }
+#nos small { font: 24px/1 var(--px); color: var(--amber); -webkit-text-stroke: 0; }
+#nos span { display: block; width: 110px; height: 8px; background: var(--line); }
+#nos i { display: block; height: 100%; background: var(--amber); }
+#nos.on { border-color: var(--amber); }
+#nos.on i { background: var(--white); }
+#hud.touch #nos { transform: translateX(calc(-100% - 94px)); }
 #race-wrong { position: absolute; left: 50%; top: 34%; transform: translateX(-50%); font: 48px/1 var(--px); color: var(--ink); background: var(--amber); padding: 4px 18px 8px; animation: blink 0.6s linear infinite; }
 #hud.touch .tw { top: 19%; transform: scale(0.85); transform-origin: top left; }
 
@@ -464,6 +481,7 @@ input[type=range]::-moz-range-thumb { width: 12px; height: 22px; border: 0; bord
 .tc.pad { display: flex; align-items: center; justify-content: center; font: calc(24px * var(--s, 1))/1 var(--px); color: var(--text); letter-spacing: 0.04em; background: var(--panel); border: 1px solid var(--titanium); }
 .tc.pad.held { background: var(--teal-dim); border-color: var(--teal); }
 .tc.small { font-size: calc(19px * var(--s, 1)); }
+.tc.nos { color: var(--amber); border-color: var(--amber); }
 /* Pedals and the handbrake: pictures. Pressed, a pedal tips away from you and
    glows (amber for gas, teal for brake). */
 .tc.pedal, .tc.lever { background: none; border: 0; flex-direction: column; transform-origin: 50% 100%; transition: transform 50ms linear, filter 50ms linear; }
@@ -527,8 +545,8 @@ input[type=range]::-moz-range-thumb { width: 12px; height: 22px; border: 0; bord
 .res-pay { width: min(300px, 32vw); padding: 12px 14px 14px; display: flex; flex-direction: column; gap: 8px; align-self: stretch; margin: 12vh 0; }
 .res-pay .stack { margin-top: auto; }
 .res-pay dd { text-align: right; font: 26px/1 var(--px); }
-.res-row { display: grid; grid-template-columns: 34px 72px 1fr 68px 68px; gap: 8px; align-items: center; padding: 5px 8px 6px; font-size: 14px; border-bottom: 1px solid rgba(59, 62, 68, 0.5); }
-.res-row .p, .res-row .n { font: 25px/1 var(--px); color: var(--white); }
+.res-row { display: grid; grid-template-columns: 34px 110px 1fr 68px 68px; gap: 8px; align-items: center; padding: 5px 8px 6px; font-size: 14px; border-bottom: 1px solid rgba(59, 62, 68, 0.5); }
+.res-row .p, .res-row .n { font: 25px/1 var(--px); color: var(--white); white-space: nowrap; overflow: hidden; }
 .res-row .c { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--muted); }
 .res-row .t, .res-row .b { text-align: right; font: 22px/1 var(--px); color: var(--white); }
 .res-row .b { color: var(--muted); }
@@ -551,6 +569,10 @@ input[type=range]::-moz-range-thumb { width: 12px; height: 22px; border: 0; bord
 .st-fx { position: absolute; inset: 0; width: 100%; height: 100%; image-rendering: pixelated; }
 .st-face { position: absolute; left: 3%; bottom: 0; height: 74%; image-rendering: pixelated; }
 .st-face.in { animation: st-in 200ms var(--ease) both; }
+.st-face.sprite { left: 9%; bottom: 15%; height: 62%; transform-origin: 50% 100%; }
+/* Johnny's little hop when his expression changes. */
+.st-face.sprite.hop { animation: st-hop 260ms var(--ease) both; }
+@keyframes st-hop { 0% { transform: none; } 35% { transform: translateY(-4.5%) scale(1.01, 0.99); } 70% { transform: translateY(0) scale(1.01, 0.98); } 100% { transform: none; } }
 @keyframes st-in { from { transform: translateX(-30px); opacity: 0; } to { transform: none; opacity: 1; } }
 .st-box { position: absolute; left: 50%; bottom: max(14px, var(--sb)); transform: translateX(-50%); width: min(980px, 92vw); padding: 16px 20px 18px; min-height: 104px; background: rgba(8, 9, 11, 0.94); color: var(--text); border: 1px solid var(--line); border-top-color: var(--titanium); }
 #story:not(.end) .st-box:not(.tell) { padding-left: min(250px, 24vw); }
@@ -558,6 +580,17 @@ input[type=range]::-moz-range-thumb { width: 12px; height: 22px; border: 0; bord
 .st-text { font: var(--bold) 20px/1.4 var(--dot); min-height: 2.8em; }
 .st-next { position: absolute; right: 14px; bottom: 10px; width: 12px; height: 8px; background: var(--amber); clip-path: polygon(0 0, 100% 0, 50% 100%); animation: blink 0.8s linear infinite; }
 .st-skip { position: absolute; top: max(14px, var(--st)); right: max(16px, var(--sr)); background: var(--panel); }
+/* Make your racer: the form Johnny hands you. */
+.st-racer { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: min(620px, 92vw); max-height: 92vh; padding: 16px 18px 18px; display: flex; flex-direction: column; gap: 8px; }
+.st-racer .go { align-self: flex-end; margin-top: 4px; }
+#racer-name { font: 34px/1 var(--px); color: var(--white); background: var(--panel-2); border: 1px solid var(--line); padding: 7px 12px 9px; outline: none; -webkit-user-select: text; user-select: text; }
+#racer-name:focus { border-color: var(--teal); }
+.flag-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(54px, 1fr)); gap: 6px; overflow-y: auto; touch-action: pan-y; min-height: 0; padding: 2px; }
+.flag { padding: 0; border: 2px solid var(--line); background: none; cursor: pointer; line-height: 0; }
+.flag canvas { width: 100%; height: auto; display: block; }
+.flag:hover, .flag:focus-visible { border-color: var(--titanium-hi); outline: none; }
+.flag.on { border-color: var(--teal); box-shadow: 0 0 0 1px var(--teal); }
+#racer-picked { min-height: 1.3em; }
 #story.end .st-box { width: auto; min-height: 0; background: none; border: 0; bottom: 42%; }
 #story.end .st-text { font: 64px/1 var(--px); min-height: 0; color: var(--white); }
 #story.end .st-next { display: none; }
@@ -601,6 +634,8 @@ input[type=range]::-moz-range-thumb { width: 12px; height: 22px; border: 0; bord
   .tier { font-size: 21px; padding: 2px 6px 3px; }
   .card-strip { height: 140px; }
   .res-row { padding: 2px 8px 3px; }
+  .st-racer { padding: 8px 12px 10px; gap: 4px; }
+  #racer-name { font-size: 26px; padding: 4px 10px 6px; }
   .res-place { font-size: 56px; }
   .st-text { font-size: 16px; }
   .st-box { min-height: 80px; padding: 8px 12px 10px; }
