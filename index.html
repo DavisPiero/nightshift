@@ -147,12 +147,18 @@
 
   <!-- Shop: tier tabs, brand tabs, the car's numbers on the left, the cards
        on the right (after David's Forza references). -->
-  <section id="scr-shop" class="screen desk shop" hidden>
+  <section id="scr-shop" class="screen shop" hidden>
     <header class="bar"><button class="btn back" data-back>Back</button><h2>Shop<span class="jp">ショップ</span></h2></header>
-    <nav id="shop-tiers" class="tier-tabs"></nav>
-    <nav id="shop-brands" class="brand-tabs"></nav>
-    <aside id="shop-info" class="pnl shop-info"></aside>
-    <div id="shop-grid" class="card-grid"></div>
+    <div id="shop-desk" class="desk-panel" hidden>
+      <nav id="shop-tiers" class="tier-tabs"></nav>
+      <nav id="shop-brands" class="brand-tabs"></nav>
+      <div class="desk-body">
+        <aside id="shop-info" class="shop-info"></aside>
+        <div id="shop-grid" class="card-grid"></div>
+      </div>
+    </div>
+    <button class="btn desk-toggle" data-desk></button>
+    <div id="dave"><p id="dave-say"></p><img id="dave-face" alt="Dave" draggable="false"></div>
   </section>
 
   <!-- Race: pick a track. List on the left, the track flies by behind, its
@@ -212,9 +218,9 @@
     <footer class="foot"><button id="race-go" class="btn go pri">Race</button></footer>
   </section>
 
-  <!-- Garage: a rail of tabs on the left; each opens a small pop-up with
-       its choices. The car on the turntable fills the rest (drag to turn
-       round it, scroll or pinch to zoom); its ratings bottom right. -->
+  <!-- Garage: tabs and choices on the laptop on the left, the car's ratings
+       beside them. The car on the turntable fills the rest (drag to turn
+       round it, scroll or pinch to zoom). -->
   <section id="scr-garage" class="screen garage" hidden>
     <header class="bar"><button class="btn back" data-back>Back</button><h2>Garage<span class="jp">ガレージ</span></h2>
       <div class="car-switch">
@@ -223,15 +229,17 @@
         <button class="btn sq" id="garage-next" aria-label="Next car">&gt;</button>
       </div>
     </header>
-    <nav id="garage-tabs" class="grail pnl"></nav>
-    <div id="garage-pop" class="gpop pnl" hidden>
-      <div class="ttl"><span id="garage-pop-title"></span><button class="x" id="garage-close" aria-label="Close">&times;</button></div>
-      <div id="garage-list" class="list"></div>
+    <div id="garage-desk" class="desk-panel" hidden>
+      <nav id="garage-tabs" class="tier-tabs"></nav>
+      <div class="desk-body">
+        <div id="garage-list" class="list"></div>
+        <aside class="gstats">
+          <div class="ttl"><span>Spec</span></div>
+          <div id="garage-stats" class="stats"></div>
+        </aside>
+      </div>
     </div>
-    <aside class="gstats pnl">
-      <div class="ttl"><span>Spec</span></div>
-      <div id="garage-stats" class="stats"></div>
-    </aside>
+    <button class="btn desk-toggle" data-desk></button>
   </section>
 
   <!-- Settings, four tabs -->

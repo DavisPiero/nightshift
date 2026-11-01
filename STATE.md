@@ -1,17 +1,17 @@
 # NIGHTSHIFT: state
 
-_Last updated 2026-11-01, session 18. Part 1 of Arlo's fourth notes is merged and live._
+_Last updated 2026-11-01, session 18. Parts 1 and 2 of Arlo's fourth notes are merged and live._
 
 ## Where we are
-Part 1 of 3 of the new notes is live: cockpit camera further forward, your own camera at the laptop, lens dirt gone, NOS 30 to 35% and CR 1500 with blue fire, roar and shake, the iPad NOS button as its own gauge, higher-res Johnny behind a full-width box, phone Back and bin, hold wobble, painted road, headlight pools, a smoother pull-up.
+Part 2 of 3 is live: tabs and Analytics on the race laptop, Shop and Garage on a laptop on the left, Dave's lot with Dave talking in the corner, no headlights at dawn.
 
 ## Next
-- **Part 2:** laptop tabs with Analytics (drivers, cars, styles, most trouble, predicted standings); shop and garage on a laptop on the left, real HTML laid over its screen; the sketchy dealership scene; Dave.
-- **Part 3:** phone contacts and favours, one every 24 real hours per person; Sonny after Under the City, with invites (500 CR entry, podium or nothing, one try, one difficulty step up, about twice your top event); Johnny 10% off one type of car; Dave's quests. Fix Parabolica Street, build the mountainside map, and raise trees, buildings and other trackside models to the cars' quality. Rough edges below.
+- **Part 3:** phone contacts and favours, one every 24 real hours per person; Sonny after Under the City, with invites (500 CR entry, podium or nothing, one try, one difficulty step up, about twice your top event); Johnny 10% off one type of car; Dave's quests for a discount on any car. Fix Parabolica Street, build the mountainside map, and raise trees, buildings and other trackside models to the cars' quality. Rough edges below.
 David said: push each part when finished, without asking.
 
 ## Open with David
-- Sprite sheets for Sonny and Dave are coming from him (5 across, 4 down, on black). Placeholders until then. Same question for Max and Aoi.
+- Sprite sheets for Sonny and Dave are coming from him (5 across, 4 down, on black). Dave's painted stand-in is up until then; Sonny's comes in Part 3.
+- Dave's lines, the look of the lot, the laptop's size on screen, and "Most trouble" wording are all Claude's guesses. Same question for Max and Aoi.
 - Does NOS feel right? Nobody here can hear the roar. "30%" is set as how far ahead of the same car a held bottle gets you.
 - Are the headlights bright enough? One number in `car-model.js`.
 - Does the new look work on every screen he uses? Is the small text right now (`--weight`, `--track`)?
@@ -28,8 +28,8 @@ David said: push each part when finished, without asking.
 - At speed the stars streak with the motion blur.
 - The cranes in the docks picture are painted over the new road and float a little.
 - Johnny has no blink. The story's Skip button still stops at the racer form, on purpose.
-- The phone and laptop have not been tried on a real iPad: a second 3D view may cost frame rate there.
-- The laptop's strong tilt makes its rows look uneven: prices sit lower than their names.
+- The phone and laptops have not been tried on a real iPad: a second 3D view may cost frame rate there, and now it runs all the time in the Shop and Garage.
+- The Shop tile on the home screen still shows the Underground, not Dave's lot.
 - World neon, including pink, is unchanged on purpose.
 - Only the player has engine sound, smoke and sparks. Rivals use the parked model.
 - Three tracks across a whole career repeat; weather, time and rivals vary them.

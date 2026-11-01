@@ -1,15 +1,18 @@
-// The shop: filter by stage (Street, GT3, Formula) and by brand, a wall of car
-// cards, the picked car's numbers on the left with the Buy button. A stage that
-// your level has not reached stays locked. Nothing here spends money without a
-// yes in a pop-up.
+// The shop: Dave's lot. A laptop on the left (ui/desk.js) filters by stage (Street,
+// GT3, Formula) and by brand, with a wall of car cards and the picked car's numbers
+// and Buy button. The picked car stands on the lot in front of you: drag to walk
+// round it. Dave sits in the corner and talks. A stage that your level has not
+// reached stays locked. Nothing here spends money without a yes in a pop-up.
 
 import { CARS, TIERS, carTitle } from '../vehicles/cars.js';
 import { levelFor, cr } from '../career/career.js';
 import { buildSpec } from '../vehicles/tuning.js';
 import { fillStats } from './stats-view.js';
 import { carCard, lockedCard } from './car-cards.js';
+import { daveOnCar, daveOnLife } from '../career/dave.js';
 
 const $ = (sel) => document.querySelector(sel);
+const CHAT_SECONDS = 9; // how long he lets a thought sit before the next one
 
 export class Shop {
   constructor(game, screens) {
@@ -18,12 +21,38 @@ export class Shop {
     this.tier = 'street';
     this.brand = null; // null: every brand
     this.picked = CARS.find((c) => c.price)?.id;
+    this.said = 0;
+    $('#dave-face').src = 'assets/story/face-dave.png';
+    screens.garage.orbitControls($('#scr-shop'));
   }
 
   get level() { return levelFor(this.game.save.career.xp); }
   owned(id) { return this.game.save.garage.owned.includes(id); }
 
-  open() { this.fill(); }
+  open() {
+    this.fill();
+    this.say();
+  }
+
+  // Something about the car in front of him, then a bit about himself, until
+  // you leave. He only talks while the Shop is the open screen.
+  say(onCar = true) {
+    clearTimeout(this.chat);
+    if (this.screens.top && this.screens.top !== 'shop') return;
+    this.said++;
+    $('#dave-say').textContent = onCar ? daveOnCar(this.picked, this.said) : daveOnLife(this.said);
+    this.chat = setTimeout(() => this.say(this.said % 3 === 0), CHAT_SECONDS * 1000);
+  }
+
+  // The car on the lot follows the card you pick. Leaving, the game goes back
+  // to the car you own (Screens.showEl).
+  look(id) {
+    this.picked = id;
+    this.game.showCar(id);
+    this.game.orbitReset();
+    this.fill();
+    this.say();
+  }
 
   fill() {
     const tiers = $('#shop-tiers');
@@ -50,9 +79,10 @@ export class Shop {
     grid.innerHTML = '';
     const shown = cars.filter((c) => !this.brand || c.make === this.brand).sort((a, b) => a.price - b.price);
     if (!shown.some((c) => c.id === this.picked)) this.picked = shown[0]?.id;
+    if (this.picked) this.game.showCar(this.picked);
     for (const c of shown) {
       const card = carCard(c, { owned: this.owned(c.id), on: c.id === this.picked });
-      card.addEventListener('click', () => { this.picked = c.id; this.fill(); });
+      card.addEventListener('click', () => this.look(c.id));
       grid.appendChild(card);
     }
     if (!shown.length) for (let i = 0; i < 4; i++) grid.appendChild(lockedCard('To be continued'));

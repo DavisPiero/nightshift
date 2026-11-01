@@ -23,8 +23,9 @@
    Formula (150-200 and on). Every race pays, you can never lose money, and cars cost real effort
    (about 60 races and 6 hours to finish Street). Told in short pixel-art scenes.
 10. **A moment before the lights.** Career only: a short scene of you pulling up (one press skips it),
-   a laptop for one-race upgrades over whichever camera you had on (one press goes on), then the
-   countdown. NOS is the best of them, on Shift, a touch button and the right bumper: 30% more speed,
+   a laptop over whichever camera you had on (one press goes on), then the countdown. It has two
+   tabs: Upgrades, and Analytics (every driver, their car and numbers, their style, who is most likely
+   to be trouble, the predicted standings). NOS is the best of them, on Shift, a touch button and the right bumper: 30% more speed,
    climbing to 35% if you hold it, with blue fire, a roar and camera shake.
 
 ## The story
@@ -54,7 +55,8 @@ whole look: change a colour or a font there, once.
   on the picture, about 500 m (Settings > Map zoom). In a race: your place and lap in a box at the top
   (David, 2026-11-01), and the F1-style sheet on the left: place, who moved, name, gap to the leader,
   last lap; your row amber, the fastest lap teal.
-- Behind the menus: the 3D scene, except the plain screens (Career, Shop, Settings).
+- Behind the menus: the 3D scene, except the plain screens (Career, Settings).
+- Shop and Garage: everything sits on a real laptop pulled up on the left, the car stands in the rest of the screen, and the laptop can be put down. The Shop is Dave's lot; Dave sits in the right corner talking rubbish.
 - Japanese: on screen titles and in the world only, never on buttons or rows.
 - Motion: quick and smooth. Lists slide in when a screen or tab opens, never on every click.
 - Banned: control hints outside Settings > Controls, except the laptop's NOS row.

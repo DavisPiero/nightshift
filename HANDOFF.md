@@ -7,7 +7,7 @@
 `CLAUDE.md`, `STATE.md`, the last 20 lines of `DECISIONS.md`, then this file.
 
 ## What comes next
-Part 2, then Part 3, of David's fourth notes: both are spelled out under "Next" in `STATE.md`, with his answers in the last lines of `DECISIONS.md`. He wants each part pushed when finished, without asking. Part 2 lays the existing shop and garage HTML over the laptop's screen with a CSS 3D transform that follows its corners; the race laptop stays drawn on its canvas.
+Part 3 of David's fourth notes: spelled out under "Next" in `STATE.md`, with his answers in `DECISIONS.md`. He wants each part pushed when finished, without asking.
 
 ## How the look works
 - Colours, fonts, spacing: the list at the top of `styles/main.css`. Canvas drawings repeat a few of those values (`ui/hud.js`, `ui/screens.js`, `input/touch.js`).
@@ -21,6 +21,9 @@ Part 2, then Part 3, of David's fourth notes: both are spelled out under "Next" 
 - NOS force is `NOS_PUSH` to `NOS_PUSH_HELD` in `vehicle.js`; `vehicle.nosHeld` is how long this burn has run. `Shake.burn` and `shake.nos` are the camera side.
 - Phone: `save.binned` holds deleted mail ids (`bin` in `inbox.js`). `asking` is "are you sure?", `onBin` means the bin is picked.
 - Road: `Tex.road(width)` gives one tile of the road's width by 32 m as map and bump. Headlights: `Tex.headlightPattern` is projected by the spot light.
+- Shop and Garage laptop: `ui/desk.js`, `Desk.sync(screen)` from `Screens.showEl`. `DeviceStage.pin(el, w, h)` lays `.desk-panel` over the display each frame. `desk.inset` feeds the lens shift. `game.room` picks the scene (garage or Dave's lot).
+- New line for Dave: `career/dave.js`. Stand-in face: a branch in `tools/story-paint.mjs`, `node tools/story-art.mjs faces`.
+- Analytics: `race/analytics.js`, its numbers are checked at the end of `tools/ai-bench.mjs`.
 - `game.device` is whichever of the phone and laptop is up. Both have `nav`, `press` and a key listener. `DeviceStage` (world/props-devices.js) draws them; `stage.update` runs from `render`.
 - A new mail: a line in `MAIL` in `career/inbox.js`, with `when(career)`.
 - A new Johnny line: `j('mood', 'text')` in `story.js`. Moods are the list at the top of `tools/johnny-sprites.mjs`. `{name}` and `{home}` work in any line.

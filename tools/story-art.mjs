@@ -50,7 +50,7 @@ if (only !== 'faces') for (const [id, s] of Object.entries(SHOTS)) {
 }
 mkdirSync(join(ROOT, 'review'), { recursive: true });
 writeFileSync(join(ROOT, 'review/blank.html'), '<!doctype html><body>');
-const painted = { contract: 0, tbc: 0, 'face-max': 0, 'face-max-blink': 1, 'face-aoi': 0, 'face-aoi-blink': 1 };
+const painted = { contract: 0, tbc: 0, 'face-max': 0, 'face-max-blink': 1, 'face-aoi': 0, 'face-aoi-blink': 1, 'face-dave': 0 };
 for (const [id, blink] of Object.entries(painted)) {
   jobs.push({ page: 'review/blank.html', out: join(ROOT, 'review/story-last.png'), wait: 0.1, js: `(()=>{${BAKE}${PAINT}return paint(${JSON.stringify(id)},${!!blink});})()`, saveData: join(OUT, `${id}.png`), after: 0.1 });
 }
