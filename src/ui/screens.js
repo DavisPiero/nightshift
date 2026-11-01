@@ -51,7 +51,8 @@ export class Screens {
     $('#tracks-go').addEventListener('click', () => this.open('setup'));
     $('#setup-go').addEventListener('click', () => { if (this.afterCar === 'back') this.back(); else this.open('race'); });
     $('#res-go').addEventListener('click', () => this.resultsDone());
-    $('#res-again').addEventListener('click', () => { this.closeAll(); game.restart(); });
+    $('#res-again').addEventListener('click', () => { if (!game.raceSetup?.event) this.closeAll(); game.raceAgain(); });
+    $('#arrive-skip').addEventListener('click', () => game.endArrive());
 
     this.garage = new Garage(game, this);
     this.shop = new Shop(game, this);
@@ -191,7 +192,7 @@ export class Screens {
     else this.game.garageTab = null;
     if (name === 'shop') this.shop.open();
     if (name === 'career') this.career.open();
-    if (name === 'main') this.showOwnedCar();
+    if (name === 'main') { this.showOwnedCar(); this.phone?.refresh(); }
     this.wallet();
     $('#wallet').hidden = !['main', 'career', 'shop', 'garage', 'tracks', 'setup', 'race'].includes(name);
     if (name === 'settings') this.settings.open();
@@ -247,7 +248,7 @@ export class Screens {
       this.game.startRace(pick, true);
       const wait = Math.max(0, 5500 - (performance.now() - shown));
       setTimeout(() => {
-        this.game.go();
+        if (pick.event) this.game.arrive(); else this.game.go();
         el.classList.add('done');
         setTimeout(() => { el.hidden = true; }, 420);
       }, wait);

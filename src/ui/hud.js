@@ -7,6 +7,8 @@
 // map, the start lights in the middle. In a Time Trial: the clock, the gap to
 // the ghost, last and best. Canvas colours are the style sheet's.
 
+import { NOS_SECONDS } from '../career/upgrades.js';
+
 const SEGMENTS = 28;
 const FONT = '"Jersey 10", ui-monospace, monospace';
 const WHITE = '#ffffff', AMBER = '#ffb000', TEAL = '#22d8c8', TITANIUM = '#8d9198', DIM = '#34373c', INK = '#08090b';
@@ -39,7 +41,12 @@ export class Hud {
     this.big = root.querySelector('#race-big');
     this.wrong = root.querySelector('#race-wrong');
     this.goClock = 0;
+    this.nosEl = root.querySelector('#nos');
+    this.nosBar = root.querySelector('#nos i');
   }
+
+  // The NOS gauge: only when you have some.
+  setNos(on) { this.nosEl.hidden = !on; }
 
   // The race to show, or null for free driving.
   setRace(race) {
@@ -197,6 +204,7 @@ export class Hud {
 
   draw(v, dt) {
     this.drawMap(v);
+    if (!this.nosEl.hidden) { this.nosBar.style.width = `${(v.nosLeft / NOS_SECONDS) * 100}%`; this.nosEl.classList.toggle('on', v.nosOn); }
     if (this.race) this.drawRace(dt);
     if (this.trial) this.drawTrial(dt);
     const g = this.g, W = 132, H = 132;

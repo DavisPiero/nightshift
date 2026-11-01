@@ -23,6 +23,7 @@ export const DEFAULT_TOUCH = {
     throttle: { x: 0.9, y: 0.66 },
     brake: { x: 0.76, y: 0.76 },
     handbrake: { x: 0.77, y: 0.5 },
+    nos: { x: 0.62, y: 0.82 },
     gearUp: { x: 0.91, y: 0.36 },
     gearDown: { x: 0.81, y: 0.3 },
     camera: { x: 0.15, y: 0.09 },  // top left: the minimap has the top right
@@ -54,6 +55,7 @@ const BUTTONS = {
   throttle: { label: 'GAS', w: 112, h: 136, cls: 'gas pedal' },
   brake: { label: 'BRAKE', w: 118, h: 104, cls: 'brake pedal' },
   handbrake: { label: 'HANDBRAKE', w: 124, h: 84, cls: 'lever' },
+  nos: { label: 'NOS', w: 96, h: 64, cls: 'nos', nos: true },
   gearUp: { label: '+', w: 70, h: 62, manual: true },
   gearDown: { label: '-', w: 70, h: 62, manual: true },
   camera: { label: 'CAM', w: 74, h: 52, cls: 'small', action: 'camera' },
@@ -138,7 +140,7 @@ export class TouchSource {
       const w = b.w * s.size, h = b.h * s.size;
       el.style.width = `${w}px`; el.style.height = `${h}px`;
       el.style.setProperty('--s', s.size);
-      el.hidden = !!b.manual && !this.manual && !this.editing;
+      el.hidden = ((!!b.manual && !this.manual) || (!!b.nos && !this.nos)) && !this.editing;
       put(el, s.layout[name], w, h);
     }
     const R = STICK_R * s.size;
@@ -151,6 +153,7 @@ export class TouchSource {
 
   setSettings(settings) { this.settings = settings; this.place(); }
   setManual(on) { this.manual = on; this.place(); }
+  setNos(on) { this.nos = on; this.place(); }
   show(on) { this.root.hidden = !on; this.enabled = on; if (!on) this.releaseAll(); else this.place(); }
 
   // --- driving ---
@@ -229,6 +232,7 @@ export class TouchSource {
       throttle: this.held.has('throttle') ? 1 : 0,
       brake: this.held.has('brake') ? 1 : 0,
       handbrake: this.held.has('handbrake'),
+      nos: this.held.has('nos'),
       gearUp: this.pressed.has('gearUp'),
       gearDown: this.pressed.has('gearDown'),
     };

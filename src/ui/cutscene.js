@@ -1,12 +1,17 @@
 // Story scenes: a pixel-art picture that drifts slowly, weather and neon moving
 // on top of it, a face that blinks, and the words typed into a dialog box. Tap,
 // click, Enter or Space moves on; Skip ends the scene. Pictures and faces are
-// made by tools/story-art.mjs and live in assets/story/.
+// made by tools/story-art.mjs and live in assets/story/. Johnny has a sprite for
+// each expression (tools/johnny-sprites.mjs, assets/story/johnny/), with a hop
+// when it changes, and no blink. A line with `ask: 'racer'` stops for the form
+// that makes your racer; even Skip stops there.
 
 import { PEOPLE, SCENES } from '../career/story.js';
+import { FLAGS, flagCanvas } from '../vehicles/flags.js';
 
 const $ = (sel) => document.querySelector(sel);
-const FACES = Object.keys(PEOPLE);
+const FACES = Object.keys(PEOPLE).filter((id) => !PEOPLE[id].sprite);
+const MOODS = ['plain', 'talk', 'aside', 'flat', 'wrench-look', 'down', 'sorry', 'shock', 'think', 'calm', 'thumbs', 'laugh', 'wrench', 'worry', 'explain', 'angry', 'facepalm', 'sad', 'smug', 'wrench-grin'];
 const CPS = 46; // letters a second
 
 // What moves over each picture.
@@ -22,12 +27,16 @@ export class Cutscene {
     this.nameEl = this.el.querySelector('.st-name');
     this.text = this.el.querySelector('.st-text');
     this.box = this.el.querySelector('.st-box');
+    this.skip = this.el.querySelector('.st-skip');
+    this.form = this.el.querySelector('.st-racer');
     for (const id of FACES) for (const f of ['', '-blink']) { const i = new Image(); i.src = `assets/story/face-${id}${f}.png`; }
-    this.el.addEventListener('pointerdown', (e) => { if (!e.target.closest('.st-skip')) this.advance(); });
-    this.el.querySelector('.st-skip').addEventListener('click', () => this.finish());
+    for (const m of MOODS) { const i = new Image(); i.src = `assets/story/johnny/${m}.png`; }
+    this.el.addEventListener('pointerdown', (e) => { if (!e.target.closest('.st-skip, .st-racer')) this.advance(); });
+    this.skip.addEventListener('click', () => this.finish(true));
+    this.buildForm();
     window.addEventListener('keydown', (e) => {
-      if (this.el.hidden) return;
-      if (e.code === 'Escape') this.finish();
+      if (this.el.hidden || !this.form.hidden) return;
+      if (e.code === 'Escape') this.finish(true);
       else if (e.code === 'Enter' || e.code === 'Space') this.advance();
       else return;
       e.preventDefault(); e.stopPropagation(); e.nsCaptured = true;
@@ -36,7 +45,7 @@ export class Cutscene {
 
   play(id, done) {
     const s = SCENES[id];
-    this.scene = s; this.done = done; this.n = -1; this.artId = null;
+    this.scene = s; this.done = done; this.n = -1; this.artId = null; this.mood = null;
     this.game.save.career.seen = [...new Set([...this.game.save.career.seen, id])];
     this.game.saveNow();
     this.el.hidden = false;
@@ -50,7 +59,9 @@ export class Cutscene {
 
   // Finish the line being typed, or go to the next one.
   advance() {
+    if (!this.form.hidden) return;
     if (this.shown < this.full?.length) { this.shown = this.full.length; this.text.textContent = this.full; return; }
+    if (this.scene.lines[this.n]?.ask && !this.racer.name) { this.showForm(); return; }
     this.n++;
     const line = this.scene.lines[this.n];
     if (!line) { this.finish(); return; }
@@ -63,10 +74,74 @@ export class Cutscene {
     this.nameEl.hidden = !p;
     this.nameEl.textContent = p ? p.name : '';
     this.face.hidden = !p;
-    if (p) { this.face.src = `assets/story/face-${line.who}.png`; this.face.classList.remove('in'); void this.face.offsetWidth; this.face.classList.add('in'); }
+    this.showFace(line, p);
     this.el.classList.toggle('end', art === 'tbc');
-    this.full = line.text; this.shown = 0; this.typed = 0;
+    this.full = this.words(line); this.shown = 0; this.typed = 0;
     this.text.textContent = '';
+  }
+
+  // Johnny's sprite: he slides in, then hops when his expression changes.
+  // Anyone else's face slides in each line, as before.
+  showFace(line, p) {
+    const f = this.face, sprite = !!p?.sprite, first = this.spriteOn !== sprite || !this.mood;
+    f.classList.toggle('sprite', sprite);
+    this.spriteOn = sprite;
+    if (!p) { this.mood = null; return; }
+    if (!sprite) { this.mood = null; f.src = `assets/story/face-${line.who}.png`; f.classList.remove('in'); void f.offsetWidth; f.classList.add('in'); return; }
+    const mood = line.mood || 'plain', changed = mood !== this.mood;
+    this.mood = mood;
+    if (!changed) return;
+    f.src = `assets/story/johnny/${mood}.png`;
+    f.classList.remove('in', 'hop'); void f.offsetWidth;
+    f.classList.add(first ? 'in' : 'hop');
+  }
+
+  get racer() { return this.game.save.career.racer; }
+
+  // A line's words, with your name and home put in.
+  words(line) {
+    const r = this.racer, f = FLAGS[r.flag];
+    const text = (f === FLAGS.jp && line.local) || line.text;
+    return text.replaceAll('{name}', r.name || 'kid').replaceAll('{home}', f?.home || 'somewhere');
+  }
+
+  // --- make your racer ---
+  buildForm() {
+    const form = this.form, name = form.querySelector('#racer-name'), sign = form.querySelector('.go'), grid = form.querySelector('#racer-flags');
+    this.picked = '';
+    const check = () => { sign.disabled = !(name.value.trim() && this.picked); };
+    for (const [id, f] of Object.entries(FLAGS)) {
+      const b = document.createElement('button');
+      b.type = 'button'; b.className = 'flag'; b.title = f.name; b.setAttribute('aria-label', f.name);
+      b.appendChild(flagCanvas(id, 84, 56));
+      b.addEventListener('click', () => {
+        this.picked = id;
+        for (const o of grid.children) o.classList.toggle('on', o === b);
+        this.game.audio.ui('select');
+        check();
+      });
+      grid.appendChild(b);
+    }
+    name.addEventListener('input', check);
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      if (sign.disabled) return;
+      this.racer.name = name.value.trim();
+      this.racer.flag = this.picked;
+      this.game.saveNow();
+      this.game.buildChanged();
+      form.hidden = true;
+      this.skip.hidden = false;
+      this.game.audio.ui('confirm');
+      this.advance();
+    });
+    form.addEventListener('keydown', (e) => e.stopPropagation()); // typing is not driving
+  }
+
+  showForm() {
+    this.form.hidden = false;
+    this.skip.hidden = true;
+    this.form.querySelector('#racer-name').focus();
   }
 
   setArt(id) {
@@ -87,8 +162,9 @@ export class Cutscene {
       if (next !== this.shown) { this.shown = next; this.text.textContent = this.full.slice(0, next); }
     }
     this.blink -= dt;
-    if (this.who && this.blink < 0.12) this.face.src = `assets/story/face-${this.who}-blink.png`;
-    if (this.blink < 0) { this.blink = 2 + Math.random() * 3.5; if (this.who) this.face.src = `assets/story/face-${this.who}.png`; }
+    const blinks = this.who && !PEOPLE[this.who].sprite;
+    if (blinks && this.blink < 0.12) this.face.src = `assets/story/face-${this.who}-blink.png`;
+    if (this.blink < 0) { this.blink = 2 + Math.random() * 3.5; if (blinks) this.face.src = `assets/story/face-${this.who}.png`; }
     this.drawFx(dt);
     requestAnimationFrame((t) => this.frame(t));
   }
@@ -129,7 +205,16 @@ export class Cutscene {
     }
   }
 
-  finish() {
+  // skipped: Skip was pressed. A scene that makes your racer still stops there.
+  finish(skipped = false) {
+    const ask = this.scene?.lines.findIndex((l) => l.ask) ?? -1;
+    if (skipped && ask >= 0 && !this.racer.name) {
+      this.n = ask - 1; this.full = ''; this.shown = 0;
+      this.advance();
+      this.shown = this.full.length; this.text.textContent = this.full;
+      this.showForm();
+      return;
+    }
     this.running = false;
     this.el.hidden = true;
     this.full = '';

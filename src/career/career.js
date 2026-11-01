@@ -34,9 +34,9 @@ export const CLEARS = 3; // a top three finish clears an event
 
 // The acts of the Street stage. `after` is a scene from story.js.
 export const ACTS = [
-  { id: 'clockoff', name: 'Clocking Off', jp: '退勤', blurb: 'The docks, after the last shift.' },
-  { id: 'oldcountry', name: 'The Old Country', jp: '東京', blurb: 'Johnny takes you to the tunnels where he learned.' },
-  { id: 'backhome', name: 'Back Home', jp: '帰郷', blurb: 'The harbor has heard about you now.' },
+  { id: 'clockoff', name: 'Clocking Off', jp: '退勤', blurb: 'The harbor, after work.' },
+  { id: 'undertokyo', name: 'Under Tokyo', jp: '東京', blurb: 'Johnny takes you to the tunnels where he learned.' },
+  { id: 'backhome', name: 'Back to the Harbor', jp: '帰郷', blurb: 'The harbor has heard about you now.' },
   { id: 'parabolica', name: 'The Ring', jp: '環状', blurb: 'The fastest street in the city, and someone with a clipboard.' },
   { id: 'lastrun', name: 'The Last Night Shift', jp: '最終', blurb: 'One more race with Max.' },
 ];
@@ -70,8 +70,8 @@ export const EVENTS = [
 ];
 EVENTS.forEach((e, n) => {
   const k = n / (EVENTS.length - 1);
-  e.cr = Math.round((1500 + 6500 * k) / 50) * 50;
-  e.xp = Math.round((250 + 450 * k) / 10) * 10;
+  e.cr = Math.round((1800 + 7800 * k) / 50) * 50;
+  e.xp = Math.round((220 + 400 * k) / 10) * 10;
 });
 
 export const getEvent = (id) => EVENTS.find((e) => e.id === id);

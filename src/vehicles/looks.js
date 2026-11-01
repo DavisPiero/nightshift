@@ -25,6 +25,7 @@ export const DECALS = {
   side:    { name: 'Side stripe', info: 'along both sides' },
   number:  { name: 'Race number', info: 'a roundel on each door' },
   kanji:   { name: '走り屋 sticker', info: '"street racer", on the rear quarters' },
+  flag:    { name: 'Home flag', info: 'your flag, on each door' },
 };
 export const DECAL_COLOURS = [[0xf2f2ee, 'White'], [0x111214, 'Black'], [0xd8261e, 'Red'], [0xe8b81e, 'Yellow'], [0x3ff0e8, 'Turquoise'], [0xff2e88, 'Pink']];
 

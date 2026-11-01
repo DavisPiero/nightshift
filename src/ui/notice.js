@@ -1,31 +1,29 @@
-// The notice board: one window over the title screen, once after each update,
-// saying what is new. Change NOTICE and give it a new id with each update. A
-// new player, who has nothing to compare with, never sees it.
+// What is new in each update. It arrives on your phone as mail, once per update.
+// Change NOTICE and give it a new id with each update. A new player, who has
+// nothing to compare with, gets none.
 
 const NOTICE = {
-  id: '2026-11-01',
-  title: 'What\u2019s new',
+  id: '2026-11-01-story',
+  subject: 'What’s new',
   lines: [
-    'Bumping another car no longer cuts your speed.',
-    'Shorter, narrower, faster Starter Track and Underground.',
-    'Smarter rivals, and Hard really is hard now.',
-    'Race settings: Race, Time Trial with a ghost, or Practice.',
-    'A race sheet, and a whole new look.',
+    'A new story, and Johnny has a new face.',
+    'Make your racer: name, flag.',
+    'Your phone, with your mail.',
+    'Pull up to the race, buy one-race upgrades on the laptop.',
+    'NOS.',
   ],
 };
 
-// Show it if this save has not seen it. Returns nothing; saves that it did.
-export function showNotice(game, root = document.querySelector('#notice')) {
+// Mark this update as arrived, if this save has not had it. A player who has
+// never chosen a platform is new, so gets no mail.
+export function showNotice(game) {
   const save = game.save;
   if (save.notice === NOTICE.id) return;
-  const fresh = !save.platform;
+  if (save.platform) save.updateMail = NOTICE.id;
   save.notice = NOTICE.id;
   game.saveNow();
-  if (fresh || !root) return;
-  root.innerHTML = `<section class="nw"><header>${NOTICE.title}</header><div class="nb"><ul>${NOTICE.lines.map((l) => `<li>${l}</li>`).join('')}</ul></div><footer><button class="nok pri">OK</button></footer></section>`;
-  const close = () => { root.hidden = true; window.removeEventListener('keydown', onKey, true); };
-  const onKey = (e) => { if (e.key === 'Enter' || e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); close(); } };
-  root.querySelector('.nok').addEventListener('click', close);
-  root.hidden = false;
-  window.addEventListener('keydown', onKey, true);
+  game.screens.phone.refresh();
 }
+
+// The update as a message for the inbox, or null.
+export const updateMail = (save) => (save.updateMail === NOTICE.id ? { id: NOTICE.id, from: 'NIGHTSHIFT', subject: NOTICE.subject, lines: NOTICE.lines.map((l) => `- ${l}`), text: '' } : null);

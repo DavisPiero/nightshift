@@ -14,7 +14,9 @@ export function defaultSave() {
   return {
     version: SAVE_VERSION,
     platform: null,              // 'computer' | 'touch', null until chosen
-    notice: '',                  // the last notice board shown (ui/notice.js)
+    notice: '',                  // the last update seen (ui/notice.js)
+    updateMail: '',              // an update waiting in your inbox
+    read: [],                    // mail you have opened (career/inbox.js)
     settings: {
       // Gameplay
       transmission: 'auto',
@@ -47,6 +49,7 @@ export function defaultSave() {
       done: {},                  // per event id: best place
       tracks: ['starter'],       // tracks played, so open in Race
       seen: [],                  // story scenes already shown
+      racer: { name: '', flag: '' }, // who you are: made before the first race
     },
     lastRace: { track: 'starter', weather: 'clear', time: 'night', mode: 'race', laps: 3, difficulty: 'normal', rivals: 7 },
     bestLaps: {},                // per 'track:car': the best Time Trial lap and its ghost

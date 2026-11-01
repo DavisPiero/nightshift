@@ -1,6 +1,6 @@
 # NIGHTSHIFT
 
-Casual night-time street racing in the browser, with a career: start on the docks in a borrowed
+Casual night-time street racing in the browser, with a career: start on the harbor in a borrowed
 Impreza, race eight-car grids for money, buy your way up. Foggy, neon-Japan, a little bit pixelated. Drive a Subaro Impreza WRX STi Coupe, a Nissani Skyliner GT-R, a Dodga Challenjer
 SRT Super Stok, a 1969 Fard Mustank Touring Car or a Lamborgino Countash 5000 QV round the Starter Track (a harbour estate at night), the
 Underground (Tokyo expressway tunnels) or Parabolica Street (a Monza-shaped Tokyo ring road),

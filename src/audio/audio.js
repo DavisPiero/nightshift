@@ -450,7 +450,7 @@ export class GameAudio {
     const hardStop = v.brakeGrip > 0.85 && v.speed > 12 ? (v.brakeGrip - 0.85) * 4 : 0;
     const squeal = v.speed > 4 ? Math.min(1, Math.max(slide, hardStop)) * Math.min(1, v.speed / 15) : 0;
     this.squealGain.gain.setTargetAtTime(squeal * (wet ? 0.07 : 0.22) * level, t, 0.05);
-    this.hissGain.gain.setTargetAtTime(wet ? Math.min(1, v.speed / 30) * 0.12 * level : 0, t, 0.1);
+    this.hissGain.gain.setTargetAtTime(Math.max(wet ? Math.min(1, v.speed / 30) * 0.12 : 0, v.nosOn ? 0.3 : 0) * level, t, 0.1);
     this.rainGain.gain.setTargetAtTime(raining ? 0.16 * (1 + patch * 0.8) : 0, t, 0.5);
     this.humGain.gain.setTargetAtTime(0.025, t, 0.5);
     if (raining && Math.random() < dt * 9 * (1 + patch)) this.drop();

@@ -75,6 +75,7 @@
     </div>
     <div id="race-big"></div>
     <div id="race-wrong" hidden>Wrong way</div>
+    <div id="nos" hidden><small>NOS</small><span><i></i></span></div>
     <div id="hud-buttons">
       <button id="pause-button" class="btn sq" aria-label="Pause"><i class="ico-pause"></i></button>
     </div>
@@ -112,6 +113,8 @@
       <p class="tag">street racing after dark</p>
     </div>
     <button id="gear" class="btn sq gear" data-go="settings" aria-label="Settings"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="7.2" stroke-width="3.4" stroke-dasharray="3.2 2.45"/><circle cx="12" cy="12" r="5.2" stroke-width="2"/></svg></button>
+    <button id="phone-btn" class="btn sq gear" aria-label="Phone"><svg viewBox="0 0 24 24" width="22" height="26" fill="none" stroke="currentColor" stroke-width="2"><rect x="7" y="3" width="10" height="18" rx="1.5"/><path d="M7 11h10M10 15h4M10 18h4"/><path d="M15 3V1"/></svg><span class="ph-dot" hidden></span></button>
+    <p id="phone-tip" hidden>You got mail</p>
     <nav class="stack tiles">
       <button class="tile big" data-go="career" data-sound="confirm" style="background-image: url(assets/loading/starter.jpg)"><span class="th">Career</span><span id="tile-career" class="ts"></span></button>
       <button class="tile" data-go="tracks" data-sound="confirm" style="background-image: url(assets/loading/parabolica.jpg)"><span class="th">Race</span><span class="ts">Any track and car you have</span></button>
@@ -295,8 +298,21 @@
       <p class="st-text"></p>
       <span class="st-next"></span>
     </div>
+    <form class="st-racer pnl" hidden>
+      <div class="ttl"><span>Your racer</span></div>
+      <label class="label" for="racer-name">Name</label>
+      <input id="racer-name" type="text" maxlength="12" autocomplete="off" spellcheck="false">
+      <p class="label">Nationality</p>
+      <div id="racer-flags" class="flag-grid"></div>
+      <button class="btn go pri" type="submit" disabled>Sign</button>
+    </form>
     <button class="btn small st-skip">Skip</button>
   </div>
+
+  <!-- The phone and the laptop, real models over everything (props-devices.js). -->
+  <canvas id="device" hidden></canvas>
+  <div id="fade"></div>
+  <button id="arrive-skip" class="btn small" hidden>Skip</button>
 
   <!-- A yes-or-no window, and pop-ups like Level Up. -->
   <div id="dialog" hidden></div>

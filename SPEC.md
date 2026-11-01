@@ -21,13 +21,19 @@
    against a ghost of your best lap, saved per track and car; Practice, just you and the road.
 9. **A career worth finishing.** From the docks to the top: Street (levels 0-100), GT3 (100-150),
    Formula (150-200 and on). Every race pays, you can never lose money, and cars cost real effort
-   (about 50 races and 6 hours to finish Street). Told in short pixel-art scenes.
+   (about 60 races and 6 hours to finish Street). Told in short pixel-art scenes.
+10. **A moment before the lights.** Career only: a 3 s scene of you pulling up (one press skips it),
+   your cockpit, a laptop for one-race upgrades (one press goes on), then the countdown. NOS is the
+   best of them, on Shift, a touch button and the right bumper.
 
 ## The story
-Your shift at the docks ends at 4 AM. Johnny, a middle-aged garage owner born in Yokohama who moved
-to America for the love of cars, lends you an Impreza. Max, named after the champ, is the rival.
-Johnny takes you back to the Tokyo tunnels where he learned; then home; then the Ring, where Aoi
-Tachibana, a GT3 scout, is watching. Beat Max at level 100 and sign. To be continued.
+It all takes place in Japan. You are a data analyst who times the street races after work. Johnny, a
+retired mechanic who moved here from America and never says where he was born, thinks you have talent:
+he lends you an Impreza and asks your name and nationality for the race sheet. His dream is to engineer
+and own his own racing team. Max, named after the champ, is the rival. Johnny takes you to the Tokyo
+tunnels where he learned; then the harbor; then the Ring, where Aoi Tachibana, a GT3 scout, is watching.
+Beat Max at level 100. Aoi offers the seat; you sign only with Johnny as your engineer, and that starts
+his team. To be continued.
 
 ## Look of the menus
 One look for every screen (David, 2026-11-01). The list at the top of `styles/main.css` is the
@@ -50,7 +56,8 @@ whole look: change a colour or a font there, once.
 - Behind the menus: the 3D scene, except the plain screens (Career, Shop, Settings).
 - Japanese: on screen titles and in the world only, never on buttons or rows.
 - Motion: quick and smooth. Lists slide in when a screen or tab opens, never on every click.
-- Banned: control hints outside Settings > Controls.
+- Banned: control hints outside Settings > Controls, except the laptop's NOS row.
+- Phone: the small button beside the gear. An old flip phone, a real model, tilted, on the right: inbox and updates.
 
 ## Milestones
 1. Foundation: loop, platform screen. **Done.**
@@ -82,6 +89,6 @@ whole look: change a colour or a font there, once.
 - Cyberpunk clutter (holograms, chrome everywhere) or a glossy modern look in the world.
   Shine is for the cars' paint and glass.
 - Real badges, logos or exact real car names (near-miss names are fine).
-- Performance parts or upgrades (scrapped, David, 2026-10-31). Faster means a faster car.
+- Permanent parts (scrapped, David, 2026-10-31). Faster for good means a faster car; upgrades last one race.
 - Multiplayer.
 - Online play.

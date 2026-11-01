@@ -4,11 +4,12 @@
 //
 // Driving: left stick steers, right trigger accelerates, left trigger brakes
 // and reverses, A / Cross is the handbrake, B / Circle shifts up and
-// X / Square down (manual), Y / Triangle changes camera, Start pauses.
+// X / Square down (manual), Y / Triangle changes camera, right bumper is NOS,
+// Start pauses.
 // Menus: d-pad or stick moves between buttons, A presses, B goes back.
 
 const DEAD = 0.12;
-const BTN = { a: 0, b: 1, x: 2, y: 3, lt: 6, rt: 7, start: 9, up: 12, down: 13, left: 14, right: 15 };
+const BTN = { a: 0, b: 1, x: 2, y: 3, rb: 5, lt: 6, rt: 7, start: 9, up: 12, down: 13, left: 14, right: 15 };
 
 export class GamepadSource {
   constructor() {
@@ -49,6 +50,7 @@ export class GamepadSource {
       handbrake: down(BTN.a),
       gearUp: pressed(BTN.b),
       gearDown: pressed(BTN.x),
+      nos: down(BTN.rb),
     };
     if (pressed(BTN.y)) this.onAction?.('camera');
     if (pressed(BTN.start)) this.onAction?.('pause');
@@ -69,8 +71,15 @@ export class GamepadSource {
     const now = performance.now();
     const down = (i) => !!p.buttons[i]?.pressed;
     const fresh = (i) => down(i) && !this.prev.has(i);
-    const top = game.screens.top;
-    if (top) {
+    const top = game.screens.top, dev = game.device;
+    if (game.state === 'arrive' && fresh(BTN.a)) game.endArrive();
+    else if (dev) {
+      const y = p.axes[1] || 0;
+      const dir = down(BTN.down) || y > 0.6 ? 1 : down(BTN.up) || y < -0.6 ? -1 : 0;
+      if (dir && now - this.lastNav > 180) { this.lastNav = now; dev.nav(dir); }
+      if (fresh(BTN.a)) dev.press();
+      if (fresh(BTN.b)) dev.go ? dev.go() : dev.back();
+    } else if (top) {
       const root = document.querySelector(`#scr-${top}`);
       const list = [...root.querySelectorAll('button, input')].filter((b) => b.offsetParent && !b.disabled);
       const y = p.axes[1] || 0, xa = p.axes[0] || 0;
