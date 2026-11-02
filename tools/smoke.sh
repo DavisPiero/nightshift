@@ -5,10 +5,12 @@
 # of game time through both cameras, and the check fails if the car did not
 # get up to speed, did not travel along the road, or (on iPad) the touch
 # controls were not on screen. Then runs the physics bench.
-# Exit code 0 = pass. Usage: ./tools/smoke.sh
+# Each test finds a free port of its own, so two tests can never collide. Exit code 0 = pass. Usage: ./tools/smoke.sh
+# ./tools/smoke.sh quick: two runs and the career bench, for small changes.
 cd "$(dirname "$0")/.." || exit 1
+[ "$1" = quick ] && QUICK=1
 CHROME="/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
-PORT=8799
+PORT=$(python3 -c 'import socket; s=socket.socket(); s.bind(("127.0.0.1", 0)); print(s.getsockname()[1])')
 python3 -m http.server $PORT --bind 127.0.0.1 >/dev/null 2>&1 &
 SERVER=$!
 trap 'kill $SERVER 2>/dev/null' EXIT
@@ -19,7 +21,9 @@ run() {
     --dump-dom "http://127.0.0.1:$PORT/index.html?smoke$1" 2>/dev/null | sed -n '/<pre id="smoke">/,/<\/pre>/p' | sed 's/<[^>]*>//g'
 }
 FAIL=0
-for ARGS in "" "&device=touch&weather=rain" "&track=underground&car=countach-qv" "&track=parabolica&weather=snow&time=dawn" "&track=mountain&weather=rain&time=sunset&race" "&race&difficulty=hard"; do
+set -- "" "&device=touch&weather=rain" "&track=underground&car=countach-qv" "&track=parabolica&weather=snow&time=dawn" "&track=mountain&weather=rain&time=sunset&race" "&race&difficulty=hard"
+[ "$1" = "" ] && [ "${QUICK:-}" = 1 ] && set -- "" "&race&difficulty=hard"
+for ARGS in "$@"; do
   OUT=$(run "$ARGS")
   if [ -z "$OUT" ]; then echo "SMOKE FAIL ($ARGS): the game did not load or did not finish"; FAIL=1; continue; fi
   echo "$OUT"
@@ -27,4 +31,4 @@ for ARGS in "" "&device=touch&weather=rain" "&track=underground&car=countach-qv"
 done
 [ $FAIL = 0 ] || exit 1
 node tools/career-bench.mjs || exit 1
-node tools/drive-bench.mjs
+[ "${QUICK:-}" = 1 ] || node tools/drive-bench.mjs

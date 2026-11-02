@@ -43,8 +43,8 @@ way they are, HANDOFF.md for how the last session ended. BRIEF.md is the origina
   (headless Chrome; see the top of the file for several shots, sizes and running JavaScript).
 - Smoke test (headless Chrome: computer/clear, iPad/rain, the Countash on the Underground,
   Parabolica Street in snow at dawn, a race on Yamagiri Pass in the rain, then a race against seven AI cars; a bot drives for 20 s
-  through both cameras, then the career and driving benches; about 8 minutes, so run it in the
-  background): `./tools/smoke.sh`
+  through both cameras, then the career and driving benches; about 20 minutes, so run it in the
+  background): `./tools/smoke.sh`. `./tools/smoke.sh quick` is two runs and the career bench, for small changes.
 - AI bench: `node tools/ai-bench.mjs` (about 5 minutes: races, rival tuning, lap times per difficulty). Run it after changing the AI, physics or a track.
 - Career bench: `node tools/career-bench.mjs` (a second). Run it after changing pay, prices, levels or events.
 - Driving bench (physics only, in Node: 0-100, braking, coasting, body lean, spins with/without
