@@ -200,6 +200,17 @@ export function buildTrackScene(track, def) {
       cones.push([x, 0.32, z, r() * 6]);
     }
   }
+  // What collects round a dock: drums, tyres, gas bottles, a rack of bins.
+  for (let k = 13; k < track.count; k += 53) {
+    if (r() < 0.35) continue;
+    const s = r() < 0.5 ? 1 : -1, off = track.wall + 1.6 + r() * 1.2;
+    const put = (id, b, o, ry, sc = 1, y = 0) => { const [x, z] = along(track.wrap(k + b), s, off + o); place.add(id, x, y, z, ry, sc); };
+    const heap = r();
+    if (heap < 0.3) { put('barrel', 0, 0, r() * 6); put('barrel', 0.8, 0.3, r() * 6); put('barrel', 0.3, 0.8, r() * 6); }
+    else if (heap < 0.55) { for (let i = 0; i < 4; i++) put('tyre', 0, 0, i, 1, i * 0.17); put('tyre', 0.9, 0.3, 1); }
+    else if (heap < 0.75) { put('propane', 0, 0, r() * 6); put('propane', 0.5, 0.15, r() * 6); put('trash-bag', 1, 0.2, r() * 6); }
+    else put('trash-cans', 0, 0.2, track.headingAt(track.wrap(k)));
+  }
   for (const b of bins) place.add('bin', b[0], 0, b[2], b[3]);
   for (const c of cones) place.add('cone', c[0], 0, c[2], c[3]);
 

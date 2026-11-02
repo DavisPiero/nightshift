@@ -22,6 +22,7 @@ import { Tex } from '../graphics/textures.js';
 import { buildCar, bakeStatic } from '../vehicles/car-model.js';
 import { SKYLINER_R34, CHALLENJER_SRT8 } from '../vehicles/cars.js';
 import { merge, placed } from './scene-kit.js';
+import { modelParts } from './models.js';
 
 // Materials are shared by every placement (and every track).
 const matCache = new Map();
@@ -43,12 +44,21 @@ let detail = 1;
 export const setSceneDetail = (k) => { detail = k; };
 export const sceneDetail = () => detail;
 
+// An asset that is a model from the CC0 library.
+const found = (id, name, jp, group) => ({ name, jp, group, note: 'Poly Haven, CC0.', kit: () => ({ parts: modelParts(id) }) });
+
 // Cards for leaves and blossom: see-through, both sides lit. `glow` lifts them a
 // little out of the dark, so blossom reads at night.
 function leafMat(key, tex, glow = 0, power = 0, side = THREE.DoubleSide) {
-  return mat('leaf' + key, () => new THREE.MeshLambertMaterial({ map: tex(), alphaTest: 0.5, side, emissive: glow, emissiveMap: glow ? tex() : null, emissiveIntensity: power }));
+  return mat('leaf' + key, () => {
+    const m = new THREE.MeshLambertMaterial({ map: tex(), alphaTest: 0.5, side, emissive: glow, emissiveMap: glow ? tex() : null, emissiveIntensity: power });
+    // A lamp in among the leaves must not burn them out to white.
+    m.onBeforeCompile = (s) => { s.fragmentShader = s.fragmentShader.replace('#include <opaque_fragment>', 'outgoingLight = min(outgoingLight, vec3(0.62)) ;\n#include <opaque_fragment>'); };
+    return m;
+  });
 }
-const barkMat = () => mat('bark', () => new THREE.MeshLambertMaterial({ map: Tex.bark() }));
+// Bark: a photograph of the real tree's, where there is one.
+const barkMat = (kind) => mat('bark' + kind, () => new THREE.MeshLambertMaterial({ map: (kind && Tex.photo(kind)) || Tex.bark(), normalMap: kind ? Tex.photoNormal(kind) : null }));
 
 // A crown: n cards scattered through an ellipsoid, facing outward. Their normals
 // point out from its middle, so the whole crown shades like one soft round
@@ -218,6 +228,20 @@ export const ASSETS = {
     name: 'Wheelie bin', jp: 'ゴミ箱', group: 'Street',
     kit: () => ({ parts: [part(new THREE.BoxGeometry(0.7, 1.1, 0.7), lambert(0x2a3a2c), { y: 0.55 })] }),
   },
+  barrier: found('concrete_road_barrier', 'Concrete barrier', 'コンクリ壁', 'Street'),
+  hydrant: found('fire_hydrant', 'Fire hydrant', '消火栓', 'Street'),
+  aircon: found('exterior_aircon_unit', 'Air-con unit', '室外機', 'Street'),
+  'utility-box': found('utility_box_02', 'Utility box', '配電箱', 'Street'),
+  'power-box': found('power_box_01', 'Power box', '電源箱', 'Street'),
+  'trash-cans': found('metal_trash_can', 'Rack of bins', 'ゴミ箱', 'Street'),
+  'trash-bag': found('trashbag', 'Rubbish bag', 'ゴミ袋', 'Street'),
+  tyre: found('old_tyre', 'Old tyre', '古タイヤ', 'Street'),
+  barrel: found('barrel_03', 'Oil drum', 'ドラム缶', 'Street'),
+  propane: found('propane_tank', 'Gas bottle', 'ガス', 'Street'),
+  'covered-car': found('covered_car', 'Car under a sheet', 'カバー車', 'Street'),
+  boulder: found('boulder_01', 'Boulder', '岩', 'Mountain'),
+  'rock-face': found('rock_face_01', 'Rock face', '岩肌', 'Mountain'),
+  'real-fern': found('fern_02', 'Fern', '羊歯', 'Nature'),
   'power-pole': {
     name: 'Power pole', jp: '電柱', group: 'Street',
     note: 'Wooden pole with a cross-arm; the wires are strung by the track.',
@@ -249,7 +273,7 @@ export const ASSETS = {
     note: 'In full blossom: a wide umbrella of flower on a dark crooked trunk. Lines Parabolica Street; takes the lamps well.',
     kit: () => ({
       parts: [
-        { geo: limbs(0.34, 2.8, 3.2, 1.5, 5), mat: barkMat(), shadow: false },
+        { geo: limbs(0.34, 2.8, 3.2, 1.5, 5), mat: barkMat('sakura'), shadow: false },
         { geo: crown({ n: 90, rx: 5.2, ry: 2.3, rz: 5.2, cy: 5.0, size: 2.1, seed: 9 }), mat: leafMat('blossom', Tex.blossom, 0xff9cc0, 0.2, THREE.FrontSide), shadow: true },
       ],
     }),
@@ -270,7 +294,7 @@ export const ASSETS = {
       }
       return {
         parts: [
-          part(new THREE.CylinderGeometry(0.1, 0.42, 21, 7), barkMat(), { y: 10.5 }),
+          part(new THREE.CylinderGeometry(0.1, 0.42, 21, 7), barkMat('cedar'), { y: 10.5 }),
           { geo: merge(tiers), mat: leafMat('cedartier', Tex.cedarTier), shadow: true },
         ],
       };

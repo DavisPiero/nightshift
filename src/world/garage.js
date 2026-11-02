@@ -9,6 +9,7 @@
 // It is its own scene: the car is moved into it for the Garage and car-pick
 // screens.
 
+import { modelMesh } from './models.js';
 import * as THREE from 'three';
 import { Tex } from '../graphics/textures.js';
 
@@ -80,13 +81,15 @@ export function buildGarage() {
   for (let i = 0; i < 6; i++) add(new THREE.BoxGeometry(0.02, 0.03, 0.5), new THREE.MeshStandardMaterial({ color: 0xc8ccd0, metalness: 1, roughness: 0.3 }), W / 2 - 0.81, 0.2 + i * 0.18, 1.6);
   const tyre = new THREE.CylinderGeometry(0.33, 0.33, 0.24, 14);
   const rubber = new THREE.MeshLambertMaterial({ color: 0x121314 });
-  for (let i = 0; i < 4; i++) add(tyre, rubber, W / 2 - 0.6, 0.12 + i * 0.25, -D / 2 + 0.7, i * 0.4);
-  for (let i = 0; i < 3; i++) add(tyre, rubber, W / 2 - 1.35, 0.12 + i * 0.25, -D / 2 + 0.6, i * 0.3);
+  for (let i = 0; i < 5; i++) group.add(modelMesh('old_tyre', W / 2 - 0.6, i * 0.165, -D / 2 + 0.7, i * 0.9, 1.05));
+  for (let i = 0; i < 3; i++) group.add(modelMesh('old_tyre', W / 2 - 1.35, i * 0.165, -D / 2 + 0.6, i * 0.7, 1.05));
+  group.add(modelMesh('tool_cart', W / 2 - 0.9, 0, -0.6, -Math.PI / 2 + 0.15));
+  group.add(modelMesh('metal_tool_chest', -0.6, 0.99, -D / 2 + 0.42, 0.1, 0.8));
+  group.add(modelMesh('barrel_03', -W / 2 + 0.5, 0, -2.5, 1));
   const card = new THREE.MeshLambertMaterial({ color: 0x9a7448 });
   add(new THREE.BoxGeometry(0.6, 0.45, 0.5), card, -W / 2 + 0.6, 0.23, 3.1, 0.3);
   add(new THREE.BoxGeometry(0.45, 0.35, 0.4), card, -W / 2 + 0.55, 0.62, 3.05, -0.2);
   add(new THREE.BoxGeometry(0.5, 0.4, 0.5), card, W / 2 - 0.7, 0.2, 3.4, 0.6);
-  add(new THREE.CylinderGeometry(0.3, 0.3, 0.9, 12), new THREE.MeshLambertMaterial({ color: 0x1f4a6a }), -W / 2 + 0.5, 0.45, -2.5);
   add(new THREE.ConeGeometry(0.18, 0.5, 8), new THREE.MeshLambertMaterial({ map: Tex.cone() }), -3.6, 0.25, 3.9);
 
   // --- Workshop: structure, a working bench, tools, lifting gear ---

@@ -471,6 +471,11 @@ input[type=range]::-moz-range-thumb { width: 12px; height: 22px; border: 0; bord
 #race-big { position: absolute; left: 50%; top: 26%; transform: translate(-50%, -50%); font: 170px/1 var(--px); color: var(--white); text-shadow: 0 4px 24px rgba(0, 0, 0, 0.7); pointer-events: none; }
 #race-big.go { color: var(--amber); font-size: 120px; }
 #race-big.on { animation: lamp 260ms var(--ease) both; }
+#race-big.word { color: var(--amber); font-size: 76px; white-space: nowrap; }
+#rt-pos.up { animation: place-up 700ms var(--ease); }
+#rt-pos.down { animation: place-down 700ms var(--ease); }
+@keyframes place-up { 0% { color: var(--teal); transform: scale(1.5); } 100% { transform: scale(1); } }
+@keyframes place-down { 0% { color: var(--white); transform: scale(0.75); } 100% { transform: scale(1); } }
 @keyframes lamp { from { transform: translate(-50%, -50%) scale(1.4); opacity: 0.4; } to { transform: translate(-50%, -50%); } }
 #nos { position: absolute; left: 50%; bottom: max(14px, var(--sb)); transform: translateX(calc(-100% - 112px)); display: flex; align-items: center; gap: 8px; padding: 4px 10px 6px; background: var(--panel); border: 1px solid var(--line); }
 #nos small { font: 24px/1 var(--px); color: var(--amber); -webkit-text-stroke: 0; }

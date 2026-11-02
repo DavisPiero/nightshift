@@ -1,6 +1,7 @@
 // NIGHTSHIFT start-up: builds the world, the car and the systems, and runs
 // the game states: menus (main, drive, garage, settings), driving and paused.
 
+import { worldReady } from './world/models.js';
 import * as THREE from 'three';
 import { GRAPHICS, defaultGraphicsFor, URL_FLAGS } from './core/config.js';
 import { Loop } from './core/loop.js';
@@ -49,7 +50,7 @@ import { showNotice } from './ui/notice.js';
 import { upgradedSpec, NOS_SECONDS } from './career/upgrades.js';
 
 const FINISH_MAX = 8, FINISH_PAUSE = 0.9; // seconds: the longest slide to a stop, and the beat after it before the pay
-const ARRIVE_ROLL = 3; // seconds rolling up to the grid; a moment's stop follows
+const ARRIVE_ROLL = 3.2, ARRIVE_ROAD = 28; // seconds and metres rolling up to your place; a moment's stop follows
 
 const _sun = new THREE.Vector3(), _dir = new THREE.Vector3();
 
@@ -417,11 +418,13 @@ class Game {
     if (this.state === 'loading') { this.controls.releaseAll(); this.state = 'driving'; }
   }
 
-  // --- before a career race: pull up to the grid (a few seconds, one press
-  // skips it), a fade, the laptop, then the lights. ---
+  // --- before any race, Time Trial or Practice: roll up to your place (a few
+  // seconds, one press skips it), a fade, then the lights. The career has the
+  // laptop before them. ---
   arrive() {
-    const p = this.race.player, t = this.track;
+    const t = this.track, p = this.race?.player ?? { index: t.nearest(this.vehicle.x, this.vehicle.z).index, offset: 0 };
     this.state = 'arrive';
+    if (this.race) this.raceView.clearLane(p); // nothing in your lane to go round
     this.model.setBeams?.(false); // cones of light look like discs from in front
     this.hud.show(false);
     this.touch.show(false);
@@ -432,19 +435,18 @@ class Game {
     this.arrival.cam = [t.x[i] + t.leftX(i) * out, t.z[i] + t.leftZ(i) * out];
   }
 
-  // The car rolls along the middle of the road, eases over into its slot and
-  // pulls up on the brakes, the body dipping and settling, then the engine
-  // blips. The physics is not running: it is only put where the picture wants
+  // The car rolls straight up its own lane and pulls up on the brakes, the body
+  // dipping and settling, then the engine blips. The physics is not running: it is only put where the picture wants
   // it. The camera is a person at the kerb: it follows a moment late and
   // drifts a little in the hand.
   arriveFrame(dt) {
     const a = this.arrival, v = this.vehicle, t = this.track, s = v.spec;
     a.t += dt;
-    const k = Math.min(1, a.t / ARRIVE_ROLL), left = 44 * (1 - k) ** 1.8;
+    const k = Math.min(1, a.t / ARRIVE_ROLL), left = ARRIVE_ROAD * (1 - k) ** 1.7;
     const at = a.index - left, j = t.wrap(Math.floor(at)), n = t.wrap(j + 1), f = at - Math.floor(at);
-    const over = Math.max(0, Math.min(1, 1 - left / 16)), o = a.offset * over * over * (3 - 2 * over);
-    const was = [v.x, v.z], mix = (p, q) => p + (q - p) * f;
+    const o = a.offset, was = [v.x, v.z], mix = (p, q) => p + (q - p) * f;
     v.x = mix(t.x[j], t.x[n]) + t.leftX(j) * o; v.z = mix(t.z[j], t.z[n]) + t.leftZ(j) * o;
+    settleOnRoad(v, t, { index: j, along: f });
     const moved = Math.hypot(v.x - was[0], v.z - was[1]), step = Math.max(dt, 1e-3), speed = moved / step;
     // Points where it is going, and the front wheels turn to match.
     const road = t.headingAt(j), aim = moved > 0.004 ? Math.atan2(v.x - was[0], v.z - was[1]) : road;
@@ -486,7 +488,9 @@ class Game {
     setTimeout(() => {
       this.vehicle.reset(a.x, a.z, a.heading);
       settleOnRoad(this.vehicle, this.track, this.track.nearest(a.x, a.z));
-      this.prepare();
+      this.raceView.showAll();
+      if (this.raceSetup?.event) this.prepare();
+      else { this.cameras.set(this.cameras.mode, this.carRef()); this.lights(); }
       fade.classList.remove('on');
     }, 260);
   }
@@ -715,11 +719,13 @@ class Game {
     if (race.otherHit) { // two rivals touching, as loud as it is close
       const h = race.otherHit, near = 1 / (1 + (Math.hypot(h.x - this.vehicle.x, h.z - this.vehicle.z) / 18) ** 2);
       if (near > 0.1) this.audio.fx('knock', Math.min(1, h.closing / 15) * near);
+      if (near > 0.05 && h.closing > 2) this.effects.hit({ x: h.x, z: h.z, nx: 0, nz: 0 }, Math.min(8, h.closing), h.vehicle); // and sparks, as yours are
     }
     if (race.state === 'racing') { // a place gained or lost, a lap done
       if (this.heardPlace && p.place !== this.heardPlace) this.audio.ui(p.place < this.heardPlace ? 'gain' : 'lose');
       this.heardPlace = p.place;
       if (p.lap > this.heardLap && !p.done) this.audio.ui(p.best === p.lapTimes.at(-1) && p.lap > 1 ? 'best' : 'lap');
+      if (p.lap > this.heardLap && !p.done && p.lap === race.laps - 1) this.hud.callout('Final lap');
       this.heardLap = p.lap;
     }
     if (race.lights !== was && race.state === 'countdown' && race.lights <= 3) this.audio.ui('count');
@@ -1015,7 +1021,7 @@ window.addEventListener('error', (e) => {
 // after a moment without it if it cannot load (offline).
 const fontReady = URL_FLAGS.smoke ? Promise.resolve()
   : Promise.race([document.fonts?.load('20px "Jersey 10"') ?? Promise.resolve(), new Promise((r) => setTimeout(r, 1500))]);
-fontReady.catch(() => {}).then(() => carsReady).finally(() => {
+fontReady.catch(() => {}).then(() => Promise.all([carsReady, worldReady])).finally(() => {
   if (URL_FLAGS.library) { document.querySelector('#boot')?.remove(); import('./ui/library.js').then((m) => m.startLibrary(URL_FLAGS)); return; }
   const game = new Game();
   if (URL_FLAGS.smoke) game.smoke = new SmokeTest();

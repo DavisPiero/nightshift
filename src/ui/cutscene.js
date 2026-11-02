@@ -88,7 +88,7 @@ export class Cutscene {
     this.spriteOn = sprite;
     if (!p) { this.mood = null; return; }
     if (!sprite) { this.mood = null; f.src = `assets/story/face-${line.who}.png`; f.classList.remove('in'); void f.offsetWidth; f.classList.add('in'); return; }
-    const mood = line.mood || 'plain', changed = mood !== this.mood;
+    const mood = line.mood || p.rest || 'plain', changed = mood !== this.mood;
     this.mood = mood;
     if (!changed) return;
     f.src = `assets/story/${line.who}/${mood}.png`;

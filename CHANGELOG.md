@@ -1,5 +1,16 @@
 # Changelog
 
+## David's and Arlo's notes on Part 4 (2026-11-02)
+- Drifts ease in and out: the tyres hand the car over instead of a switch, the click is gone, and tyre noise and smoke rise with the slide.
+- You just roll up: straight up your own lane, nothing to go round, and now before Race, Time Trial and Practice too.
+- Johnny's favour is 10% off the muscle cars, the Mustank and the Challenjer.
+- Dave's cigarette is his resting pose, in the Shop and in his scenes.
+- Free CC0 photos and models from Poly Haven: rock, soil, concrete, sakura and cedar bark, tin; boulders, rock faces, ferns, drums, tyres, gas bottles, bins, hydrants, boxes, air-con, tools and a car under a sheet.
+- The mountain's steep ground is real rock, laid on from three sides so it no longer stretches.
+- Home screen: the Shop tile is Dave's lot and the Garage tile is the car, no black laptop. Dave's sign clears the top bar.
+- Lamps no longer burn blossom out to white. The car sits clear of the rev dial. Rivals throw sparks when they hit each other.
+- A Final lap call, and your place jumps when it changes.
+
 ## Arlo's fourth notes, part 4 (2026-11-02)
 - Contacts on your phone: Johnny's favour (10% off one type of car, once a day), Dave's jobs (15% off any car), Sonny's invites (one a day, CR 500, one try, podium or nothing, big money).
 - The handbrake gives you a clean drift that holds and straightens by itself.

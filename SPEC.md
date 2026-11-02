@@ -4,7 +4,7 @@
 1. **In the car within seconds.** Career, Race: two taps to the next race. Or Race, track, car, race
    settings, Race: four taps, each screen remembering your last pick.
 2. **Driving that forgives.** The car has weight and slides, but assists catch spins,
-   countersteer for you a little and hold a drift once it starts. The handbrake with the wheel over gives a clean drift that holds and straightens by itself. A kid with a keyboard
+   countersteer for you a little and hold a drift once it starts. The handbrake with the wheel over gives a clean drift that eases in, holds and eases out by itself; it never switches on. A kid with a keyboard
    or an iPad should be able to drift on the first lap and never spin into a wall by accident.
 3. **It sounds like a real engine.** Deep, layered, reacts to throttle, gear changes and
    lift-off. Never a mosquito.
@@ -22,8 +22,8 @@
 9. **A career worth finishing.** From the docks to the top: Street (levels 0-100), GT3 (100-150),
    Formula (150-200 and on). Every race pays, an event can never lose you money (only Sonny's invites can: CR 500, one try,
    podium or nothing), and cars cost real effort (about 60 races and 6 hours to finish Street). Told in short pixel-art scenes.
-10. **A moment before the lights.** Career only: a short scene of you pulling up (one press skips it),
-   a laptop over whichever camera you had on (one press goes on), then the countdown. It has two
+10. **A moment before the lights.** Every race, Time Trial and Practice: you roll straight up your lane to your place (one press skips it), then the lights.
+   Career only: a laptop first, over whichever camera you had on (one press goes on). It has two
    tabs: Upgrades, and Analytics (every driver, their car and numbers, their style, who is most likely
    to be trouble, the predicted standings). NOS is the best of them, on Shift, a touch button and the right bumper: 30% more speed,
    climbing to 35% if you hold it, with blue fire, a roar and camera shake.
@@ -67,7 +67,7 @@ whole look: change a colour or a font there, once.
 2. Desktop driving: coupe, physics, keyboard, two cameras, debug, test road. **Done, signed off 2026-10-25.**
 3. iPad controls, plus David's first-drive notes: touch controls, physics fixes (lean,
    lift-off, collisions), pixel menus, settings in four tabs, weather, effects, a fuller
-   track, the R34 and a proper cockpit. **In progress.** (This pulled in parts of 5, 7 and 8.)
+   track, the R34 and a proper cockpit. **Done.** (This pulled in parts of 5, 7 and 8.)
 4. Feel, garage and world (David's second notes), in three parts: (1) feel pass, Feel
    panel, ratings, parts, controllers, the Challenjer. **Done, signed off 2026-10-25.** (2) The
    garage: workshop, visual and performance mods, dyno, named builds. **Done, signed off
@@ -79,12 +79,13 @@ whole look: change a colour or a font there, once.
    Look pass (David's third notes, 2026-10-26): neon Japan menus, new track and car pick
    layouts, the Underground track, rebuilt car bodies and a third car (R35), paint
    reflections, the garage room. **Done, signed off 2026-10-26.**
-5. Night circuit: a second, full track.
+5. Night circuit: a second, full track. **Done** (the Underground, then Parabolica Street and Yamagiri Pass).
 6. Realism overhaul (M6, started 2026-10-28; GLB cars done, 2026-10-31). Then the career (2026-10-31):
    racing, four difficulties, money and levels, the shop, the story. **Street stage done.**
    Arlo's fourth notes (2026-11-01), in three parts: (1) feel, road, headlights, phone bin. **Done.**
    (2) Analytics, laptops in Shop and Garage, Dave's lot. **Done.** (3) Quick fixes, Parabolica in blossom, Yamagiri Pass,
    trackside models, far scenery baked into the sky. **Done.** (4) Contacts, favours, Sonny, quests, drift, finishes, sound, High without pixels, the car in its world. **Done.**
+   Notes on Part 4 (2026-11-02): smooth drifts, the plain roll-up everywhere, muscle-car favour, CC0 photos and props, a nitpick pass. **Done.**
 7. GT3 and Formula: their cars, circuits and story. Needs models from David.
 8. Saving and settings: the rest (most of it is done in 3).
 9. Polish and release.

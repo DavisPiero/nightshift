@@ -10,7 +10,7 @@ import { levelFor, cr } from '../career/career.js';
 import { buildSpec } from '../vehicles/tuning.js';
 import { fillStats } from './stats-view.js';
 import { carCard, lockedCard } from './car-cards.js';
-import { daveOnCar, daveOnLife, daveOnJob } from '../career/dave.js';
+import { daveOnCar, daveOnLife, daveOnJob, DAVE_REST } from '../career/dave.js';
 import { priceOf, paid } from '../career/contacts.js';
 import { currentQuest } from '../career/quests.js';
 
@@ -60,6 +60,9 @@ export class Shop {
     const lot = this.game.lot;
     lot?.setDave(mood);
     clearTimeout(this.blinkAt);
+    clearTimeout(this.restAt);
+    // Said his piece: back to the cigarette (David: it is his default).
+    this.restAt = setTimeout(() => { clearTimeout(this.blinkAt); lot?.setDave(DAVE_REST); }, 1400 + text.length * 60);
     if (!BLINKS.includes(mood)) return;
     const blink = () => {
       this.blinkAt = setTimeout(() => {

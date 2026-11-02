@@ -13,6 +13,25 @@ import { Placer, sceneDetail } from './assets.js';
 import { skyBackdrop, reflectSky } from './track-scene.js';
 import { fbm } from './mountain.js';
 
+// Photographed rock on the steep ground. Laid on from three sides by where the
+// ground really is, so a cliff is never one tile dragged down its face.
+function rockOnSteeps(m) {
+  m.userData.snow = { value: 0 };
+  const rock = Tex.photo('rock');
+  if (!rock) return;
+  m.onBeforeCompile = (s) => {
+    s.uniforms.rockMap = { value: rock };
+    s.uniforms.snow = m.userData.snow;
+    s.vertexShader = s.vertexShader.replace('#include <common>', '#include <common>\nattribute float rocky; varying float vRocky; varying vec3 vPlace; varying vec3 vUp;')
+      .replace('#include <begin_vertex>', '#include <begin_vertex>\nvRocky = rocky; vPlace = position; vUp = normal;');
+    s.fragmentShader = s.fragmentShader.replace('#include <common>', '#include <common>\nuniform sampler2D rockMap; uniform float snow; varying float vRocky; varying vec3 vPlace; varying vec3 vUp;')
+      .replace('#include <color_fragment>', `#include <color_fragment>
+      vec3 side = pow(abs(normalize(vUp)), vec3(4.0)); side /= side.x + side.y + side.z;
+      vec3 stone = texture2D(rockMap, vPlace.zy / 11.0).rgb * side.x + texture2D(rockMap, vPlace.xz / 11.0).rgb * side.y + texture2D(rockMap, vPlace.xy / 11.0).rgb * side.z;
+      diffuseColor.rgb = mix(diffuseColor.rgb, stone * vec3(0.92, 0.9, 0.86), vRocky * (1.0 - snow * 0.7));`);
+  };
+}
+
 const GRID = 5, MARGIN = 240, TILE = 24; // metres between ground points, how far it runs past the road, points to a tile
 const smooth = (a, b, x) => { const t = Math.max(0, Math.min(1, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
 
@@ -72,12 +91,13 @@ export function buildMountain(track, def) {
   // Cut into tiles, so the mountain behind you is not drawn. Normals come from
   // the whole height map, so tiles join without a seam. Rock where it is steep,
   // forest floor where it is not, snow swapped in for the weather.
-  const groundMat = new THREE.MeshLambertMaterial({ map: Tex.soil(), vertexColors: true });
+  const groundMat = new THREE.MeshLambertMaterial({ map: Tex.soil(), vertexColors: true, normalMap: Tex.photoNormal('soil') });
+  rockOnSteeps(groundMat);
   const tiles = [];
-  const soilA = new THREE.Color(0x3a4630), soilB = new THREE.Color(0x4a4030), rock = new THREE.Color(0x66645c), c = new THREE.Color();
+  const soilA = new THREE.Color(0x8a9a78), soilB = new THREE.Color(0xa09078), c = new THREE.Color();
   for (let tj = 0; tj < nz - 1; tj += TILE) for (let ti = 0; ti < nx - 1; ti += TILE) {
     const w = Math.min(TILE, nx - 1 - ti) + 1, d = Math.min(TILE, nz - 1 - tj) + 1;
-    const pos = new Float32Array(w * d * 3), nor = new Float32Array(w * d * 3), uv = new Float32Array(w * d * 2), dry = new Float32Array(w * d * 3), white = new Float32Array(w * d * 3), idx = [];
+    const pos = new Float32Array(w * d * 3), nor = new Float32Array(w * d * 3), uv = new Float32Array(w * d * 2), dry = new Float32Array(w * d * 3), white = new Float32Array(w * d * 3), rocky = new Float32Array(w * d), idx = [];
     for (let j = 0; j < d; j++) for (let i = 0; i < w; i++) {
       const gi = ti + i, gj = tj + j, p = (j * w + i), x = x0 + gi * GRID, z = z0 + gj * GRID;
       const y = H[gj * nx + gi];
@@ -87,7 +107,8 @@ export function buildMountain(track, def) {
       nor.set([-dx / l, GRID * 2 / l, -dz / l], p * 3);
       uv.set([x / 14, z / 14], p * 2);
       const slope = Math.hypot(dx, dz) / (GRID * 2);
-      c.copy(soilA).lerp(soilB, fbm(x * 0.03, z * 0.03, 3)).lerp(rock, smooth(0.65, 1.05, slope + (fbm(x * 0.08, z * 0.08, 2) - 0.5) * 0.4));
+      rocky[p] = smooth(0.5, 0.95, slope + (fbm(x * 0.08, z * 0.08, 2) - 0.5) * 0.5);
+      c.copy(soilA).lerp(soilB, fbm(x * 0.03, z * 0.03, 3));
       dry.set([c.r, c.g, c.b], p * 3);
       const s = 0.95 - smooth(0.9, 1.4, slope) * 0.45;
       white.set([s * 1.0, s * 1.02, s * 1.08], p * 3);
@@ -98,6 +119,7 @@ export function buildMountain(track, def) {
     g.setAttribute('normal', new THREE.BufferAttribute(nor, 3));
     g.setAttribute('uv', new THREE.BufferAttribute(uv, 2));
     g.setAttribute('color', new THREE.BufferAttribute(dry.slice(), 3));
+    g.setAttribute('rocky', new THREE.BufferAttribute(rocky, 1));
     g.setIndex(idx);
     const m = new THREE.Mesh(g, groundMat);
     m.receiveShadow = true;
@@ -270,6 +292,27 @@ export function buildMountain(track, def) {
     tones.push(shade.setRGB(v * (0.85 + r() * 0.3), v, v * (0.9 + r() * 0.2)).getHex());
     place.add('cedar-card', x, y, z, ry, [s, s * (0.9 + r() * 0.3), s], tones[tones.length - 1]);
   }
+  // Rock by the road: boulders fallen from above, and faces of it where the
+  // ground rises. Real ferns close to the road, where you can see them.
+  for (let k = 0; k < n; k += 17) {
+    if (r() < 0.45) continue;
+    const s = r() < 0.5 ? 1 : -1, [x, z] = along(k, s * (W + 2.2 + r() * 6));
+    if (near2(x, z) < (W + 1.6) ** 2) continue;
+    place.add('boulder', x, heightAt(x, z) - 0.25, z, r() * 6, 0.45 + r() * 0.7);
+  }
+  for (let k = 7; k < n; k += 53) {
+    const [ax, az] = along(k, W + 8), [bx, bz] = along(k, -(W + 8)), high = heightAt(ax, az) > heightAt(bx, bz);
+    const [x, z] = high ? [ax, az] : [bx, bz];
+    if (near2(x, z) < (W + 4.5) ** 2) continue;
+    place.add('rock-face', x, heightAt(x, z) - 1.4, z, head(k) + (high ? -1.57 : 1.57) + (r() - 0.5) * 0.7, 0.8 + r() * 0.5);
+  }
+  for (let k = 0, ferns = 0; k < n && ferns < 150 * sceneDetail(); k += 5) {
+    if (r() < 0.5) continue;
+    const s = r() < 0.5 ? 1 : -1, [x, z] = along(k, s * (W + 1.7 + r() * 2.4));
+    if (near2(x, z) < (W + 1.2) ** 2) continue;
+    place.add('real-fern', x, heightAt(x, z), z, r() * 6, 0.4 + r() * 0.3);
+    ferns++;
+  }
   for (let k = 0; k < n; k += 3) for (const off of [W + 2.6, -(W + 4.4)]) {
     if (r() < 0.45) continue;
     if (Math.sign(off) < 0 && r() < 0.5) continue;
@@ -291,6 +334,7 @@ export function buildMountain(track, def) {
     setSnow(on) {
       for (const m of tiles) { m.geometry.attributes.color.array.set(on ? m.userData.white : m.userData.dry); m.geometry.attributes.color.needsUpdate = true; }
       groundMat.map = on ? null : Tex.soil(); groundMat.needsUpdate = true;
+      groundMat.userData.snow.value = on ? 1 : 0;
       // Snow on the boughs: the same pictures, frosted pale.
       group.traverse((o) => { const m = o.material; if (o.isInstancedMesh && m?.map && cardMats.some((t) => t() === m.map)) m.color.setHex(on ? 0xc8d4e0 : 0xffffff); });
     },

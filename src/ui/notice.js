@@ -3,17 +3,15 @@
 // nothing to compare with, gets none.
 
 const NOTICE = {
-  id: '2026-11-02-notes4-4',
+  id: '2026-11-02-notes5',
   subject: 'What’s new',
   lines: [
-    'Your phone has Contacts. Johnny does favours, Dave has jobs, and Sonny has races that cost you if you lose them.',
-    'The handbrake gives you a proper drift now.',
-    'Hold the throttle in the countdown to warm your tyres.',
-    'Take the lead and they come after you.',
-    'Finish with a slide to a stop and watch your pay count up.',
-    'More tracks earlier in the career.',
-    'Sound for everything, and you can hear the other cars.',
-    'High graphics has no pixels now. Cars sit in the light of the road they are on.',
+    'Drifts ease in and out now, with no click.',
+    'You just roll up to the line, in every kind of race.',
+    'Johnny’s favour is 10% off the muscle cars.',
+    'Dave has gone back to his cigarette.',
+    'Real rock, bark, concrete and junk at the side of the road.',
+    'A Final lap call, and your place jumps when it changes.',
   ],
 };
 

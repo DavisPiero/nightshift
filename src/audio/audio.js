@@ -482,9 +482,7 @@ export class GameAudio {
       if (this._shifts !== undefined && v.gearbox.gear > 0) this.engine.shift(v.gearbox.lastShift > 0, !!v.spec.turbo);
       this._shifts = v.gearbox.shiftCount;
     }
-    // The car's own events: the lever, the tail letting go, the bottle opening.
-    if (v.drift && !this._drift) this.fx('chirp');
-    this._drift = !!v.drift;
+    // The car's own events: the bottle opening.
     if (v.nosOn && !this._nos) this.fx('nos');
     this._nos = v.nosOn;
     this.scrape *= Math.exp(-dt * 7);
@@ -541,7 +539,7 @@ export class GameAudio {
     playFx(this.ctx, this.fxBus, this.noise, kind, Math.min(1, speed / 15));
   }
 
-  // A sound in the world: wall, knock, ratchet, chirp, kerb, whoosh, nos.
+  // A sound in the world: wall, knock, ratchet, kerb, whoosh, nos.
   fx(kind, v = 1, pan = 0) {
     if (!this.ctx || this.ctx.state !== 'running') return;
     playFx(this.ctx, this.fxBus, this.noise, kind, v, pan);

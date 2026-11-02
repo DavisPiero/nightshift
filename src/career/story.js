@@ -15,7 +15,7 @@ export const PEOPLE = {
   johnny: { name: 'Johnny', jp: 'ジョニー', sprite: true, voice: 0.3 },
   max: { name: 'Max', jp: 'マックス', voice: 0.55 },
   aoi: { name: 'Aoi Tachibana', jp: '橘', voice: 0.8 },
-  dave: { name: 'Dave', jp: 'デイブ', sprite: true, voice: 0.1 },
+  dave: { name: 'Dave', jp: 'デイブ', sprite: true, voice: 0.1, rest: 'smoke' },
   sonny: { name: 'Sonny', jp: 'ソニー', voice: 1 },
 };
 

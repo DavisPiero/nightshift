@@ -29,6 +29,7 @@ All controls are listed (and keys can be changed) in Settings > Controls. The to
 layout can be dragged into place there too.
 
 ## Credits
+World textures and props: [Poly Haven](https://polyhaven.com), CC0 (`tools/fetch-cc0.mjs` lists each one).
 
 Car bodies and cabins are captured from these 3D models (badges and logos removed, sorted into
 the game's own materials, see `tools/capture-car.mjs`). All are from Sketchfab, used under Creative

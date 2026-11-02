@@ -78,7 +78,7 @@ check(!shop.length, 'every Street car should be affordable by the end');
   const car = CARS.find((x) => x.id === 'mustank-gt500'), other = CARS.find((x) => x.id === 'countach-qv');
   check(contacts(c).length === 1, 'only Johnny at the start');
   check(priceOf(save, car).pct === 0, 'no deal before a favour');
-  c.favours.johnny = { at: base, type: 'american' };
+  c.favours.johnny = { at: base };
   check(priceOf(save, car).price === 49500 && priceOf(save, other).pct === 0, 'Johnny: 10% off one type only');
   call(save, 'johnny');
   check(c.favours.johnny.at === base, 'one favour every 24 hours');
@@ -117,7 +117,7 @@ check(!shop.length, 'every Street car should be affordable by the end');
   check(deal.pct === VOUCHER_OFF && deal.who === 'Dave', 'a voucher is 15% off any car');
   paid(save, deal);
   check(c.vouchers === QUESTS.length - 1, 'a voucher is spent once');
-  const seenWith = c.vouchers; c.vouchers = 0; c.favours.johnny = { at: base, type: 'american' }; c.vouchers = seenWith;
+  const seenWith = c.vouchers; c.vouchers = 0; c.favours.johnny = { at: base }; c.vouchers = seenWith;
   check(priceOf(save, car).pct === VOUCHER_OFF, 'the best deal applies, not both');
 }
 if (failed) { console.log(`\n${failed} check(s) failed`); process.exit(1); }

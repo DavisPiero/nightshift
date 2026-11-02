@@ -136,17 +136,21 @@ console.log('Handbrake drift');
     applyWeather(v, w);
     while (kmh(v) < 100) v.step(DT, controls({ throttle: 1 }));
     const start = v.speed, h0 = v.heading;
-    let max = 0, t = 0, entered = false;
-    for (; t < 3; t += DT) { v.step(DT, controls({ steer: -1, throttle: 0.8, handbrake: t < 0.2 })); max = Math.max(max, Math.abs(v.slipAngle)); entered ||= !!v.drift; }
+    let max = 0, t = 0, entered = false, jolt = 0, slideStep = 0;
+    // A jolt is the sharpest change of the nose's rotation, in rad/s per second.
+    const stepped = (c) => { const y = v.yawRate, r = v.rearSlide; v.step(DT, c); jolt = Math.max(jolt, Math.abs(v.yawRate - y) / DT); slideStep = Math.max(slideStep, Math.abs(v.rearSlide - r)); };
+    for (; t < 3; t += DT) { stepped(controls({ steer: -1, throttle: 0.8, handbrake: t < 0.2 })); max = Math.max(max, Math.abs(v.slipAngle)); entered ||= !!v.drift; }
     const held = v.speed, turned = v.heading - h0, slide = Math.abs(v.slipAngle);
     let back = 0;
-    while (v.drift && back < 2) { v.step(DT, controls({ throttle: 0.8 })); back += DT; }
-    console.log(`  ${car.model.padEnd(22)} ${w.padEnd(5)} slide ${deg(max)} deg, held ${deg(slide)}, turned ${deg(turned)} deg, speed kept ${(held / start * 100).toFixed(0)}%, straight in ${back.toFixed(2)} s`);
+    while (v.drift && back < 2) { stepped(controls({ throttle: 0.8 })); back += DT; }
+    console.log(`  ${car.model.padEnd(22)} ${w.padEnd(5)} slide ${deg(max)} deg, held ${deg(slide)}, turned ${deg(turned)} deg, speed kept ${(held / start * 100).toFixed(0)}%, straight in ${back.toFixed(2)} s, jolt ${jolt.toFixed(1)}`);
+    check(jolt < 8, `${car.model}: going into and out of a drift should have no jolt`);
+    check(slideStep < 0.04, `${car.model}: tyre noise and smoke should rise, never jump`);
     check(entered, `${car.model}: a handbrake tap should start a drift`);
     check(max > 0.45 && max < 0.8, `${car.model}: the slide should be a clean 25 to 45 degrees`);
     check(slide > 0.45, `${car.model}: the drift should hold while the wheel is over`);
     check(held / start > 0.7, `${car.model}: a drift should keep most of its speed`);
-    check(back < 1.2 && !v.drift, `${car.model}: it should straighten by itself`);
+    check(back < 1.5 && !v.drift, `${car.model}: it should straighten by itself`);
     let spun = 0; for (let n = 0; n < 240; n++) { v.step(DT, controls({ throttle: 0.8 })); spun = Math.max(spun, Math.abs(v.slipAngle)); }
     check(spun < 0.3, `${car.model}: no swing back after a drift`);
   }

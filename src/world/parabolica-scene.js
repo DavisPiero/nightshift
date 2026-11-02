@@ -266,6 +266,16 @@ export function buildParabolica(track, def) {
     }
   }
 
+  // On the pavement: hydrants, boxes of the city's wiring, racks of bins, rubbish out.
+  for (let k = 9; k < track.count; k += 31) {
+    const s = r() < 0.5 ? 1 : -1, [x, z] = along(k, s, W + 1.7), head = track.headingAt(k), what = r();
+    if (near(x, z) < W + 1.2 || spots.some((p) => Math.hypot(p[0] - x, p[1] - z) < p[2] * 0.7)) continue;
+    if (what < 0.3) place.add('hydrant', x, 0.12, z, head);
+    else if (what < 0.6) place.add('utility-box', x, 0.12, z, head + (s > 0 ? 3.14 : 0));
+    else if (what < 0.8) place.add('trash-cans', x, 0.12, z, head);
+    else { place.add('trash-bag', x, 0.12, z, r() * 6); place.add('trash-bag', x + 0.5, 0.12, z + 0.3, r() * 6, 0.8); }
+  }
+
   // --- Inside: the park ---
   // A hedge along the fence, round lamps along a path, and trees: mostly
   // dark broadleaves, with clumps of cherry blossom.

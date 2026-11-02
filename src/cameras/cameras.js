@@ -111,7 +111,7 @@ class ChaseCamera {
     cam.position.z -= Math.sin(this.yaw) * sx;
     cam.position.y += sy;
     cam.up.set(0, 1, 0);
-    cam.lookAt(v.x + Math.sin(v.heading) * 2.5 + sx * 2, v.roadY + v.slope * 2.5 + 0.9 + sy, v.z + Math.cos(v.heading) * 2.5);
+    cam.lookAt(v.x + Math.sin(v.heading) * 2.5 + sx * 2, v.roadY + v.slope * 2.5 + 0.62 + sy, v.z + Math.cos(v.heading) * 2.5);
     cam.rotateZ(roll);
     // Wider view at speed, eased so it never jumps.
     const fov = OPTIONS.fov + speedK * speedK * CAMERA_FEEL.speedFov + rush * 8 + this.shake.nos * 9;
