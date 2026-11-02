@@ -25,7 +25,7 @@ Nothing is queued. Waiting on David's and Arlo's notes on this update.
 - The Subaru's source: no author or licence. Mustank: its real sponsor livery shows on a shop card.
 
 ## Known rough edges
-- The smoke test's 200 m race limit is tight on the mountain: an uphill start in traffic gets 197 to 230 m in 20 s, so that run can fail with nothing wrong.
+- The smoke test's 200 m race limit is tight on the mountain: an uphill start in traffic gets 120 to 237 m in 20 s (the same before session 21), so that run often fails with nothing wrong. Worth a fairer test.
 - Rivals touch the walls more on Hard on the narrow Starter, and on Impossible more still. The fight for P1 will add to that.
 - At speed the stars streak with the motion blur.
 - The cranes in the docks picture float a little. Johnny has no blink.

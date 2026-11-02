@@ -35,7 +35,7 @@ Nothing is queued. Start with what David and Arlo find playing this update.
 - Sky bake: `skyBackdrop(farGroup, centre)` or `cityBackdrop`. `backdrop.userData.far` is the `FarBake`; `applyLook` bakes, `WeatherView.set` sets the haze. It must not be `transparent` in Three's eyes or it draws over the world.
 - Trees: `crown()` and `limbs()` in `assets.js`, textures `Tex.leaves`, `blossom`, `cedarTier`, `cedarCard`. Crowns are `FrontSide`: double-sided flips the out-pointing normals and turns half the cards black.
 - A world can have `update(dt, camera, v)` (Parabolica's petals) and `setSnow(on)` (the mountain's ground).
-- Smoke test: a race on the mountain only just clears its 200 m limit (197 to 230 m, varies with traffic). A narrow miss there is not a broken game, but look before assuming so.
+- Smoke test: a race on the mountain gets 120 to 237 m against its 200 m limit (traffic; the same on the old main in session 21), so it often fails with nothing wrong. A narrow miss there is not a broken game, but look before assuming so.
 - Light on a hilly road: `roadGlow` in `mountain-scene.js`, not `place.pool`, which is flat.
 
 ## How the look works
