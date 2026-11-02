@@ -1,6 +1,7 @@
 // NIGHTSHIFT start-up: builds the world, the car and the systems, and runs
 // the game states: menus (main, drive, garage, settings), driving and paused.
 
+import { worldReady } from './world/models.js';
 import * as THREE from 'three';
 import { GRAPHICS, defaultGraphicsFor, URL_FLAGS } from './core/config.js';
 import { Loop } from './core/loop.js';
@@ -718,11 +719,13 @@ class Game {
     if (race.otherHit) { // two rivals touching, as loud as it is close
       const h = race.otherHit, near = 1 / (1 + (Math.hypot(h.x - this.vehicle.x, h.z - this.vehicle.z) / 18) ** 2);
       if (near > 0.1) this.audio.fx('knock', Math.min(1, h.closing / 15) * near);
+      if (near > 0.05 && h.closing > 2) this.effects.hit({ x: h.x, z: h.z, nx: 0, nz: 0 }, Math.min(8, h.closing), h.vehicle); // and sparks, as yours are
     }
     if (race.state === 'racing') { // a place gained or lost, a lap done
       if (this.heardPlace && p.place !== this.heardPlace) this.audio.ui(p.place < this.heardPlace ? 'gain' : 'lose');
       this.heardPlace = p.place;
       if (p.lap > this.heardLap && !p.done) this.audio.ui(p.best === p.lapTimes.at(-1) && p.lap > 1 ? 'best' : 'lap');
+      if (p.lap > this.heardLap && !p.done && p.lap === race.laps - 1) this.hud.callout('Final lap');
       this.heardLap = p.lap;
     }
     if (race.lights !== was && race.state === 'countdown' && race.lights <= 3) this.audio.ui('count');
@@ -1018,7 +1021,7 @@ window.addEventListener('error', (e) => {
 // after a moment without it if it cannot load (offline).
 const fontReady = URL_FLAGS.smoke ? Promise.resolve()
   : Promise.race([document.fonts?.load('20px "Jersey 10"') ?? Promise.resolve(), new Promise((r) => setTimeout(r, 1500))]);
-fontReady.catch(() => {}).then(() => carsReady).finally(() => {
+fontReady.catch(() => {}).then(() => Promise.all([carsReady, worldReady])).finally(() => {
   if (URL_FLAGS.library) { document.querySelector('#boot')?.remove(); import('./ui/library.js').then((m) => m.startLibrary(URL_FLAGS)); return; }
   const game = new Game();
   if (URL_FLAGS.smoke) game.smoke = new SmokeTest();

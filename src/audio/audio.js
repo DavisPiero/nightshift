@@ -539,7 +539,7 @@ export class GameAudio {
     playFx(this.ctx, this.fxBus, this.noise, kind, Math.min(1, speed / 15));
   }
 
-  // A sound in the world: wall, knock, ratchet, chirp, kerb, whoosh, nos.
+  // A sound in the world: wall, knock, ratchet, kerb, whoosh, nos.
   fx(kind, v = 1, pan = 0) {
     if (!this.ctx || this.ctx.state !== 'running') return;
     playFx(this.ctx, this.fxBus, this.noise, kind, v, pan);

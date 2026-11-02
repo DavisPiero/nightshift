@@ -1,4 +1,4 @@
-# Hand-off: end of session 20 (2026-11-02)
+# Hand-off: end of session 21 (2026-11-02)
 
 ## Repo state
 - On `main`, everything committed and pushed; no other branches. `main` is the live site. Next work goes on a new branch.
@@ -7,7 +7,14 @@
 `CLAUDE.md`, `STATE.md`, the last 20 lines of `DECISIONS.md`, then this file.
 
 ## What comes next
-Nothing is queued: Arlo's fourth notes are finished. Start with what David and Arlo found playing it.
+Nothing is queued. Start with what David and Arlo find playing this update.
+
+## How session 21 works
+- Drift: `drift.mix` 0..1 is its share of the car, `free` in `step` is the tyres'. `drift.angle` is the eased slide. Times are at the top of `vehicle.js`. The drive bench's `jolt` must stay under 8.
+- Roll-up: `Game.arrive` before everything; `raceLoad` always calls it. `raceView.clearLane` and `showAll`. The laptop comes only if `raceSetup.event`.
+- CC0: `tools/fetch-cc0.mjs` to `assets/world/`; `worldReady` in `models.js`; `found()` in `assets.js`; `modelMesh` for hand-built scenes; `Tex.photo(name)`. `rockOnSteeps` in `mountain-scene.js`.
+- Home tiles are `assets/loading/*.jpg`: re-run `tools/loading-stills.sh` after a look change.
+- `tools/shot.mjs`: a job with `same: true` stays on the page, for a sequence.
 
 ## How Part 4 works
 - Testing sound: headless Chrome never lets an AudioContext start (`ctx.resume()` hangs forever). Render in an `OfflineAudioContext` on `review/blank.html` instead.
@@ -71,7 +78,7 @@ Nothing is queued: Arlo's fourth notes are finished. Start with what David and A
 
 ## Open with David
 Ask these first.
-1. How do the drift, warm tyres, the fight for P1, the finishes and the sounds feel and sound? Nobody here can feel or hear them.
+1. How do the new drift, warm tyres, the fight for P1, the finishes and the sounds feel and sound? Nobody here can feel or hear them.
 2. Does High run smoothly? Has it been tried on a real iPad?
-3. Sprite sheets for Sonny, Max and Aoi? Keep Dave's cigarette pose?
-4. Are 15% for Dave's jobs and country of origin for car types right? Other guesses are in `STATE.md`.
+3. Sprite sheets for Sonny, Max and Aoi?
+4. Is 15% for Dave's jobs right? Other guesses are in `STATE.md`.

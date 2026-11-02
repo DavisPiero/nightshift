@@ -49,11 +49,15 @@ export class Hud {
   setNos(on) { this.nosEl.hidden = !on; }
 
   // The race to show, or null for free driving.
+  // A word across the screen for a moment: Final lap.
+  callout(text) { this.calloutText = text; this.calloutClock = 2; }
+
   setRace(race) {
     this.race = race;
     this.rh.hidden = !race;
     this.rt.hidden = !race;
     this.big.textContent = '';
+    this.calloutClock = 0;
     this.wrong.hidden = true;
     this.goClock = 0;
     this.finished = false;
@@ -82,6 +86,7 @@ export class Hud {
     else if (r.state === 'racing' && this.goClock > 0) { this.big.textContent = 'GO'; this.big.className = 'on go'; this.goClock -= dt; }
     else if (r.state === 'finished' && !this.finished) { this.finished = true; this.big.textContent = 'FINISH'; this.big.className = 'on go'; this.goClock = 2.4; }
     else if (r.state === 'finished' && this.goClock > 0) this.goClock -= dt;
+    else if (this.calloutClock > 0) { this.calloutClock -= dt; this.big.textContent = this.calloutText; this.big.className = 'on word'; }
     else { this.big.textContent = ''; this.big.className = ''; }
     this.wrong.hidden = r.wrongWay < 1.5;
     this.tick -= dt;
@@ -89,7 +94,9 @@ export class Hud {
     this.tick = 0.1;
     const going = r.state === 'racing' || r.state === 'finished';
     const set = (el, text) => { if (el.textContent !== text) el.textContent = text; };
-    set(this.rt.querySelector('#rt-pos'), String(p.place || r.cars.indexOf(p) + 1));
+    const pos = this.rt.querySelector('#rt-pos'), place = p.place || r.cars.indexOf(p) + 1, was = Number(pos.textContent);
+    if (r.state === 'racing' && place !== was) { pos.classList.remove('up', 'down'); void pos.offsetWidth; pos.classList.add(place < was ? 'up' : 'down'); }
+    set(pos, String(place));
     set(this.rt.querySelector('#rt-of'), `/${r.cars.length}`);
     set(this.rt.querySelector('#rt-lap'), String(Math.min(p.lap + 1, r.laps)));
     set(this.rt.querySelector('#rt-laps'), `/${r.laps}`);
@@ -215,7 +222,7 @@ export class Hud {
     const a0 = Math.PI * 0.75, a1 = Math.PI * 2.25;
 
     // Backing: a thin titanium ring round a black face.
-    g.fillStyle = 'rgba(8, 9, 11, 0.88)';
+    g.fillStyle = 'rgba(8, 9, 11, 0.96)';
     g.beginPath(); g.arc(cx, cy, R + 2, 0, Math.PI * 2); g.fill();
     g.strokeStyle = TITANIUM; g.lineWidth = 1;
     g.beginPath(); g.arc(cx, cy, R + 2, 0, Math.PI * 2); g.stroke();

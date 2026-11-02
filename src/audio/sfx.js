@@ -67,10 +67,6 @@ const FX = {
     tone(ctx, out, { type: 'sine', f0: 200, f1: 110, t: 0.1, dur: 0.05, peak: 0.08, lp: 800 });
   },
   // The tail letting go.
-  chirp(ctx, out, noise) {
-    const f = rand(1000, 1400);
-    hiss(ctx, out, noise, { dur: 0.3, peak: 0.7, f0: f, f1: f * 1.35, q: 9 });
-  },
   // A kerb under the tyres.
   kerb(ctx, out, noise, v) {
     hiss(ctx, out, noise, { dur: 0.03, peak: 0.1 + v * 0.14, type: 'lowpass', f0: 340, q: 1 });

@@ -179,7 +179,7 @@ export class Race {
       if ((cs[a].isPlayer || cs[b].isPlayer) && hit.closing > this.playerKnock) {
         this.playerKnock = hit.closing;
         this.playerContact = hit;
-      } else if (!cs[a].isPlayer && !cs[b].isPlayer && hit.closing > (this.otherHit?.closing ?? 1)) this.otherHit = { closing: hit.closing, x: va.x, z: va.z };
+      } else if (!cs[a].isPlayer && !cs[b].isPlayer && hit.closing > (this.otherHit?.closing ?? 1)) this.otherHit = { closing: hit.closing, x: va.x, z: va.z, vehicle: va };
     }
   }
 

@@ -223,6 +223,12 @@ export function buildUnderground(track, def) {
     place.add('exit-sign', p.x, 0, p.z, track.headingAt(k));
   }
 
+  // Power boxes bolted to the wall, between the lamps.
+  for (let k = 70; k < track.count; k += 120) {
+    const p = at(k, W - 0.22);
+    place.add('power-box', p.x, 0.6, p.z, track.headingAt(k) + Math.PI / 2, 1.3);
+  }
+
   // Small halos round the red and green lamps; the lamps' bright bits join
   // the reflections.
   const built = place.finish(group, { glowSize: 1.4 });

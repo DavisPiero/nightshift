@@ -97,6 +97,21 @@ function noise(g, w, h, base, spread, seed, alpha = 1) {
   g.putImageData(img, 0, 0);
 }
 
+// Photographs from the CC0 library (tools/fetch-cc0.mjs), for what code cannot
+// paint: rock, bark, concrete. If one fails to load, the painted one stands in.
+const photos = new Map();
+const PHOTOS = { rock: true, soil: true, concrete: false, sakura: true, cedar: true, pavement: false, tin: true };
+const url = (file) => new URL(`../../assets/world/tex/${file}.jpg`, import.meta.url).href;
+function photoFile(file, srgb) {
+  return new THREE.TextureLoader().loadAsync(url(file)).then((t) => {
+    t.wrapS = t.wrapT = THREE.RepeatWrapping;
+    t.anisotropy = 8;
+    if (srgb) t.colorSpace = THREE.SRGBColorSpace;
+    photos.set(file, t);
+  }).catch((e) => console.error(`photo ${file} failed to load`, e));
+}
+export const photosReady = Promise.all(Object.entries(PHOTOS).flatMap(([name, normal]) => [photoFile(`photo-${name}`, true), normal ? photoFile(`photo-${name}-n`, false) : null]));
+
 const cache = new Map();
 function cached(name, make) {
   if (!cache.has(name)) cache.set(name, make());
@@ -225,6 +240,9 @@ function clump(g, w, h, colours, dabs, size, seed, shape = () => 1) {
 const clear = (size, paint) => canvasTexture(size, paint, { nearest: false });
 
 export const Tex = {
+  // A photograph and its normal map, or null.
+  photo: (name) => photos.get(`photo-${name}`) ?? null,
+  photoNormal: (name) => photos.get(`photo-${name}-n`) ?? null,
   // A clump of broadleaf leaves, lit from above.
   leaves: () => cached('leaves', () => clear([256, 256], (g, w, h) => {
     clump(g, w, h, ['#16261a', '#1c3220', '#223a24'], 2600, 7, 11);
@@ -264,7 +282,7 @@ export const Tex = {
   }, { nearest: false })),
   // The forest floor and bare rock under the mountain's colours (a grey that
   // the ground's own colours tint).
-  soil: () => cached('soil', () => canvasTexture([512, 512], (g, w, h) => {
+  soil: () => Tex.photo('soil') ?? cached('soil', () => canvasTexture([512, 512], (g, w, h) => {
     noise(g, w, h, [170, 170, 170], 46, 51);
     const r = rng(52);
     for (let i = 0; i < 2400; i++) { g.fillStyle = `rgba(${r() < 0.5 ? '30,30,30' : '235,235,235'},${0.05 + r() * 0.16})`; const s = 2 + r() * 12; g.beginPath(); g.ellipse(r() * w, r() * h, s, s * (0.3 + r() * 0.7), r() * 3, 0, 6.3); g.fill(); }
@@ -370,7 +388,7 @@ export const Tex = {
   })),
 
   // Concrete pavement / kerb with slab joints.
-  concrete: () => cached('concrete', () => canvasTexture([64, 64], (g, w, h) => {
+  concrete: () => Tex.photo('concrete') ?? cached('concrete', () => canvasTexture([64, 64], (g, w, h) => {
     noise(g, w, h, [104, 104, 98], 26, 2);
     g.fillStyle = 'rgba(40,40,38,0.6)';
     g.fillRect(0, 0, w, 1); g.fillRect(0, 0, 1, h);

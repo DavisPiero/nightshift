@@ -63,7 +63,7 @@ export function buildDealership() {
   const roofY = 3.5, roofW = 9, roofD = 8;
   for (const x of [-1, 1]) for (const z of [-1, 1]) add(new THREE.BoxGeometry(0.14, roofY, 0.14), rust, x * roofW / 2, roofY / 2, z * roofD / 2);
   for (const z of [-1, 1]) add(new THREE.BoxGeometry(roofW + 0.3, 0.14, 0.14), rust, 0, roofY, z * roofD / 2);
-  const tinTex = Tex.cladding([96, 90, 80]).clone();
+  const tinTex = (Tex.photo('tin') ?? Tex.cladding([96, 90, 80])).clone();
   tinTex.repeat.set(3, 1); tinTex.needsUpdate = true;
   const tin = add(new THREE.PlaneGeometry(roofW + 0.8, roofD + 0.8), lambert(0x8a8478, { map: tinTex, side: THREE.DoubleSide }), 0, roofY + 0.14, 0);
   tin.rotation.x = -Math.PI / 2 + 0.05;
@@ -169,8 +169,8 @@ export function buildDealership() {
     g.fillStyle = '#1a2a60'; g.font = 'bold 72px "DotGothic16", "Jersey 10", monospace'; g.fillText('中古車  ·  NO REFUNDS', w / 2, h * 0.78);
   }, '#e8dfbc');
   const signM = new THREE.Mesh(new THREE.PlaneGeometry(4.8, 1.2), new THREE.MeshLambertMaterial({ map: sign }));
-  signM.position.set(hole.x, top + 0.72, front - 0.5); group.add(signM);
-  for (const x of [hole.x - 1.9, hole.x + 1.9]) add(new THREE.BoxGeometry(0.08, 1.2, 0.08), steel, x, top + 0.6, front - 0.55);
+  signM.scale.setScalar(0.86); signM.position.set(hole.x, top + 0.5, front - 0.5); group.add(signM);
+  for (const x of [hole.x - 1.9, hole.x + 1.9]) add(new THREE.BoxGeometry(0.08, 0.9, 0.08), steel, x, top + 0.42, front - 0.55);
 
   // Boards wired to the fence.
   const notice = (text, x, z, ry, bg, ink) => {
@@ -226,6 +226,18 @@ export function buildDealership() {
   place.add('power-pole', -9.6, 0, YARD.back - 1.2, 0.2);
   place.add('floodlight', YARD.x - 1, 0, YARD.back + 1, -0.6);
   place.add('bin', 7.8, 0, -7, 0.4);
+  // The real junk: something under a sheet he won't talk about, tyres, drums, gas.
+  place.add('covered-car', 9, 0, 3, -0.12);
+  for (let i = 0; i < 5; i++) place.add('tyre', -8.8, i * 0.17, 3.6, i * 0.7);
+  for (let i = 0; i < 3; i++) place.add('tyre', -8.1, i * 0.17, 4.4, i * 0.4);
+  place.add('tyre', -9, 0.3, 5.2, 0.4, [1, 1, 1]);
+  place.add('barrel', 7.4, 0, -5.6, 1);
+  place.add('barrel', 8.2, 0, -5.2, 3);
+  place.add('propane', -9.5, 0, -7.6, 0.4);
+  place.add('propane', -9, 0, -7.9, 2);
+  place.add('trash-bag', -2.6, 0, -5.4, 1);
+  place.add('trash-bag', -2.1, 0, -5.2, 2.6, 0.8);
+  place.add('aircon', cab.x - 2.1, top, front - 1.1, 0, 0.8);
   place.add('cone', 6.4, 0, -0.6, 0.3);
   place.add('cone', -3.6, 0, 3.1, 1);
   place.finish(group, { glowSize: 2.2 });
