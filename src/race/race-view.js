@@ -36,6 +36,13 @@ export class RaceView {
     }
   }
 
+  // The rolling-up: rivals behind you in your lane are put away until you stop.
+  clearLane(you) {
+    for (const { car, model } of this.rivals) model.root.visible = !(car.offset * you.offset > 0 && car.covered < (you.covered ?? 0));
+  }
+
+  showAll() { for (const { model } of this.rivals) model.root.visible = true; }
+
   clear() {
     for (const { model } of this.rivals) { model.root.removeFromParent(); model.dispose?.(); }
     this.rivals = [];

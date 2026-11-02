@@ -14,9 +14,7 @@ export const clock = { skew: 0, now() { return Date.now() + this.skew; } };
 const HOUR = 3600 * 1000;
 export const hoursLeft = (ms) => `${Math.max(1, Math.ceil(ms / HOUR))} h`;
 
-// The kinds of car Johnny can get a deal on.
-export const CAR_TYPES = { japanese: 'Japanese', american: 'American', italian: 'Italian' };
-const JOHNNY_OFF = 10; // percent
+const JOHNNY_OFF = 10; // percent, on muscle cars (David, 2026-11-02)
 export const VOUCHER_OFF = 15; // Dave's, on any one car
 
 const seen = (id) => (c) => c.seen.includes(id);
@@ -32,18 +30,17 @@ export const CONTACTS = [
 export const contacts = (career) => CONTACTS.filter((p) => p.met(career));
 
 const johnnyWait = (career) => Math.max(0, (career.favours.johnny?.at ?? -DAY) + DAY - clock.now());
-const dealLive = (career) => johnnyWait(career) > 0 ? career.favours.johnny.type : null;
+const dealLive = (career) => johnnyWait(career) > 0;
 
-// The kinds that still have a car you do not own.
-const typesToBuy = (save) => Object.keys(CAR_TYPES).filter((t) => CARS.some((c) => c.origin === t && c.price && !save.garage.owned.includes(c.id)));
+// Is there a muscle car left that you do not own?
+const muscleToBuy = (save) => CARS.some((c) => c.muscle && c.price && !save.garage.owned.includes(c.id));
 
 // The small print under a name in the list.
 export function contactNote(save, id) {
   const c = save.career;
   if (id === 'johnny') {
-    const deal = dealLive(c);
-    if (deal) return `${JOHNNY_OFF}% off ${CAR_TYPES[deal]}, ${hoursLeft(johnnyWait(c))} left`;
-    return typesToBuy(save).length ? 'Favour ready' : '';
+    if (dealLive(c)) return `${JOHNNY_OFF}% off muscle cars, ${hoursLeft(johnnyWait(c))} left`;
+    return muscleToBuy(save) ? 'Favour ready' : '';
   }
   if (id === 'sonny') {
     const inv = currentInvite(c);
@@ -62,13 +59,10 @@ export function call(save, id, n = 0) {
   const c = save.career, p = CONTACTS.find((x) => x.id === id);
   const msg = (subject, text, more = {}) => ({ id: `call-${id}`, from: p.name, subject, text, read: true, call: true, ...more });
   if (id === 'johnny') {
-    const deal = dealLive(c);
-    if (deal) return msg('Already sorted', `Already called in my favour, ${c.racer.name || 'kid'}. ${JOHNNY_OFF}% off anything ${CAR_TYPES[deal]} at Dave's. Ring me in ${hoursLeft(johnnyWait(c))}.`);
-    const types = typesToBuy(save);
-    if (!types.length) return msg('Nothing to sort', 'You own everything he\'s got. Go and drive one.');
-    const type = types[Math.floor(Math.random() * types.length)];
-    c.favours.johnny = { at: clock.now(), type };
-    return msg('Favour', `Rang a man about a man. ${JOHNNY_OFF}% off anything ${CAR_TYPES[type]} at Dave's, for 24 hours. Don't tell him I know his real name.`);
+    if (dealLive(c)) return msg('Already sorted', `Already called in my favour, ${c.racer.name || 'kid'}. ${JOHNNY_OFF}% off the muscle cars at Dave's. Ring me in ${hoursLeft(johnnyWait(c))}.`);
+    if (!muscleToBuy(save)) return msg('Nothing to sort', 'You own all the old iron he\'s got. Go and scare someone in it.');
+    c.favours.johnny = { at: clock.now() };
+    return msg('Favour', `Rang a man about a man. ${JOHNNY_OFF}% off the muscle cars at Dave's, for 24 hours. Old iron, big engines. Don't tell him I know his real name.`);
   }
   if (id === 'sonny') {
     const inv = currentInvite(c);
@@ -91,7 +85,7 @@ export const inviteMail = (inv) => ({
 
 // What a car costs you today, and whose deal it is: the best one, never both.
 export function priceOf(save, car) {
-  const c = save.career, deal = dealLive(c) === car.origin ? JOHNNY_OFF : 0, voucher = c.vouchers ? VOUCHER_OFF : 0;
+  const c = save.career, deal = car.muscle && dealLive(c) ? JOHNNY_OFF : 0, voucher = c.vouchers ? VOUCHER_OFF : 0;
   const pct = Math.max(deal, voucher);
   return { price: Math.round(car.price * (1 - pct / 100) / 50) * 50, pct, who: !pct ? null : voucher >= deal ? 'Dave' : 'Johnny' };
 }

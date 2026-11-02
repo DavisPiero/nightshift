@@ -412,9 +412,9 @@ export const COUNTACH_QV = {
 export const CARS = [IMPREZA_GC8, SKYLINER_R34, CHALLENJER_SRT8, MUSTANK_GT500, COUNTACH_QV];
 export const ALL_CARS = CARS;
 const PRICES = { 'impreza-gc8': 0, 'challenjer-srt8': 15000, 'skyliner-r34': 30000, 'mustank-gt500': 55000, 'countach-qv': 100000 };
-// Where each is from: what Johnny's favour goes by (career/contacts.js).
-const ORIGIN = { 'impreza-gc8': 'japanese', 'skyliner-r34': 'japanese', 'challenjer-srt8': 'american', 'mustank-gt500': 'american', 'countach-qv': 'italian' };
-for (const c of CARS) { c.tier = 'street'; c.price = PRICES[c.id]; c.origin = ORIGIN[c.id]; }
+// The muscly retro cars: what Johnny's favour goes by (career/contacts.js).
+const MUSCLE = ['challenjer-srt8', 'mustank-gt500'];
+for (const c of CARS) { c.tier = 'street'; c.price = PRICES[c.id]; c.muscle = MUSCLE.includes(c.id); }
 
 // The stages of the career, and the level each one opens at.
 export const TIERS = [

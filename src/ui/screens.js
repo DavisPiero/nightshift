@@ -254,7 +254,7 @@ export class Screens {
       this.game.startRace(pick, true);
       const wait = Math.max(0, 5500 - (performance.now() - shown));
       setTimeout(() => {
-        if (pick.event) this.game.arrive(); else this.game.go();
+        this.game.arrive();
         el.classList.add('done');
         setTimeout(() => { el.hidden = true; }, 420);
       }, wait);

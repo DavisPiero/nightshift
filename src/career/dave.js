@@ -5,6 +5,9 @@
 // Every mood on David's sheet (tools/character-sprites.mjs).
 export const DAVE_MOODS = ['plain', 'talk', 'bored', 'flat', 'shout', 'aside', 'wink', 'shock', 'think', 'squint', 'thumbs', 'laugh', 'smoke', 'shrug', 'frown', 'facepalm', 'angry', 'shut', 'smirk', 'grin'];
 
+// How he stands when he is not saying anything (David, 2026-11-02).
+export const DAVE_REST = 'smoke';
+
 // A line: [mood, words].
 const CARS = {
   'impreza-gc8': [

@@ -482,9 +482,7 @@ export class GameAudio {
       if (this._shifts !== undefined && v.gearbox.gear > 0) this.engine.shift(v.gearbox.lastShift > 0, !!v.spec.turbo);
       this._shifts = v.gearbox.shiftCount;
     }
-    // The car's own events: the lever, the tail letting go, the bottle opening.
-    if (v.drift && !this._drift) this.fx('chirp');
-    this._drift = !!v.drift;
+    // The car's own events: the bottle opening.
     if (v.nosOn && !this._nos) this.fx('nos');
     this._nos = v.nosOn;
     this.scrape *= Math.exp(-dt * 7);

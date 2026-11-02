@@ -8,7 +8,7 @@ import * as THREE from 'three';
 import { Tex } from '../graphics/textures.js';
 import { Placer } from './assets.js';
 import { rng } from './scene-kit.js';
-import { DAVE_MOODS } from '../career/dave.js';
+import { DAVE_MOODS, DAVE_REST } from '../career/dave.js';
 
 const YARD = { x: 11, back: -9, front: 12 };
 const DAVE_ASPECT = 186 / 123; // his sprites' width over height
@@ -149,7 +149,7 @@ export function buildDealership() {
     return t;
   };
   for (const m of DAVE_MOODS) daveFace(m);
-  const daveH = 1.2, dave = new THREE.Mesh(new THREE.PlaneGeometry(daveH * DAVE_ASPECT, daveH), new THREE.MeshLambertMaterial({ map: daveFace('plain'), alphaTest: 0.5 }));
+  const daveH = 1.2, dave = new THREE.Mesh(new THREE.PlaneGeometry(daveH * DAVE_ASPECT, daveH), new THREE.MeshLambertMaterial({ map: daveFace(DAVE_REST), alphaTest: 0.5 }));
   dave.position.set(hole.x, hole.sill + 0.42, front - 0.72);
   dave.rotation.y = 0.32;
   group.add(dave);
