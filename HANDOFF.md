@@ -10,6 +10,7 @@
 Nothing is queued: Arlo's fourth notes are finished. Start with what David and Arlo found playing it.
 
 ## How Part 4 works
+- Testing sound: headless Chrome never lets an AudioContext start (`ctx.resume()` hangs forever). Render in an `OfflineAudioContext` on `review/blank.html` instead.
 - Drift: `vehicle.drift`, set in `checkDrift`, moved in `stepDrift`, which takes over from the tyre forces. Angles are at the top of `vehicle.js`. `c.park` is the finish's version of it.
 - Finish: `FinishDriver` replaces the player's driver after the flag (`takeover`). `driver.parked` ends the wait. `cameras.finish(true)` swings the camera. `ui/tally.js` shows what `results()` already banked.
 - Warm tyres: `race.warm`, `v.launchLeft`, `v.burnout` (smoke at a standstill).
